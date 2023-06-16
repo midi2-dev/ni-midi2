@@ -102,3 +102,21 @@ TEST_F(value_translation, preserve_14_32_14)
         EXPECT_EQ(v, midi::downsample_32_to_14bit(midi::upsample_14_to_32bit(v))) << "preserve_14_32_14(" << v << ")";
     }
 }
+
+//-----------------------------------------------
+
+TEST_F(value_translation, upsample_x_to_ybit)
+{
+    for (midi::uint7_t v = 0u; v < 0x80; ++v)
+    {
+        EXPECT_EQ(midi::upsample_7_to_16bit(v), midi::upsample_x_to_ybit(v, 7, 16));
+    }
+    for (midi::uint7_t v = 0u; v < 0x80; ++v)
+    {
+        EXPECT_EQ(midi::upsample_7_to_32bit(v), midi::upsample_x_to_ybit(v, 7, 32));
+    }
+    for (midi::uint14_t v = 0u; v < 0x4000; ++v)
+    {
+        EXPECT_EQ(midi::upsample_14_to_32bit(v), midi::upsample_x_to_ybit(v, 14, 32));
+    }
+}

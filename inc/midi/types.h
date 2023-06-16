@@ -24,6 +24,7 @@
 
 //--------------------------------------------------------------------------
 
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -72,6 +73,8 @@ constexpr uint14_t downsample_32_to_14bit(uint32_t);
 constexpr uint16_t upsample_7_to_16bit(uint7_t);
 constexpr uint32_t upsample_7_to_32bit(uint7_t);
 constexpr uint32_t upsample_14_to_32bit(uint14_t);
+
+constexpr uint32_t upsample_x_to_ybit(uint32_t v, uint8_t x, uint8_t y);
 
 //--------------------------------------------------------------------------
 
@@ -163,8 +166,8 @@ struct pitch_7_25
     constexpr note_nr_t note_nr() const;
 
     constexpr pitch_7_25& operator=(pitch_7_9);
-    constexpr pitch_7_25  operator+(const pitch_increment&) const;
-    constexpr pitch_7_25  operator+(float) const;
+    constexpr pitch_7_25 operator+(const pitch_increment&) const;
+    constexpr pitch_7_25 operator+(float) const;
 
     constexpr void operator+=(const pitch_increment&);
 
@@ -437,6 +440,43 @@ constexpr uint32_t upsample_14_to_32bit(uint14_t v)
         result |= (bits << 5u) | (bits >> 8u);
     }
 
+    return result;
+}
+
+//--------------------------------------------------------------------------
+
+constexpr uint32_t upsample_x_to_ybit(uint32_t v, uint8_t x, uint8_t y)
+{
+    assert((x > 1) && (y <= 32) && (x < y));
+
+    const uint8_t  scale_bits = (y - x);      // number of bits to upscale
+    const uint32_t x_center   = 1 << (x - 1); // center value for x, e.g.
+                                              // 0x40 (64) for 7 bits
+                                              // 0x2000 (8192) for 14 bits
+                                              // simple bit shift
+    uint32_t result = v << scale_bits;
+    if (v <= x_center)
+    {
+        return result;
+    }
+
+    // expanded bit repeat scheme
+    uint8_t  repeat_bits  = x - 1; // we must repeat all but the highest bit
+    uint32_t repeat_mask  = (1 << repeat_bits) - 1;
+    uint32_t repeat_value = v & repeat_mask; // repeat bit sequence
+    if (scale_bits > repeat_bits)
+    { // need to repeat multiple times
+        repeat_value <<= (scale_bits - repeat_bits);
+    }
+    else
+    {
+        repeat_value >>= (repeat_bits - scale_bits);
+    }
+    while (repeat_value != 0)
+    {
+        result |= repeat_value;       // fill lower bits with repeat_value
+        repeat_value >>= repeat_bits; // move repeat bit sequence to next position
+    }
     return result;
 }
 
