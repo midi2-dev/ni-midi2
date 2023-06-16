@@ -177,7 +177,7 @@ constexpr midi2_channel_voice_message make_midi2_channel_voice_message(
 //--------------------------------------------------------------------------
 
 constexpr midi2_channel_voice_message make_midi2_note_off_message(
-  group_t group, status_t channel, note_nr_t note_nr, velocity vel, uint8_t attribute, uint16_t attribute_data)
+  group_t group, channel_t channel, note_nr_t note_nr, velocity vel, uint8_t attribute, uint16_t attribute_data)
 {
     return { group,     channel_voice_status::note_off,
              channel,   static_cast<note_nr_t>(note_nr & 0x7F),
@@ -197,7 +197,7 @@ constexpr midi2_channel_voice_message make_midi2_note_on_message(group_t   group
 //--------------------------------------------------------------------------
 
 constexpr midi2_channel_voice_message make_midi2_note_on_message(
-  group_t group, status_t channel, note_nr_t note_nr, velocity vel, pitch_7_9 pitch)
+  group_t group, channel_t channel, note_nr_t note_nr, velocity vel, pitch_7_9 pitch)
 {
     return { group,   channel_voice_status::note_on, channel,
              note_nr, note_attribute::pitch_7_9,     static_cast<uint32_t>((vel.value << 16) | pitch.value) };
@@ -206,7 +206,7 @@ constexpr midi2_channel_voice_message make_midi2_note_on_message(
 //--------------------------------------------------------------------------
 
 constexpr midi2_channel_voice_message make_midi2_note_on_message(
-  group_t group, status_t channel, note_nr_t note_nr, velocity vel, uint8_t attribute, uint16_t attribute_data)
+  group_t group, channel_t channel, note_nr_t note_nr, velocity vel, uint8_t attribute, uint16_t attribute_data)
 {
     return { group,     channel_voice_status::note_on,
              channel,   note_nr,
@@ -226,7 +226,7 @@ constexpr midi2_channel_voice_message make_midi2_poly_pressure_message(group_t  
 //--------------------------------------------------------------------------
 
 constexpr midi2_channel_voice_message make_registered_per_note_controller_message(
-  group_t group, status_t channel, note_nr_t note_nr, uint8_t controller, controller_value v)
+  group_t group, channel_t channel, note_nr_t note_nr, uint8_t controller, controller_value v)
 {
     return { group, channel_voice_status::registered_per_note_controller, channel, note_nr, controller, v.value };
 }
@@ -234,7 +234,7 @@ constexpr midi2_channel_voice_message make_registered_per_note_controller_messag
 //--------------------------------------------------------------------------
 
 constexpr midi2_channel_voice_message make_assignable_per_note_controller_message(
-  group_t group, status_t channel, note_nr_t note_nr, uint8_t controller, controller_value v)
+  group_t group, channel_t channel, note_nr_t note_nr, uint8_t controller, controller_value v)
 {
     return { group, channel_voice_status::assignable_per_note_controller, channel, note_nr, controller, v.value };
 }
@@ -264,7 +264,7 @@ constexpr midi2_channel_voice_message make_midi2_control_change_message(group_t 
 //--------------------------------------------------------------------------
 
 constexpr midi2_channel_voice_message make_registered_controller_message(
-  group_t group, status_t channel, uint7_t bank, uint7_t index, controller_value v)
+  group_t group, channel_t channel, uint7_t bank, uint7_t index, controller_value v)
 {
     return { group,
              channel_voice_status::registered_controller,
@@ -277,7 +277,7 @@ constexpr midi2_channel_voice_message make_registered_controller_message(
 //--------------------------------------------------------------------------
 
 constexpr midi2_channel_voice_message make_assignable_controller_message(
-  group_t group, status_t channel, uint7_t bank, uint7_t index, controller_value v)
+  group_t group, channel_t channel, uint7_t bank, uint7_t index, controller_value v)
 {
     return { group,
              channel_voice_status::assignable_controller,
@@ -290,7 +290,7 @@ constexpr midi2_channel_voice_message make_assignable_controller_message(
 //--------------------------------------------------------------------------
 
 constexpr midi2_channel_voice_message make_relative_registered_controller_message(
-  group_t group, status_t channel, uint7_t bank, uint7_t index, controller_increment inc)
+  group_t group, channel_t channel, uint7_t bank, uint7_t index, controller_increment inc)
 {
     return { group,
              channel_voice_status::relative_registered_controller,
@@ -303,7 +303,7 @@ constexpr midi2_channel_voice_message make_relative_registered_controller_messag
 //--------------------------------------------------------------------------
 
 constexpr midi2_channel_voice_message make_relative_assignable_controller_message(
-  group_t group, status_t channel, uint7_t bank, uint7_t index, controller_increment inc)
+  group_t group, channel_t channel, uint7_t bank, uint7_t index, controller_increment inc)
 {
     return { group,
              channel_voice_status::relative_assignable_controller,
@@ -347,7 +347,7 @@ constexpr midi2_channel_voice_message make_midi2_channel_pressure_message(group_
 
 //--------------------------------------------------------------------------
 
-constexpr midi2_channel_voice_message make_midi2_pitch_bend_message(group_t group, status_t channel, pitch_bend pb)
+constexpr midi2_channel_voice_message make_midi2_pitch_bend_message(group_t group, channel_t channel, pitch_bend pb)
 {
     return { group, channel_voice_status::pitch_bend, channel, 0, 0, pb.value };
 }
