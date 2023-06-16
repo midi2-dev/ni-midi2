@@ -885,3 +885,272 @@ TEST_F(channel_voice_message, get_channel_pitch_bend_value)
 }
 
 //-----------------------------------------------
+
+TEST_F(channel_voice_message, as_midi1_channel_voice_message)
+{
+    using namespace midi;
+
+    // note_on
+    {
+        auto m1 = as_midi1_channel_voice_message(
+          midi2_channel_voice_message_view{ make_midi2_note_on_message(4, 7, 99, velocity{ uint16_t{ 0x4567 } }) });
+        EXPECT_TRUE(m1);
+        if (m1)
+            EXPECT_EQ(*m1, make_midi1_note_on_message(4, 7, 99, velocity{ uint16_t{ 0x4567 } }));
+
+        auto m2 = as_midi1_channel_voice_message(
+          midi2_channel_voice_message_view{ make_midi2_note_on_message(13, 5, 60, velocity{ uint16_t{ 0 } }) });
+        EXPECT_TRUE(m2);
+        if (m2)
+            // MIDI 2 note on velocity 0 must be translated to MIDI 1 note velocity 1
+            EXPECT_EQ(*m2, make_midi1_note_on_message(13, 5, 60, velocity{ uint7_t{ 1 } }));
+
+        EXPECT_FALSE(as_midi1_channel_voice_message(midi2_channel_voice_message_view{
+          make_midi2_note_on_message(9, 10, 127, velocity{ uint16_t{ 0xA000 } }, pitch_7_9{ note_nr_t{ 60 } }) }));
+    }
+
+    // note_off
+    {
+        auto m1 = as_midi1_channel_voice_message(
+          midi2_channel_voice_message_view{ make_midi2_note_off_message(3, 9, 66, velocity{ uint16_t{ 0x1234 } }) });
+        EXPECT_TRUE(m1);
+        if (m1)
+            EXPECT_EQ(*m1, make_midi1_note_off_message(3, 9, 66, velocity{ uint16_t{ 0x1234 } }));
+
+        auto m2 = as_midi1_channel_voice_message(
+          midi2_channel_voice_message_view{ make_midi2_note_off_message(13, 5, 60, velocity{ uint7_t{ 0 } }) });
+        EXPECT_TRUE(m2);
+        if (m2)
+            EXPECT_EQ(*m2, make_midi1_note_off_message(13, 5, 60, velocity{ uint7_t{ 0 } }));
+
+        // MIDI 2 note on with attribute is not converted!
+        EXPECT_FALSE(as_midi1_channel_voice_message(midi2_channel_voice_message_view{
+          make_midi2_note_off_message(9, 10, 127, velocity{ uint16_t{ 0xA000 } }, 4, 16) }));
+    }
+
+    // poly_pressure
+    {
+        auto m1 = as_midi1_channel_voice_message(midi2_channel_voice_message_view{
+          make_midi2_poly_pressure_message(14, 2, 64, controller_value{ uint7_t{ 77 } }) });
+        EXPECT_TRUE(m1);
+        if (m1)
+            EXPECT_EQ(*m1, make_midi1_poly_pressure_message(14, 2, 64, controller_value{ uint7_t{ 77 } }));
+
+        auto m2 = as_midi1_channel_voice_message(midi2_channel_voice_message_view{
+          make_midi2_poly_pressure_message(14, 2, 64, controller_value{ 0x6789ABCDu }) });
+        EXPECT_TRUE(m2);
+        if (m2)
+            EXPECT_EQ(*m2, make_midi1_poly_pressure_message(14, 2, 64, controller_value{ 0x6789ABCDu }));
+    }
+
+    // control_change
+    {
+        auto m1 = as_midi1_channel_voice_message(midi2_channel_voice_message_view{
+          make_midi2_control_change_message(5, 15, 7, controller_value{ 0x89ABCDEFu }) });
+        EXPECT_TRUE(m1);
+        if (m1)
+            EXPECT_EQ(*m1, make_midi1_control_change_message(5, 15, 7, controller_value{ 0x89ABCDEFu }));
+
+        auto m2 = as_midi1_channel_voice_message(midi2_channel_voice_message_view{
+          make_midi2_control_change_message(9, 0, 49, controller_value{ uint32_t{ 12345 } }) });
+        EXPECT_TRUE(m2);
+        if (m2)
+            EXPECT_EQ(*m2, make_midi1_control_change_message(9, 0, 49, controller_value{ uint32_t{ 12345 } }));
+
+        // 7.4.6 MIDI 2.0 Control Change Message
+        // Implementation Recommendations
+        // * Devices receiving the MIDI 2.0 Protocol should ignore Control Change messages with indexes of 0, 6, 32, 38,
+        // 98, 99, 100, and 101.
+        // * In MIDI 2.0 Protocol, Control Change 88 shall not be used for High Resolution Velocity. The Note On 16 bit
+        // Velocity value has a higher range than the MIDI 1.0 High Resolution Velocity controller and Note On combined.
+        for (auto index : { 0, 6, 32, 38, 88, 98, 99, 100, 101 })
+        {
+            EXPECT_FALSE(as_midi1_channel_voice_message(midi2_channel_voice_message_view{
+              make_midi2_control_change_message(9, 0, index, controller_value{ uint32_t{ 12345 } }) }));
+        }
+    }
+
+    // program_change
+    {
+        auto m1 = as_midi1_channel_voice_message(
+          midi2_channel_voice_message_view{ make_midi2_program_change_message(14, 7, 42) });
+        EXPECT_TRUE(m1);
+        if (m1)
+            EXPECT_EQ(*m1, make_midi1_program_change_message(14, 7, 42));
+
+        auto m2 = as_midi1_channel_voice_message(
+          midi2_channel_voice_message_view{ make_midi2_program_change_message(9, 0, 44) });
+        EXPECT_TRUE(m2);
+        if (m2)
+            EXPECT_EQ(*m2, make_midi1_program_change_message(9, 0, 44));
+
+        // MIDI 2 program change with bank set is not converted!
+        EXPECT_FALSE(as_midi1_channel_voice_message(
+          midi2_channel_voice_message_view{ make_midi2_program_change_message(14, 7, 0, 42) }));
+    }
+
+    // channel pressure
+    {
+        auto m1 = as_midi1_channel_voice_message(midi2_channel_voice_message_view{
+          make_midi2_channel_pressure_message(8, 8, controller_value{ 0xABCDEF01 }) });
+        EXPECT_TRUE(m1);
+        if (m1)
+            EXPECT_EQ(*m1, make_midi1_channel_pressure_message(8, 8, controller_value{ 0xABCDEF01 }));
+
+        auto m2 = as_midi1_channel_voice_message(midi2_channel_voice_message_view{
+          make_midi2_channel_pressure_message(2, 14, controller_value{ uint7_t{ 109 } }) });
+        EXPECT_TRUE(m2);
+        if (m2)
+            EXPECT_EQ(*m2, make_midi1_channel_pressure_message(2, 14, controller_value{ uint7_t{ 109 } }));
+    }
+
+    // pitch_bend
+    {
+        auto m1 = as_midi1_channel_voice_message(
+          midi2_channel_voice_message_view{ make_midi2_pitch_bend_message(3, 8, pitch_bend{ uint14_t{ 0xAFED } }) });
+        EXPECT_TRUE(m1);
+        if (m1)
+            EXPECT_EQ(*m1, make_midi1_pitch_bend_message(3, 8, pitch_bend{ uint14_t{ 0xAFED } }));
+
+        auto m2 = as_midi1_channel_voice_message(midi2_channel_voice_message_view{
+          make_midi2_pitch_bend_message(2, 14, pitch_bend{ uint32_t{ 0x81234567 } }) });
+        EXPECT_TRUE(m2);
+        if (m2)
+            EXPECT_EQ(*m2, make_midi1_pitch_bend_message(2, 14, pitch_bend{ uint32_t{ 0x81234567 } }));
+    }
+
+    // unsupported
+    {
+        EXPECT_FALSE(as_midi1_channel_voice_message(midi2_channel_voice_message_view{
+          make_registered_per_note_controller_message(15, 10, 44, 2, controller_value{ 123456u }) }));
+
+        EXPECT_FALSE(as_midi1_channel_voice_message(midi2_channel_voice_message_view{
+          make_assignable_per_note_controller_message(3, 7, 64, 99, controller_value{ 987654u }) }));
+
+        EXPECT_FALSE(as_midi1_channel_voice_message(midi2_channel_voice_message_view{
+          make_registered_controller_message(2, 9, 0, 4, controller_value{ 123456u }) }));
+
+        EXPECT_FALSE(as_midi1_channel_voice_message(midi2_channel_voice_message_view{
+          make_assignable_per_note_controller_message(3, 7, 64, 99, controller_value{ 987654u }) }));
+
+        EXPECT_FALSE(as_midi1_channel_voice_message(midi2_channel_voice_message_view{
+          make_relative_registered_controller_message(2, 9, 0, 4, controller_increment{ -1234 }) }));
+
+        EXPECT_FALSE(as_midi1_channel_voice_message(midi2_channel_voice_message_view{
+          make_relative_assignable_controller_message(8, 0, 4, 12, controller_increment{ 111 }) }));
+
+        EXPECT_FALSE(as_midi1_channel_voice_message(
+          midi2_channel_voice_message_view{ make_per_note_pitch_bend_message(11, 12, 13, pitch_bend{ 0x80000001u }) }));
+
+        EXPECT_FALSE(as_midi1_channel_voice_message(
+          midi2_channel_voice_message_view{ make_per_note_management_message(2, 7, 0x42, note_management::reset) }));
+    }
+}
+
+//-----------------------------------------------
+
+TEST_F(channel_voice_message, as_midi2_channel_voice_message)
+{
+    using namespace midi;
+
+    // note_on
+    {
+        EXPECT_EQ(*as_midi2_channel_voice_message(midi1_channel_voice_message_view{
+                    make_midi1_note_on_message(4, 7, 99, velocity{ uint7_t{ 75 } }) }),
+                  make_midi2_note_on_message(4, 7, 99, velocity{ uint7_t{ 75 } }));
+
+        EXPECT_EQ(*as_midi2_channel_voice_message(midi1_channel_voice_message_view{
+                    make_midi1_note_on_message(13, 5, 60, velocity{ uint7_t{ 0 } }) }),
+                  make_midi2_note_off_message(13, 5, 60, velocity{ uint7_t{ 64 } }));
+    }
+
+    // note_off
+    {
+        EXPECT_EQ(*as_midi2_channel_voice_message(midi1_channel_voice_message_view{
+                    make_midi1_note_off_message(3, 9, 66, velocity{ uint7_t{ 112 } }) }),
+                  make_midi2_note_off_message(3, 9, 66, velocity{ uint7_t{ 112 } }));
+
+        EXPECT_EQ(*as_midi2_channel_voice_message(midi1_channel_voice_message_view{
+                    make_midi1_note_off_message(13, 5, 60, velocity{ uint7_t{ 0 } }) }),
+                  make_midi2_note_off_message(13, 5, 60, velocity{ uint7_t{ 0 } }));
+    }
+
+    // poly_pressure
+    {
+        EXPECT_EQ(*as_midi2_channel_voice_message(midi1_channel_voice_message_view{
+                    make_midi1_poly_pressure_message(14, 2, 64, controller_value{ uint7_t{ 77 } }) }),
+                  make_midi2_poly_pressure_message(14, 2, 64, controller_value{ uint7_t{ 77 } }));
+
+        EXPECT_EQ(*as_midi2_channel_voice_message(midi1_channel_voice_message_view{
+                    make_midi1_poly_pressure_message(14, 2, 64, controller_value{ uint7_t{ 115 } }) }),
+                  make_midi2_poly_pressure_message(14, 2, 64, controller_value{ uint7_t{ 115 } }));
+    }
+
+    // control_change
+    {
+        EXPECT_EQ(*as_midi2_channel_voice_message(midi1_channel_voice_message_view{
+                    make_midi1_control_change_message(5, 15, 7, controller_value{ uint7_t{ 19 } }) }),
+                  make_midi2_control_change_message(5, 15, 7, controller_value{ uint7_t{ 19 } }));
+
+        EXPECT_EQ(*as_midi2_channel_voice_message(midi1_channel_voice_message_view{
+                    make_midi1_control_change_message(9, 0, 49, controller_value{ uint7_t{ 65 } }) }),
+                  make_midi2_control_change_message(9, 0, 49, controller_value{ uint7_t{ 65 } }));
+
+        // 7.4.6 MIDI 2.0 Control Change Message
+        // Implementation Recommendations
+        // Devices sending the MIDI 2.0 Protocol should not transmit Control Change messages with indexes of 6, 38, 98,
+        // 99, 100, or 101. Instead, they should transmit the new Assignable Controller messages and Registered
+        // Controller messages (see Section 7.4.7). These new messages are more friendly to send, to receive, and to
+        // edit in a sequencer.
+        // * Devices sending the MIDI 2.0 Protocol should not transmit Control Change messages with indexes of 0 and 32.
+        // Instead they should transmit the new MIDI 2.0 Program Change message (see Section 7.4.9).
+        // * In MIDI 2.0 Protocol, Control Change 88 shall not be used for High Resolution Velocity. The Note On 16 bit
+        // Velocity value has a higher range than the MIDI 1.0 High Resolution Velocity controller and Note On combined.
+        for (auto index : { 0, 6, 32, 38, 88, 98, 99, 100, 101 })
+        {
+            EXPECT_FALSE(as_midi2_channel_voice_message(midi1_channel_voice_message_view{
+              make_midi1_control_change_message(9, 0, index, controller_value{ uint32_t{ 12345 } }) }));
+        }
+    }
+
+    // program_change
+    {
+        EXPECT_EQ(*as_midi2_channel_voice_message(
+                    midi1_channel_voice_message_view{ make_midi1_program_change_message(14, 7, 42) }),
+                  make_midi2_program_change_message(14, 7, 42));
+
+        EXPECT_EQ(*as_midi2_channel_voice_message(
+                    midi1_channel_voice_message_view{ make_midi1_program_change_message(9, 0, 44) }),
+                  make_midi2_program_change_message(9, 0, 44));
+    }
+
+    // channel_pressure
+    {
+        EXPECT_EQ(*as_midi2_channel_voice_message(midi1_channel_voice_message_view{
+                    make_midi1_channel_pressure_message(8, 8, controller_value{ uint7_t{ 81 } }) }),
+                  make_midi2_channel_pressure_message(8, 8, controller_value{ uint7_t{ 81 } }));
+
+        EXPECT_EQ(*as_midi2_channel_voice_message(midi1_channel_voice_message_view{
+                    make_midi1_channel_pressure_message(2, 14, controller_value{ uint7_t{ 109 } }) }),
+                  make_midi2_channel_pressure_message(2, 14, controller_value{ uint7_t{ 109 } }));
+    }
+
+    // pitch_bend
+    {
+        EXPECT_EQ(*as_midi2_channel_voice_message(midi1_channel_voice_message_view{
+                    make_midi1_pitch_bend_message(3, 8, pitch_bend{ uint14_t{ 0xAFED } }) }),
+                  make_midi2_pitch_bend_message(3, 8, pitch_bend{ uint14_t{ 0xAFED } }));
+
+        EXPECT_EQ(*as_midi2_channel_voice_message(midi1_channel_voice_message_view{
+                    make_midi1_pitch_bend_message(2, 14, pitch_bend{ uint14_t{ 1234 } }) }),
+                  make_midi2_pitch_bend_message(2, 14, pitch_bend{ uint14_t{ 1234 } }));
+    }
+
+    // invalid
+    {
+        EXPECT_FALSE(as_midi2_channel_voice_message(
+          midi1_channel_voice_message_view{ make_midi1_channel_voice_message(5, 0, 4, 1, 2) }));
+    }
+}
+
+//-----------------------------------------------

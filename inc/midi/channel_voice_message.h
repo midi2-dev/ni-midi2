@@ -28,6 +28,8 @@
 #include <midi/midi2_channel_voice_message.h>
 #include <midi/types.h>
 
+#include <optional>
+
 //--------------------------------------------------------------------------
 
 namespace midi {
@@ -60,6 +62,11 @@ constexpr controller_value get_channel_pressure_value(const universal_packet&);
 
 constexpr bool       is_channel_pitch_bend_message(const universal_packet&);
 constexpr pitch_bend get_channel_pitch_bend_value(const universal_packet&);
+
+constexpr std::optional<midi1_channel_voice_message> as_midi1_channel_voice_message(
+  const midi2_channel_voice_message_view&);
+constexpr std::optional<midi2_channel_voice_message> as_midi2_channel_voice_message(
+  const midi1_channel_voice_message_view&);
 
 //--------------------------------------------------------------------------
 // constexpr implementations
@@ -254,6 +261,112 @@ constexpr pitch_bend get_channel_pitch_bend_value(const universal_packet& p)
         return pitch_bend{ uint14_t(p.byte3() | (p.byte4() << 7)) };
     }
     return pitch_bend{ p.data[1] };
+}
+
+//--------------------------------------------------------------------------
+//! \note this is not a complete MIDI 2 -> 1 translator
+constexpr std::optional<midi1_channel_voice_message> as_midi1_channel_voice_message(
+  const midi2_channel_voice_message_view& m)
+{
+    switch (m.status())
+    {
+    case channel_voice_status::note_off:
+        if (m.byte4() == 0) // no attributes in MIDI 1
+        {
+            return make_midi1_note_off_message(m.group(), m.channel(), m.byte3(), velocity{ uint16_t(m.data() >> 16) });
+        }
+        break;
+    case channel_voice_status::note_on:
+        if (m.byte4() == 0) // no attributes in MIDI 1
+        {
+            auto vel = velocity{ uint16_t(m.data() >> 16) };
+            if (vel.as_uint7() == 0)
+                vel = velocity{ uint7_t{ 1 } };
+
+            return make_midi1_note_on_message(m.group(), m.channel(), m.byte3(), vel);
+        }
+        break;
+    case channel_voice_status::poly_pressure:
+        return make_midi1_poly_pressure_message(m.group(), m.channel(), m.byte3(), controller_value{ m.data() });
+    case channel_voice_status::control_change:
+        switch (m.byte3())
+        {
+        // reserved, do not send
+        case control_change::bank_select_msb:
+        case control_change::data_entry_msb:
+        case control_change::bank_select_lsb:
+        case control_change::data_entry_lsb:
+        case control_change::hi_res_velocity_prefix:
+        case control_change::nrpn_lsb:
+        case control_change::nrpn_msb:
+        case control_change::rpn_lsb:
+        case control_change::rpn_msb:
+            break;
+        default:
+            return make_midi1_control_change_message(m.group(), m.channel(), m.byte3(), controller_value{ m.data() });
+        }
+        break;
+    case channel_voice_status::program_change:
+        if ((m.byte4() & 0b1) == 0) // bank valid bit clear?
+            return make_midi1_program_change_message(m.group(), m.channel(), uint7_t(m.data() >> 24));
+        break;
+    case channel_voice_status::channel_pressure:
+        return make_midi1_channel_pressure_message(m.group(), m.channel(), controller_value{ m.data() });
+    case channel_voice_status::pitch_bend:
+        return make_midi1_pitch_bend_message(m.group(), m.channel(), pitch_bend{ m.data() });
+    default:
+        break;
+    }
+
+    return std::nullopt;
+}
+
+//--------------------------------------------------------------------------
+//! \note this is not a complete MIDI 1 -> 2 translator
+constexpr std::optional<midi2_channel_voice_message> as_midi2_channel_voice_message(
+  const midi1_channel_voice_message_view& m)
+{
+    switch (m.status())
+    {
+    case channel_voice_status::note_off:
+        return make_midi2_note_off_message(m.group(), m.channel(), m.data_byte_1(), velocity{ m.data_byte_2() });
+    case channel_voice_status::note_on:
+        if (m.data_byte_2() == 0)
+            return make_midi2_note_off_message(m.group(), m.channel(), m.data_byte_1(), velocity{ uint7_t{ 64 } });
+        return make_midi2_note_on_message(m.group(), m.channel(), m.data_byte_1(), velocity{ m.data_byte_2() });
+    case channel_voice_status::poly_pressure:
+        return make_midi2_poly_pressure_message(
+          m.group(), m.channel(), m.data_byte_1(), controller_value{ m.data_byte_2() });
+    case channel_voice_status::control_change:
+        switch (m.data_byte_1())
+        {
+        // reserved, do not translate
+        case control_change::bank_select_msb:
+        case control_change::data_entry_msb:
+        case control_change::bank_select_lsb:
+        case control_change::data_entry_lsb:
+        case control_change::hi_res_velocity_prefix:
+        case control_change::nrpn_lsb:
+        case control_change::nrpn_msb:
+        case control_change::rpn_lsb:
+        case control_change::rpn_msb:
+            break;
+        default:
+            return make_midi2_control_change_message(
+              m.group(), m.channel(), m.data_byte_1(), controller_value{ m.data_byte_2() });
+        }
+        break;
+    case channel_voice_status::program_change:
+        return make_midi2_program_change_message(m.group(), m.channel(), m.data_byte_1());
+    case channel_voice_status::channel_pressure:
+        return make_midi2_channel_pressure_message(m.group(), m.channel(), controller_value{ m.data_byte_1() });
+    case channel_voice_status::pitch_bend:
+        return make_midi2_pitch_bend_message(m.group(), m.channel(), pitch_bend{ m.get_14bit_value() });
+    default:
+        break;
+    }
+
+    return std::nullopt;
 }
 
 //--------------------------------------------------------------------------

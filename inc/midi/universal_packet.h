@@ -229,6 +229,8 @@ namespace control_change {
 
     constexpr controller_t portamento_control = 84;
 
+    constexpr controller_t hi_res_velocity_prefix = 88; // CA-031
+
     constexpr controller_t effects_1_depth   = 91;
     constexpr controller_t reverb_send_level = 91;
     constexpr controller_t effects_2_depth   = 92;
