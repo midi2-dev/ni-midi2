@@ -44,8 +44,6 @@ set( ni_midi2_sources
     "${NI_NIMIDI2_PACKAGE_PATH}/src/capability_inquiry.cpp"
     "${NI_NIMIDI2_PACKAGE_PATH}/inc/midi/jitter_reduction_timestamps.h"
     "${NI_NIMIDI2_PACKAGE_PATH}/src/jitter_reduction_timestamps.cpp"
-    "${NI_NIMIDI2_PACKAGE_PATH}/inc/midi/prop073_tunnel.h"
-    "${NI_NIMIDI2_PACKAGE_PATH}/src/prop073_tunnel.cpp"
 )
 
 add_library( ni-midi2 EXCLUDE_FROM_ALL ${ni_midi2_sources} )

@@ -43,7 +43,6 @@ set(LibSources
     inc/midi/universal_sysex.h src/universal_sysex.cpp
     inc/midi/capability_inquiry.h src/capability_inquiry.cpp
     inc/midi/jitter_reduction_timestamps.h src/jitter_reduction_timestamps.cpp
-    inc/midi/prop073_tunnel.h src/prop073_tunnel.cpp
 )
 
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${LibSources})
@@ -85,7 +84,6 @@ if( NIMIDI2_TESTS )
         tests/ci_process_inquiry_tests.cpp
         tests/jitter_reduction_timestamps_tests.cpp
         tests/midi1_byte_stream_tests.cpp
-        tests/prop073_tunnel_tests.cpp
     )
 
     add_executable(ni-midi2-tests ${TestSources})
