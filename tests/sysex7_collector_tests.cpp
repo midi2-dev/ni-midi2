@@ -68,7 +68,7 @@ TEST_F(sysex7_collector, regular_collect)
         for (const auto& entry : sysex7_test_cases)
         {
             bool output_generated = false;
-            auto cb               = [&](sysex sx) {
+            auto cb               = [&](midi::sysex sx) {
                 output_generated = true;
                 EXPECT_EQ(sx, entry.sysex) << entry.description;
             };
@@ -86,7 +86,7 @@ TEST_F(sysex7_collector, regular_collect)
     {
         bool     output_generated = false;
         unsigned curEntry         = 0;
-        auto     cb               = [&](sysex sx) {
+        auto     cb               = [&](midi::sysex sx) {
             output_generated = true;
             EXPECT_EQ(sx, sysex7_test_cases[curEntry].sysex) << sysex7_test_cases[curEntry].description;
         };
@@ -115,7 +115,7 @@ TEST_F(sysex7_collector, exceptional_collect)
 
     // single end packet will be ignored
     {
-        auto cb = [&](sysex) { GTEST_FAIL(); };
+        auto cb = [&](midi::sysex) { GTEST_FAIL(); };
 
         auto c = midi::sysex7_collector{ cb };
 
@@ -126,7 +126,7 @@ TEST_F(sysex7_collector, exceptional_collect)
 
     // continue + end packet will be ignored
     {
-        auto cb = [&](sysex) { GTEST_FAIL(); };
+        auto cb = [&](midi::sysex) { GTEST_FAIL(); };
 
         auto c = midi::sysex7_collector{ cb };
 
@@ -143,10 +143,10 @@ TEST_F(sysex7_collector, exceptional_collect)
     {
         std::vector<universal_packet> packets{ { 0x31441234, 0 }, { 0x31060F1E, 0x2D3C4B5A } };
 
-        sysex result{ 0x0F0000, { 0x1E, 0x2D, 0x3C, 0x4B, 0x5A } };
+        midi::sysex result{ 0x0F0000, { 0x1E, 0x2D, 0x3C, 0x4B, 0x5A } };
 
         bool output_generated = false;
-        auto cb               = [&](sysex sx) {
+        auto cb               = [&](midi::sysex sx) {
             output_generated = true;
             EXPECT_EQ(sx, result);
         };
@@ -167,10 +167,10 @@ TEST_F(sysex7_collector, exceptional_collect)
                                                { 0x35226978, 0x00000000 },
                                                { 0x35017D00, 0 } };
 
-        sysex result{ 0x7D0000 };
+        midi::sysex result{ 0x7D0000 };
 
         bool output_generated = false;
-        auto cb               = [&](sysex sx) {
+        auto cb               = [&](midi::sysex sx) {
             output_generated = true;
             EXPECT_EQ(sx, result);
         };
@@ -191,10 +191,10 @@ TEST_F(sysex7_collector, exceptional_collect)
                                                { 0x3E261A2B, 0x3C4D5E6F },
                                                { 0x3E300000, 0 } };
 
-        sysex result{ 0x7E0000, { 0x12, 0x34, 0x56, 0x78, 0x09, 0x1A, 0x2B, 0x3C, 0x4D, 0x5E, 0x6F } };
+        midi::sysex result{ 0x7E0000, { 0x12, 0x34, 0x56, 0x78, 0x09, 0x1A, 0x2B, 0x3C, 0x4D, 0x5E, 0x6F } };
 
         bool output_generated = false;
-        auto cb               = [&](sysex sx) {
+        auto cb               = [&](midi::sysex sx) {
             output_generated = true;
             EXPECT_EQ(sx, result);
         };

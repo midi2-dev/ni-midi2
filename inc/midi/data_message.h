@@ -29,15 +29,10 @@
 
 #include <cassert>
 #include <optional>
-#include <vector>
 
 //--------------------------------------------------------------------------
 
 namespace midi {
-
-//--------------------------------------------------------------------------
-
-struct sysex7;
 
 //--------------------------------------------------------------------------
 
@@ -90,10 +85,6 @@ constexpr data_message make_sysex7_complete_packet(group_t = 0);
 constexpr data_message make_sysex7_start_packet(group_t = 0);
 constexpr data_message make_sysex7_continue_packet(group_t = 0);
 constexpr data_message make_sysex7_end_packet(group_t = 0);
-
-//--------------------------------------------------------------------------
-
-std::vector<data_message> as_sysex7_packets(const sysex7&, group_t = 0);
 
 //--------------------------------------------------------------------------
 

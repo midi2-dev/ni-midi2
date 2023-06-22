@@ -23,42 +23,10 @@
 #include <gtest/gtest.h>
 
 #include <midi/data_message.h>
-#include <midi/sysex.h>
-
-#include "sysex7_test_data.h"
 
 //-----------------------------------------------
 
-class data_message : public ::testing::Test
-{
-  public:
-    bool equal(const std::vector<midi::universal_packet>& p,
-               const std::vector<midi::data_message>&     d,
-               const std::string&                         description)
-    {
-        using namespace midi;
-
-        EXPECT_EQ(p.size(), d.size()) << description;
-        if (p.size() == d.size())
-        {
-            for (auto n = 0u; n < p.size(); ++n)
-            {
-                const auto& m = static_cast<const universal_packet&>(d[n]);
-                if (p[n] != m)
-                {
-                    EXPECT_TRUE((p[n] == m)) << description;
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-};
-
-//-----------------------------------------------
-
-TEST_F(data_message, constructors)
+TEST(data_message, constructors)
 {
     using namespace midi;
 
@@ -83,7 +51,7 @@ TEST_F(data_message, constructors)
 
 //-----------------------------------------------
 
-TEST_F(data_message, make_sysex7_complete_packet)
+TEST(data_message, make_sysex7_complete_packet)
 {
     using namespace midi;
 
@@ -108,7 +76,7 @@ TEST_F(data_message, make_sysex7_complete_packet)
 
 //-----------------------------------------------
 
-TEST_F(data_message, make_sysex7_start_packet)
+TEST(data_message, make_sysex7_start_packet)
 {
     using namespace midi;
 
@@ -133,7 +101,7 @@ TEST_F(data_message, make_sysex7_start_packet)
 
 //-----------------------------------------------
 
-TEST_F(data_message, make_sysex7_continue_packet)
+TEST(data_message, make_sysex7_continue_packet)
 {
     using namespace midi;
 
@@ -158,7 +126,7 @@ TEST_F(data_message, make_sysex7_continue_packet)
 
 //-----------------------------------------------
 
-TEST_F(data_message, make_sysex7_end_packet)
+TEST(data_message, make_sysex7_end_packet)
 {
     using namespace midi;
 
@@ -183,7 +151,7 @@ TEST_F(data_message, make_sysex7_end_packet)
 
 //-----------------------------------------------
 
-TEST_F(data_message, payload_size)
+TEST(data_message, payload_size)
 {
     using namespace midi;
 
@@ -214,7 +182,7 @@ TEST_F(data_message, payload_size)
 
 //-----------------------------------------------
 
-TEST_F(data_message, set_payload_size)
+TEST(data_message, set_payload_size)
 {
     using namespace midi;
 
@@ -248,7 +216,7 @@ TEST_F(data_message, set_payload_size)
 
 //-----------------------------------------------
 
-TEST_F(data_message, payload_byte)
+TEST(data_message, payload_byte)
 {
     using namespace midi;
 
@@ -272,7 +240,7 @@ TEST_F(data_message, payload_byte)
 
 //-----------------------------------------------
 
-TEST_F(data_message, add_payload_byte)
+TEST(data_message, add_payload_byte)
 {
     using namespace midi;
 
@@ -333,7 +301,7 @@ TEST_F(data_message, add_payload_byte)
 
 //-----------------------------------------------
 
-TEST_F(data_message, set_payload_byte)
+TEST(data_message, set_payload_byte)
 {
     using namespace midi;
 
@@ -379,7 +347,7 @@ TEST_F(data_message, set_payload_byte)
 
 //-----------------------------------------------
 
-TEST_F(data_message, sysex7_packet_view)
+TEST(data_message, sysex7_packet_view)
 {
     using namespace midi;
 
@@ -435,7 +403,7 @@ TEST_F(data_message, sysex7_packet_view)
 
 //-----------------------------------------------
 
-TEST_F(data_message, is_data_message)
+TEST(data_message, is_data_message)
 {
     using namespace midi;
 
@@ -453,7 +421,7 @@ TEST_F(data_message, is_data_message)
 
 //-----------------------------------------------
 
-TEST_F(data_message, is_sysex7_packet)
+TEST(data_message, is_sysex7_packet)
 {
     using namespace midi;
 
@@ -483,19 +451,6 @@ TEST_F(data_message, is_sysex7_packet)
     EXPECT_FALSE(is_sysex7_packet(universal_packet{ 0x2691447F }));
     EXPECT_FALSE(is_sysex7_packet(universal_packet{ 0x40885060, 0x12340000 }));
     EXPECT_FALSE(is_sysex7_packet(universal_packet{ 0x5F0D, 1, 2, 3 }));
-}
-
-//-----------------------------------------------
-
-TEST_F(data_message, as_sysex7_packets)
-{
-    using namespace midi;
-
-    for (const auto& entry : sysex7_test_cases)
-    {
-        EXPECT_TRUE(equal(entry.packets, as_sysex7_packets(entry.sysex, entry.packets[0].group()), entry.description))
-          << entry.description;
-    }
 }
 
 //-----------------------------------------------

@@ -24,15 +24,46 @@
 
 #include <midi/sysex.h>
 
+#include "sysex7_test_data.h"
+
 //-----------------------------------------------
 
-TEST(sysex, sysex_constructor)
+class sysex : public ::testing::Test
+{
+  public:
+    bool equal(const std::vector<midi::universal_packet>& p,
+               const std::vector<midi::data_message>&     d,
+               const std::string&                         description)
+    {
+        using namespace midi;
+
+        EXPECT_EQ(p.size(), d.size()) << description;
+        if (p.size() == d.size())
+        {
+            for (auto n = 0u; n < p.size(); ++n)
+            {
+                const auto& m = static_cast<const universal_packet&>(d[n]);
+                if (p[n] != m)
+                {
+                    EXPECT_TRUE((p[n] == m)) << description;
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+};
+
+//-----------------------------------------------
+
+TEST_F(sysex, sysex_constructor)
 {
     using namespace midi;
 
     // empty
     {
-        sysex sx;
+        midi::sysex sx;
 
         EXPECT_EQ(0u, sx.manufacturerID);
         EXPECT_EQ(0u, sx.data.size());
@@ -44,7 +75,7 @@ TEST(sysex, sysex_constructor)
 
     // one byte manufacturer only
     {
-        sysex sx{ manufacturer::moog };
+        midi::sysex sx{ manufacturer::moog };
 
         EXPECT_EQ(0x040000u, sx.manufacturerID);
         EXPECT_EQ(0u, sx.data.size());
@@ -56,7 +87,7 @@ TEST(sysex, sysex_constructor)
 
     // three byte manufacturer only
     {
-        sysex sx{ manufacturer::native_instruments };
+        midi::sysex sx{ manufacturer::native_instruments };
 
         EXPECT_EQ(0x002109u, sx.manufacturerID);
         EXPECT_EQ(0u, sx.data.size());
@@ -68,7 +99,7 @@ TEST(sysex, sysex_constructor)
 
     // one byte manufacturer plus 7bit data
     {
-        sysex sx{ manufacturer::casio, { 1, 2, 3, 4 } };
+        midi::sysex sx{ manufacturer::casio, { 1, 2, 3, 4 } };
 
         EXPECT_EQ(0x440000u, sx.manufacturerID);
         EXPECT_EQ(4u, sx.data.size());
@@ -80,7 +111,7 @@ TEST(sysex, sysex_constructor)
 
     // three byte manufacturer plus 8bit data
     {
-        sysex sx{ manufacturer::atari, { 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF } };
+        midi::sysex sx{ manufacturer::atari, { 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF } };
 
         EXPECT_EQ(0x000058u, sx.manufacturerID);
         EXPECT_EQ(6u, sx.data.size());
@@ -93,14 +124,14 @@ TEST(sysex, sysex_constructor)
 
 //-----------------------------------------------
 
-TEST(sysex, equality)
+TEST_F(sysex, equality)
 {
     using namespace midi;
 
-    sysex a{ manufacturer::digidesign };
-    sysex b{ manufacturer::digidesign, { 1, 2, 3 } };
-    sysex c{ manufacturer::doepfer, { 1, 2, 3, 4 } };
-    sysex d{ manufacturer::doepfer, { 1, 2, 3, 4 } };
+    midi::sysex a{ manufacturer::digidesign };
+    midi::sysex b{ manufacturer::digidesign, { 1, 2, 3 } };
+    midi::sysex c{ manufacturer::doepfer, { 1, 2, 3, 4 } };
+    midi::sysex d{ manufacturer::doepfer, { 1, 2, 3, 4 } };
 
     EXPECT_EQ(a, a);
     EXPECT_NE(a, b);
@@ -122,12 +153,12 @@ TEST(sysex, equality)
 
 //-----------------------------------------------
 
-TEST(sysex, assignment)
+TEST_F(sysex, assignment)
 {
     using namespace midi;
 
-    sysex a{ manufacturer::digidesign };
-    sysex b{ manufacturer::digidesign, { 1, 2, 3 } };
+    midi::sysex a{ manufacturer::digidesign };
+    midi::sysex b{ manufacturer::digidesign, { 1, 2, 3 } };
 
     EXPECT_NE(a, b);
     a = b;
@@ -136,12 +167,12 @@ TEST(sysex, assignment)
 
 //-----------------------------------------------
 
-TEST(sysex, sysex7)
+TEST_F(sysex, sysex7)
 {
     using namespace midi;
 
     {
-        sysex7 sx{ manufacturer::native_instruments, { 1, 2, 3, 4, 5, 6, 7, 8, 9 } };
+        midi::sysex7 sx{ manufacturer::native_instruments, { 1, 2, 3, 4, 5, 6, 7, 8, 9 } };
 
         EXPECT_TRUE(sx.is_valid());
         EXPECT_TRUE(sx.is_7bit());
@@ -149,7 +180,7 @@ TEST(sysex, sysex7)
     }
 
     {
-        sysex7 sx{ manufacturer::native_instruments, { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xAB } };
+        midi::sysex7 sx{ manufacturer::native_instruments, { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xAB } };
 
         EXPECT_FALSE(sx.is_valid());
         EXPECT_FALSE(sx.is_7bit());
@@ -159,12 +190,12 @@ TEST(sysex, sysex7)
 
 //-----------------------------------------------
 
-TEST(sysex, sysex7_add_device_identity)
+TEST_F(sysex, sysex7_add_device_identity)
 {
     using namespace midi;
 
     {
-        sysex7 sx{ 0x123456, { 0x04, 0x01, 0x90, 0x22, 77 } };
+        midi::sysex7 sx{ 0x123456, { 0x04, 0x01, 0x90, 0x22, 77 } };
 
         const auto pos = sx.data.size();
 
@@ -188,7 +219,7 @@ TEST(sysex, sysex7_add_device_identity)
     }
 
     {
-        sysex7 sx{ 0x443322, { 0x04, 0x10, 99, 22, 77 } };
+        midi::sysex7 sx{ 0x443322, { 0x04, 0x10, 99, 22, 77 } };
 
         const auto pos = sx.data.size();
 
@@ -230,12 +261,12 @@ TEST(sysex, sysex7_add_device_identity)
 
 //-----------------------------------------------
 
-TEST(sysex, sysex7_make_device_identity)
+TEST_F(sysex, sysex7_make_device_identity)
 {
     using namespace midi;
 
     {
-        sysex7 sx{ 0x56, { 0x04, 1, 9, 9, 22, 77 } };
+        midi::sysex7 sx{ 0x56, { 0x04, 1, 9, 9, 22, 77 } };
 
         const auto pos = sx.data.size();
 
@@ -248,7 +279,7 @@ TEST(sysex, sysex7_make_device_identity)
     }
 
     {
-        sysex7 sx{ 0x7, { 0x04, 0x19, 9, 0x22, 77 } };
+        midi::sysex7 sx{ 0x7, { 0x04, 0x19, 9, 0x22, 77 } };
 
         const auto pos = sx.data.size();
 
@@ -264,3 +295,34 @@ TEST(sysex, sysex7_make_device_identity)
         EXPECT_EQ(0, memcmp(&identity, &i2, sizeof(device_identity)));
     }
 };
+
+//-----------------------------------------------
+
+TEST_F(sysex, send_sysex7)
+{
+    using namespace midi;
+
+    for (const auto& entry : sysex7_test_cases)
+    {
+        auto it = entry.packets.begin();
+        send_sysex7(entry.sysex, entry.packets[0].group(), [&](const data_message& p) {
+            EXPECT_EQ(p, *it++) << entry.description;
+        });
+        EXPECT_EQ(it, entry.packets.end()) << entry.description;
+    }
+}
+
+//-----------------------------------------------
+
+TEST_F(sysex, as_sysex7_packets)
+{
+    using namespace midi;
+
+    for (const auto& entry : sysex7_test_cases)
+    {
+        EXPECT_TRUE(equal(entry.packets, as_sysex7_packets(entry.sysex, entry.packets[0].group()), entry.description))
+          << entry.description;
+    }
+}
+
+//-----------------------------------------------

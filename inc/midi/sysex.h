@@ -24,6 +24,7 @@
 
 //--------------------------------------------------------------------------
 
+#include <midi/data_message.h>
 #include <midi/manufacturer.h>
 #include <midi/types.h>
 
@@ -130,6 +131,13 @@ struct sysex7 : sysex
 };
 
 //--------------------------------------------------------------------------
+
+template<typename Sender>
+void send_sysex7(const sysex7&, group_t, Sender&&);
+
+std::vector<data_message> as_sysex7_packets(const sysex7&, group_t = 0);
+
+//--------------------------------------------------------------------------
 //! MIDI SysEx (8 bit)
 struct sysex8 : sysex
 {
@@ -188,6 +196,55 @@ inline uint28_t sysex7::make_uint28(size_t data_pos) const
 {
     assert(data_pos + 3 < data.size());
     return data[data_pos] | (data[data_pos + 1] << 7) | (data[data_pos + 2] << 14) | (data[data_pos + 3] << 21);
+}
+
+//--------------------------------------------------------------------------
+
+template<typename Sender>
+void send_sysex7(const sysex7& sysex, group_t group, Sender&& sender)
+{
+    // initialize first packet
+    auto p = (sysex.total_data_size() <= 6) ? make_sysex7_complete_packet(group) : make_sysex7_start_packet(group);
+
+    // write manufacturerID bytes
+    p.add_payload_byte((sysex.manufacturerID >> 16) & 0xFF);
+    if (sysex.manufacturerID & 0x00FFFF)
+    {
+        p.add_payload_byte((sysex.manufacturerID >> 8) & 0xFF);
+        p.add_payload_byte(sysex.manufacturerID & 0xFF);
+    }
+
+    // process data bytes
+    size_t dataBytesLeft = sysex.data.size();
+    for (auto b : sysex.data)
+    {
+        p.add_payload_byte(b);
+        --dataBytesLeft;
+
+        if (p.payload_size() == 6) // packet full?
+        {
+            sender(p);
+
+            p = (dataBytesLeft <= 6) ? make_sysex7_end_packet(group) : make_sysex7_continue_packet(group);
+        }
+    }
+
+    if (p.payload_size())
+    {
+        sender(p);
+    }
+}
+
+//--------------------------------------------------------------------------
+
+inline std::vector<data_message> as_sysex7_packets(const sysex7& sysex, group_t group)
+{
+    std::vector<data_message> result;
+    result.reserve(sysex.total_data_size() / 6 + 1);
+
+    send_sysex7(sysex, group, [&](const data_message& p) { result.push_back(p); });
+
+    return result;
 }
 
 //--------------------------------------------------------------------------
