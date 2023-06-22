@@ -80,6 +80,21 @@ constexpr bool is_stream_message(const universal_packet&);
 
 //--------------------------------------------------------------------------
 
+namespace discovery_filter {
+    constexpr uint8_t endpoint_info        = 0b00001;
+    constexpr uint8_t device_identity      = 0b00010;
+    constexpr uint8_t endpoint_name        = 0b00100;
+    constexpr uint8_t product_instance_id  = 0b01000;
+    constexpr uint8_t stream_configuration = 0b10000;
+    constexpr uint8_t endpoint_all         = 0b11111;
+
+    constexpr uint8_t function_block_info = 0b01;
+    constexpr uint8_t function_block_name = 0b10;
+    constexpr uint8_t function_block_all  = 0b11;
+} // namespace discovery_filter
+
+//--------------------------------------------------------------------------
+
 struct endpoint_discovery_view
 {
     constexpr explicit endpoint_discovery_view(const universal_packet& ump)

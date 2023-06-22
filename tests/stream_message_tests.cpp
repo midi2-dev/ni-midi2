@@ -150,12 +150,12 @@ TEST_F(stream_message, endpoint_discovery)
     using namespace midi;
 
     {
-        constexpr midi::stream_message m = make_endpoint_discovery_message(0x0F);
+        constexpr midi::stream_message m = make_endpoint_discovery_message(discovery_filter::endpoint_all);
 
         EXPECT_TRUE(is_stream_message(m));
 
         EXPECT_EQ(0xF0000101u, m.data[0]);
-        EXPECT_EQ(0x0000000Fu, m.data[1]);
+        EXPECT_EQ(0x0000001Fu, m.data[1]);
         EXPECT_EQ(0u, m.data[2]);
         EXPECT_EQ(0u, m.data[3]);
 
@@ -170,11 +170,11 @@ TEST_F(stream_message, endpoint_discovery)
         EXPECT_EQ(1u, v.ump_version_major());
         EXPECT_EQ(1u, v.ump_version_minor());
         EXPECT_EQ(0x0101u, v.ump_version());
-        EXPECT_EQ(0x0Fu, v.filter());
+        EXPECT_EQ(discovery_filter::endpoint_all, v.filter());
     }
 
     {
-        const midi::stream_message m = make_endpoint_discovery_message(0x04, 2, 3);
+        const midi::stream_message m = make_endpoint_discovery_message(discovery_filter::endpoint_name, 2, 3);
 
         EXPECT_TRUE(is_stream_message(m));
 
@@ -194,7 +194,7 @@ TEST_F(stream_message, endpoint_discovery)
         EXPECT_EQ(2u, v.ump_version_major());
         EXPECT_EQ(3u, v.ump_version_minor());
         EXPECT_EQ(0x0203u, v.ump_version());
-        EXPECT_EQ(0x04u, v.filter());
+        EXPECT_EQ(discovery_filter::endpoint_name, v.filter());
     }
 }
 
@@ -205,7 +205,8 @@ TEST_F(stream_message, endpoint_discovery_view)
     using namespace midi;
 
     {
-        static constexpr midi::stream_message m = make_endpoint_discovery_message(0x04, 2, 3);
+        static constexpr midi::stream_message m =
+          make_endpoint_discovery_message(discovery_filter::endpoint_name, 2, 3);
 
         EXPECT_TRUE(is_stream_message(m));
 
@@ -215,11 +216,12 @@ TEST_F(stream_message, endpoint_discovery_view)
         EXPECT_EQ(2u, v.ump_version_major());
         EXPECT_EQ(3u, v.ump_version_minor());
         EXPECT_EQ(0x0203u, v.ump_version());
-        EXPECT_EQ(0x04u, v.filter());
+        EXPECT_EQ(discovery_filter::endpoint_name, v.filter());
     }
 
     {
-        static const midi::stream_message m = make_endpoint_discovery_message(0x03);
+        static const midi::stream_message m =
+          make_endpoint_discovery_message(discovery_filter::device_identity + discovery_filter::endpoint_name);
 
         EXPECT_TRUE(is_stream_message(m));
 
@@ -229,7 +231,7 @@ TEST_F(stream_message, endpoint_discovery_view)
         EXPECT_EQ(1u, v.ump_version_major());
         EXPECT_EQ(1u, v.ump_version_minor());
         EXPECT_EQ(0x0101u, v.ump_version());
-        EXPECT_EQ(0x03u, v.filter());
+        EXPECT_EQ(discovery_filter::device_identity + discovery_filter::endpoint_name, v.filter());
     }
 
     {
@@ -931,7 +933,8 @@ TEST_F(stream_message, function_block_discovery)
     using namespace midi;
 
     {
-        constexpr midi::stream_message m = make_function_block_discovery_message(0xFF, 0x3);
+        constexpr midi::stream_message m =
+          make_function_block_discovery_message(0xFF, discovery_filter::function_block_all);
 
         EXPECT_TRUE(is_stream_message(m));
 
@@ -949,11 +952,11 @@ TEST_F(stream_message, function_block_discovery)
 
         auto v = function_block_discovery_view{ m };
         EXPECT_EQ(0xFFu, v.function_block());
-        EXPECT_EQ(3u, v.filter());
+        EXPECT_EQ(discovery_filter::function_block_all, v.filter());
     }
 
     {
-        const midi::stream_message m = make_function_block_discovery_message(5, 0x2);
+        const midi::stream_message m = make_function_block_discovery_message(5, discovery_filter::function_block_name);
 
         EXPECT_TRUE(is_stream_message(m));
 
@@ -971,7 +974,7 @@ TEST_F(stream_message, function_block_discovery)
 
         auto v = function_block_discovery_view{ m };
         EXPECT_EQ(5, v.function_block());
-        EXPECT_EQ(2u, v.filter());
+        EXPECT_EQ(discovery_filter::function_block_name, v.filter());
     }
 }
 
@@ -982,7 +985,8 @@ TEST_F(stream_message, function_block_discovery_view)
     using namespace midi;
 
     {
-        static constexpr midi::stream_message m = make_function_block_discovery_message(5, 0x2);
+        static constexpr midi::stream_message m =
+          make_function_block_discovery_message(5, discovery_filter::function_block_name);
 
         EXPECT_TRUE(is_stream_message(m));
 
@@ -990,11 +994,12 @@ TEST_F(stream_message, function_block_discovery_view)
 
         constexpr auto v = function_block_discovery_view{ m };
         EXPECT_EQ(5, v.function_block());
-        EXPECT_EQ(2u, v.filter());
+        EXPECT_EQ(discovery_filter::function_block_name, v.filter());
     }
 
     {
-        static const midi::stream_message m = make_function_block_discovery_message(0xE, 4);
+        static const midi::stream_message m =
+          make_function_block_discovery_message(0xE, discovery_filter::function_block_info);
 
         EXPECT_TRUE(is_stream_message(m));
 
@@ -1002,7 +1007,7 @@ TEST_F(stream_message, function_block_discovery_view)
 
         const auto v = function_block_discovery_view{ m };
         EXPECT_EQ(0xE, v.function_block());
-        EXPECT_EQ(4u, v.filter());
+        EXPECT_EQ(discovery_filter::function_block_info, v.filter());
     }
 
     {
