@@ -356,6 +356,12 @@ constexpr stream_message make_product_instance_id_message(packet_format_t, const
 constexpr stream_message make_stream_configuration_request(protocol_t, extensions_t = 0);
 constexpr stream_message make_stream_configuration_notification(protocol_t, extensions_t = 0);
 
+template<typename Sender>
+void send_endpoint_name(std::string_view, Sender&&);
+
+template<typename Sender>
+void send_product_instance_id(std::string_view, Sender&&);
+
 constexpr stream_message make_function_block_discovery_message(uint8_t function_block, uint8_t filter);
 constexpr stream_message make_function_block_info_message(uint7_t function_block,
                                                           uint2_t direction,
@@ -368,6 +374,9 @@ constexpr stream_message make_function_block_info_message(uint7_t function_block
 constexpr stream_message make_function_block_name_message(packet_format_t,
                                                           uint7_t                 function_block,
                                                           const std::string_view& n);
+
+template<typename Sender>
+void send_function_block_name(uint7_t function_block, std::string_view, Sender&&);
 
 //--------------------------------------------------------------------------
 // constexpr implementations
@@ -625,6 +634,75 @@ constexpr stream_message make_function_block_name_message(packet_format_t       
             break;
     }
     return m;
+}
+
+//--------------------------------------------------------------------------
+// template implementations
+//--------------------------------------------------------------------------
+
+template<typename Sender>
+void send_endpoint_name(std::string_view name, Sender&& sender)
+{
+    if (name.length() <= 14)
+    {
+        sender(make_endpoint_name_message(packet_format::complete, name));
+    }
+    else
+    {
+        sender(make_endpoint_name_message(packet_format::start, name.substr(0, 14)));
+        name.remove_prefix(14);
+
+        while (name.size() > 14)
+        {
+            sender(make_endpoint_name_message(packet_format::cont, name.substr(0, 14)));
+            name.remove_prefix(14);
+        }
+
+        sender(make_endpoint_name_message(packet_format::end, name));
+    }
+}
+
+//--------------------------------------------------------------------------
+
+template<typename Sender>
+void send_product_instance_id(std::string_view product_instance_id, Sender&& sender)
+{
+    assert(product_instance_id.length() <= 16);
+
+    if (product_instance_id.length() <= 14)
+    {
+        sender(make_product_instance_id_message(packet_format::complete, product_instance_id));
+    }
+    else
+    {
+        sender(make_product_instance_id_message(packet_format::start, product_instance_id.substr(0, 14)));
+        product_instance_id.remove_prefix(14);
+        sender(make_product_instance_id_message(packet_format::end, product_instance_id.substr(0, 2)));
+    }
+}
+
+//--------------------------------------------------------------------------
+
+template<typename Sender>
+void send_function_block_name(uint7_t function_block, std::string_view name, Sender&& sender)
+{
+    if (name.length() <= 13)
+    {
+        sender(make_function_block_name_message(packet_format::complete, function_block, name));
+    }
+    else
+    {
+        sender(make_function_block_name_message(packet_format::start, function_block, name.substr(0, 13)));
+        name.remove_prefix(13);
+
+        while (name.size() > 13)
+        {
+            sender(make_function_block_name_message(packet_format::cont, function_block, name.substr(0, 13)));
+            name.remove_prefix(13);
+        }
+
+        sender(make_function_block_name_message(packet_format::end, function_block, name));
+    }
 }
 
 //--------------------------------------------------------------------------

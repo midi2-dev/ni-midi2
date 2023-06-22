@@ -588,6 +588,35 @@ TEST_F(stream_message, endpoint_name_view)
 
 //-----------------------------------------------
 
+TEST_F(stream_message, send_endpoint_name)
+{
+    using namespace midi;
+
+    auto run_test = [](std::string_view name) {
+        size_t      number_of_packets = 0;
+        std::string resulting_name;
+        send_endpoint_name(name, [&](const midi::universal_packet& p) {
+            auto msg = as_endpoint_name_view(p);
+            EXPECT_TRUE(msg);
+            if (msg)
+            {
+                ++number_of_packets;
+                resulting_name.append(msg->payload());
+            }
+        });
+
+        EXPECT_EQ(resulting_name, name);
+        return number_of_packets;
+    };
+
+    EXPECT_EQ(1u, run_test("short name"));
+    EXPECT_EQ(2u, run_test("A reasonably long name"));
+    EXPECT_EQ(3u, run_test("A pretty long name that needs 3 packets"));
+    EXPECT_EQ(4u, run_test("An even longer name that needs four packets"));
+}
+
+//-----------------------------------------------
+
 TEST_F(stream_message, product_instance_id)
 {
     using namespace midi;
@@ -665,6 +694,35 @@ TEST_F(stream_message, product_instance_id_view)
     {
         EXPECT_FALSE(as_product_instance_id_view(make_endpoint_name_message(packet_format::cont, "vice name in t")));
     }
+}
+
+//-----------------------------------------------
+
+TEST_F(stream_message, send_product_instance_id)
+{
+    using namespace midi;
+
+    auto run_test = [](std::string_view pid) {
+        size_t      number_of_packets = 0;
+        std::string resulting_pid;
+        send_product_instance_id(pid, [&](const midi::universal_packet& p) {
+            auto msg = as_product_instance_id_view(p);
+            EXPECT_TRUE(msg);
+            if (msg)
+            {
+                ++number_of_packets;
+                resulting_pid.append(msg->payload());
+            }
+        });
+
+        EXPECT_EQ(resulting_pid, pid);
+        return number_of_packets;
+    };
+
+    EXPECT_EQ(1u, run_test("ABCDE"));
+    EXPECT_EQ(1u, run_test("14AD4C5HE5EA9F"));
+    EXPECT_EQ(2u, run_test("14AD4C5HE5EA9F0"));
+    EXPECT_EQ(2u, run_test("14AD4C5HE5EA9F01"));
 }
 
 //-----------------------------------------------
@@ -1272,4 +1330,37 @@ TEST_F(stream_message, function_block_name_view)
     {
         EXPECT_FALSE(as_function_block_name_view(make_function_block_discovery_message(0xE, 4)));
     }
+}
+
+//-----------------------------------------------
+
+TEST_F(stream_message, send_function_block_name)
+{
+    using namespace midi;
+
+    auto run_test = [](uint7_t block, std::string_view name) {
+        size_t      number_of_packets = 0;
+        std::string resulting_name;
+        send_function_block_name(block, name, [&](const midi::universal_packet& p) {
+            auto msg = as_function_block_name_view(p);
+            EXPECT_TRUE(msg);
+            if (msg)
+            {
+                EXPECT_EQ(msg->function_block(), block);
+
+                ++number_of_packets;
+                resulting_name.append(msg->payload());
+            }
+        });
+
+        EXPECT_EQ(resulting_name, name);
+        return number_of_packets;
+    };
+
+    EXPECT_EQ(1u, run_test(0, "short name"));
+    EXPECT_EQ(1u, run_test(4, "short name ?!"));
+    EXPECT_EQ(2u, run_test(7, "short name ?!?"));
+    EXPECT_EQ(2u, run_test(31, "A reasonably long name"));
+    EXPECT_EQ(3u, run_test(9, "A pretty long name that needs 3 packets"));
+    EXPECT_EQ(4u, run_test(14, "An even longer name that needs four packets"));
 }
