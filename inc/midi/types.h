@@ -52,16 +52,13 @@ using size_t   = std::size_t;
 using group_t        = uint4_t;
 using status_t       = uint8_t;
 using channel_t      = uint4_t;
-using note_id_t      = uint7_t;
 using note_nr_t      = uint7_t;
 using controller_t   = uint7_t;
 using program_t      = uint7_t;
 using muid_t         = uint28_t;
 using manufacturer_t = uint32_t;
-
-// introduced in UMP 1.1
-using protocol_t   = uint8_t;
-using extensions_t = uint8_t;
+using protocol_t     = uint8_t;
+using extensions_t   = uint8_t;
 
 //--------------------------------------------------------------------------
 

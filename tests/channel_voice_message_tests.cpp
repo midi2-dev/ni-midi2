@@ -209,38 +209,6 @@ TEST_F(channel_voice_message, is_note_off_message)
 
 //-----------------------------------------------
 
-TEST_F(channel_voice_message, get_note_id)
-{
-    using namespace midi;
-
-    // MIDI 1 Channel Voice messages
-    {
-        EXPECT_EQ(get_note_id(make_midi1_note_off_message(0, 2, 67)), 67u);
-        EXPECT_EQ(get_note_id(make_midi1_note_on_message(13, 5, 60, velocity{ uint7_t{ 0 } })), 60u);
-        EXPECT_EQ(get_note_id(make_midi1_poly_pressure_message(14, 2, 64, controller_value{ uint7_t{ 77 } })), 64u);
-    }
-
-    // MIDI 2 Channel Voice messages
-    {
-        EXPECT_EQ(get_note_id(make_registered_per_note_controller_message(15, 10, 44, 2, controller_value{ 123456u })),
-                  44u);
-        EXPECT_EQ(get_note_id(make_assignable_per_note_controller_message(3, 7, 64, 99, controller_value{ 987654u })),
-                  64u);
-        EXPECT_EQ(get_note_id(make_per_note_pitch_bend_message(11, 12, 13, pitch_bend{ uint32_t{ 0x80000001u } })),
-                  13u);
-
-        EXPECT_EQ(get_note_id(make_midi2_note_off_message(0, 2, 67, velocity{ uint16_t{ 0x1234 } })), 67u);
-        EXPECT_EQ(get_note_id(make_midi2_note_on_message(4, 7, 99, velocity{ uint16_t{ 0x4567 } })), 99u);
-        EXPECT_EQ(get_note_id(make_midi2_note_on_message(13, 5, 60, velocity{ uint16_t{ 0 } })), 60u);
-        EXPECT_EQ(get_note_id(make_midi2_note_on_message(
-                    9, 10, 127, velocity{ uint16_t{ 0xA000 } }, pitch_7_9{ note_nr_t{ 60 } })),
-                  127u);
-        EXPECT_EQ(get_note_id(make_midi2_poly_pressure_message(14, 2, 64, controller_value{ 0x6789ABCDu })), 64u);
-    }
-}
-
-//-----------------------------------------------
-
 TEST_F(channel_voice_message, get_note_nr)
 {
     using namespace midi;
@@ -266,7 +234,7 @@ TEST_F(channel_voice_message, get_note_nr)
         EXPECT_EQ(get_note_nr(make_midi2_note_on_message(13, 5, 60, velocity{ uint16_t{ 0 } })), 60u);
         EXPECT_EQ(get_note_nr(make_midi2_note_on_message(
                     9, 10, 127, velocity{ uint16_t{ 0xA000 } }, pitch_7_9{ note_nr_t{ 60 } })),
-                  60u);
+                  127u);
         EXPECT_EQ(get_note_nr(make_midi2_poly_pressure_message(14, 2, 64, controller_value{ 0x6789ABCDu })), 64u);
     }
 }

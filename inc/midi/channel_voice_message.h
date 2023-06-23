@@ -41,7 +41,6 @@ constexpr bool is_channel_voice_message_with_status(const universal_packet&, sta
 constexpr bool is_note_on_message(const universal_packet&);
 constexpr bool is_note_off_message(const universal_packet&);
 
-constexpr note_id_t get_note_id(const universal_packet&);
 constexpr note_nr_t get_note_nr(const universal_packet&);
 
 constexpr pitch_7_9 get_note_pitch(const universal_packet&);
@@ -103,28 +102,12 @@ constexpr bool is_note_off_message(const universal_packet& p)
 
 //--------------------------------------------------------------------------
 
-constexpr note_id_t get_note_id(const universal_packet& p)
-{
-    // assert(is_channel_voice_message_with_status(p, 0x80) ||
-    //        is_channel_voice_message_with_status(p, 0x90) ||
-    //        is_channel_voice_message_with_status(p, 0xA0));
-    return p.byte3() & 0x7F;
-}
-
-//--------------------------------------------------------------------------
-
 constexpr note_nr_t get_note_nr(const universal_packet& p)
 {
     // assert(is_channel_voice_message_with_status(p, 0x80) ||
     //        is_channel_voice_message_with_status(p, 0x90) ||
     //        is_channel_voice_message_with_status(p, 0xA0));
-    if ((p.type() == packet_type::midi2_channel_voice) && ((p.status() & 0xF0) == 0x90) && (p.byte4() == 0x03))
-    {
-        // Pitch 7.9
-        return note_nr_t((p.data[1] >> 9) & 0x7F);
-    }
-
-    return note_nr_t(p.byte3() & 0x7F);
+    return p.byte3() & 0x7F;
 }
 
 //--------------------------------------------------------------------------
@@ -138,7 +121,7 @@ constexpr pitch_7_9 get_note_pitch(const universal_packet& p)
         return pitch_7_9{ uint16_t(p.data[1] & 0xFFFF) };
     }
 
-    return pitch_7_9{ note_nr_t(p.byte3() & 0x7F) };
+    return pitch_7_9{ get_note_nr(p) };
 }
 
 //--------------------------------------------------------------------------
