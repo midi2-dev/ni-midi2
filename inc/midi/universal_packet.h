@@ -60,6 +60,11 @@ enum class packet_format : uint2_t {
 
 //--------------------------------------------------------------------------
 
+//! packet address
+enum class packet_address : uint2_t { channel = 0b00, group = 0b01 };
+
+//--------------------------------------------------------------------------
+
 namespace utility_status {
     constexpr status_t noop         = 0x00;
     constexpr status_t jr_clock     = 0x10;
