@@ -47,11 +47,11 @@ namespace midi {
 struct stream_message : universal_packet
 {
     constexpr stream_message();
-    constexpr explicit stream_message(status_t, packet_format_t = packet_format::complete);
+    constexpr explicit stream_message(status_t, packet_format = packet_format::complete);
     ~stream_message() = default;
 
-    constexpr packet_format_t format() const { return ((data[0] >> 26u) & 0x03); }
-    constexpr void            set_format(packet_format_t);
+    constexpr packet_format format() const { return packet_format((data[0] >> 26u) & 0x03); }
+    constexpr void          set_format(packet_format);
 
     // UMP stream messages are groupless
     constexpr group_t group() const      = delete;
@@ -185,7 +185,7 @@ struct endpoint_name_view
         assert(p.status() == stream_status::endpoint_name);
     }
 
-    constexpr packet_format_t format() const { return ((p.data[0] >> 26u) & 0b11); }
+    constexpr packet_format format() const { return packet_format((p.data[0] >> 26u) & 0b11); }
 
     std::string payload() const { return stream_message::payload_as_string(p, 2); }
 
@@ -208,7 +208,7 @@ struct product_instance_id_view
         assert(p.status() == stream_status::product_instance_id);
     }
 
-    constexpr packet_format_t format() const { return ((p.data[0] >> 26u) & 0b11); }
+    constexpr packet_format format() const { return packet_format((p.data[0] >> 26u) & 0b11); }
 
     std::string payload() const { return stream_message::payload_as_string(p, 2); }
 
@@ -341,8 +341,8 @@ struct function_block_name_view
         assert(p.status() == stream_status::function_block_name);
     }
 
-    constexpr packet_format_t format() const { return ((p.data[0] >> 26u) & 0b11); }
-    constexpr uint8_t         function_block() const { return p.byte3() & 0x7F; }
+    constexpr packet_format format() const { return packet_format((p.data[0] >> 26u) & 0b11); }
+    constexpr uint8_t       function_block() const { return p.byte3() & 0x7F; }
 
     std::string payload() const { return stream_message::payload_as_string(p, 3); }
 
@@ -366,8 +366,8 @@ constexpr stream_message make_endpoint_info_message(uint8_t num_function_blocks,
                                                     uint8_t ump_version_major = 1,
                                                     uint8_t ump_version_minor = 1);
 constexpr stream_message make_device_identity_message(const device_identity&);
-constexpr stream_message make_endpoint_name_message(packet_format_t, const std::string_view&);
-constexpr stream_message make_product_instance_id_message(packet_format_t, const std::string_view&);
+constexpr stream_message make_endpoint_name_message(packet_format, const std::string_view&);
+constexpr stream_message make_product_instance_id_message(packet_format, const std::string_view&);
 constexpr stream_message make_stream_configuration_request(protocol_t, extensions_t = 0);
 constexpr stream_message make_stream_configuration_notification(protocol_t, extensions_t = 0);
 
@@ -386,7 +386,7 @@ constexpr stream_message make_function_block_info_message(uint7_t function_block
                                                           const function_block_options&,
                                                           group_t first_group,
                                                           uint4_t num_groups_spanned = 1);
-constexpr stream_message make_function_block_name_message(packet_format_t,
+constexpr stream_message make_function_block_name_message(packet_format,
                                                           uint7_t                 function_block,
                                                           const std::string_view& n);
 
@@ -402,16 +402,14 @@ constexpr stream_message::stream_message()
 {
 }
 
-constexpr stream_message::stream_message(status_t status, packet_format_t format)
-  : universal_packet(0xF0000000u | ((format & 0x03) << 26) | (status << 16))
+constexpr stream_message::stream_message(status_t status, packet_format format)
+  : universal_packet(0xF0000000u | (uint32_t(format) << 26) | (status << 16))
 {
 }
 
-constexpr void stream_message::set_format(packet_format_t f)
+constexpr void stream_message::set_format(packet_format f)
 {
-    assert(f < 4);
-
-    data[0] = (data[0] & 0xF3FFFFFF) | ((f & 0x3) << 26);
+    data[0] = (data[0] & 0xF3FFFFFF) | (uint32_t(f) << 26);
 }
 
 //--------------------------------------------------------------------------
@@ -535,7 +533,7 @@ constexpr stream_message make_device_identity_message(const device_identity& i)
     return m;
 }
 
-constexpr stream_message make_endpoint_name_message(packet_format_t format, const std::string_view& n)
+constexpr stream_message make_endpoint_name_message(packet_format format, const std::string_view& n)
 {
     assert(n.length() <= 14);
     stream_message m{ stream_status::endpoint_name, format };
@@ -549,7 +547,7 @@ constexpr stream_message make_endpoint_name_message(packet_format_t format, cons
     return m;
 }
 
-constexpr stream_message make_product_instance_id_message(packet_format_t format, const std::string_view& n)
+constexpr stream_message make_product_instance_id_message(packet_format format, const std::string_view& n)
 {
     assert(n.length() <= 14);
     assert(format != packet_format::cont);
@@ -633,7 +631,7 @@ constexpr stream_message make_function_block_info_message(uint7_t               
     return m;
 }
 
-constexpr stream_message make_function_block_name_message(packet_format_t         format,
+constexpr stream_message make_function_block_name_message(packet_format           format,
                                                           uint7_t                 function_block,
                                                           const std::string_view& n)
 {

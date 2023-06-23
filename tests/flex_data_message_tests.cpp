@@ -38,7 +38,7 @@ TEST_F(flex_data_message, constructors)
 
         EXPECT_EQ(midi::packet_type::flex_data, m.type());
         EXPECT_EQ(0u, m.group());
-        EXPECT_EQ(0u, m.format());
+        EXPECT_EQ(midi::packet_format::complete, m.format());
         EXPECT_EQ(0u, m.address());
         EXPECT_EQ(0u, m.channel());
         EXPECT_EQ(0u, m.status_bank());
@@ -53,7 +53,7 @@ TEST_F(flex_data_message, constructors)
 
         EXPECT_EQ(midi::packet_type::flex_data, m.type());
         EXPECT_EQ(4u, m.group());
-        EXPECT_EQ(0u, m.format());
+        EXPECT_EQ(midi::packet_format::complete, m.format());
         EXPECT_EQ(0u, m.address());
         EXPECT_EQ(0u, m.channel());
         EXPECT_EQ(0u, m.status_bank());
@@ -155,12 +155,12 @@ TEST_F(flex_data_message, flex_data_message_view)
     }
 
     {
-        static constexpr midi::flex_data_message m{ 1, 2, 0, 4, 5, 6, 7, 8, 9 };
+        static constexpr midi::flex_data_message m{ 1, midi::packet_format::cont, 0, 4, 5, 6, 7, 8, 9 };
 
         constexpr auto v = midi::flex_data_message_view{ m };
         EXPECT_TRUE(midi::as_flex_data_message_view(m));
 
-        EXPECT_EQ(2u, v.format());
+        EXPECT_EQ(midi::packet_format::cont, v.format());
         EXPECT_EQ(0u, v.address());
         EXPECT_EQ(4u, v.channel());
         EXPECT_EQ(5u, v.status_bank());
@@ -217,11 +217,11 @@ TEST_F(flex_data_message, make_flex_data_message)
     }
 
     {
-        auto m = make_flex_data_message(1, 2, 0, 4, 5, 6, 7, 8, 9);
+        auto m = make_flex_data_message(1, packet_format::start, 0, 4, 5, 6, 7, 8, 9);
 
         EXPECT_TRUE(is_flex_data_message(m));
         EXPECT_EQ(1u, m.group());
-        EXPECT_EQ(2u, m.format());
+        EXPECT_EQ(packet_format::start, m.format());
         EXPECT_EQ(0u, m.address());
         EXPECT_EQ(4u, m.channel());
         EXPECT_EQ(5u, m.status_bank());

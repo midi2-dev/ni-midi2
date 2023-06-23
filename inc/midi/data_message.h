@@ -66,10 +66,11 @@ struct sysex7_packet_view
         assert(is_sysex7_packet(ump));
     }
 
-    constexpr group_t  group() const { return p.group(); }
-    constexpr status_t status() const { return p.status() & 0xF0; }
-    constexpr uint8_t  payload_byte(size_t b) const { return p.get_byte(2 + b); }
-    constexpr size_t   payload_size() const { return p.status() & 0x0F; }
+    constexpr group_t       group() const { return p.group(); }
+    constexpr status_t      status() const { return p.status() & 0xF0; }
+    constexpr packet_format format() const { return packet_format((p.status() >> 4) & 0b11); }
+    constexpr size_t        payload_size() const { return p.status() & 0x0F; }
+    constexpr uint8_t       payload_byte(size_t b) const { return p.get_byte(2 + b); }
 
   private:
     const universal_packet& p;

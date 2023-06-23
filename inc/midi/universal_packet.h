@@ -50,13 +50,13 @@ enum class packet_type : uint4_t {
 
 //--------------------------------------------------------------------------
 
-//! message format types
-namespace packet_format {
-    constexpr packet_format_t complete = 0x0; //!< complete message
-    constexpr packet_format_t start    = 0x1; //!< start of message
-    constexpr packet_format_t cont     = 0x2; //!< continued message
-    constexpr packet_format_t end      = 0x3; //!< end of message
-} // namespace packet_format
+//! packet format types
+enum class packet_format : uint2_t {
+    complete = 0b00, //!< complete message
+    start    = 0b01, //!< start of message
+    cont     = 0b10, //!< continued message
+    end      = 0b11  //!< end of message
+};
 
 //--------------------------------------------------------------------------
 
@@ -96,10 +96,10 @@ namespace midi1_channel_voice_status {
 //--------------------------------------------------------------------------
 
 namespace data_status {
-    constexpr status_t sysex7_complete = (packet_format::complete << 4);
-    constexpr status_t sysex7_start    = (packet_format::start << 4);
-    constexpr status_t sysex7_continue = (packet_format::cont << 4);
-    constexpr status_t sysex7_end      = (packet_format::end << 4);
+    constexpr status_t sysex7_complete = (status_t(packet_format::complete) << 4);
+    constexpr status_t sysex7_start    = (status_t(packet_format::start) << 4);
+    constexpr status_t sysex7_continue = (status_t(packet_format::cont) << 4);
+    constexpr status_t sysex7_end      = (status_t(packet_format::end) << 4);
 } // namespace data_status
 
 //--------------------------------------------------------------------------
@@ -129,10 +129,10 @@ namespace channel_voice_status {
 //--------------------------------------------------------------------------
 
 namespace extended_data_status {
-    constexpr status_t sysex8_complete = (packet_format::complete << 4);
-    constexpr status_t sysex8_start    = (packet_format::start << 4);
-    constexpr status_t sysex8_continue = (packet_format::cont << 4);
-    constexpr status_t sysex8_end      = (packet_format::end << 4);
+    constexpr status_t sysex8_complete = (status_t(packet_format::complete) << 4);
+    constexpr status_t sysex8_start    = (status_t(packet_format::start) << 4);
+    constexpr status_t sysex8_continue = (status_t(packet_format::cont) << 4);
+    constexpr status_t sysex8_end      = (status_t(packet_format::end) << 4);
 
     constexpr status_t mixed_data_set_header  = 0x80;
     constexpr status_t mixed_data_set_payload = 0x90;

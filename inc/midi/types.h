@@ -60,9 +60,8 @@ using muid_t         = uint28_t;
 using manufacturer_t = uint32_t;
 
 // introduced in UMP 1.1
-using packet_format_t = uint4_t;
-using protocol_t      = uint8_t;
-using extensions_t    = uint8_t;
+using protocol_t   = uint8_t;
+using extensions_t = uint8_t;
 
 //--------------------------------------------------------------------------
 
@@ -166,8 +165,8 @@ struct pitch_7_25
     constexpr note_nr_t note_nr() const;
 
     constexpr pitch_7_25& operator=(pitch_7_9);
-    constexpr pitch_7_25 operator+(const pitch_increment&) const;
-    constexpr pitch_7_25 operator+(float) const;
+    constexpr pitch_7_25  operator+(const pitch_increment&) const;
+    constexpr pitch_7_25  operator+(float) const;
 
     constexpr void operator+=(const pitch_increment&);
 

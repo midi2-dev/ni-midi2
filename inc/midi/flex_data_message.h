@@ -44,13 +44,13 @@ struct flex_data_message : universal_packet
 {
     constexpr explicit flex_data_message(group_t = 0);
     constexpr flex_data_message(
-      group_t, packet_format_t, uint2_t, uint4_t, status_t, status_t, uint32_t = 0, uint32_t = 0, uint32_t = 0);
+      group_t, packet_format, uint2_t, uint4_t, status_t, status_t, uint32_t = 0, uint32_t = 0, uint32_t = 0);
     ~flex_data_message() = default;
 
-    constexpr packet_format_t format() const { return (byte2() & 0xC0u) >> 6; }
-    constexpr uint2_t         address() const { return (byte2() & 0x30u) >> 4; }
-    constexpr status_t        status_bank() const { return byte3(); }
-    constexpr status_t        status() const { return byte4(); }
+    constexpr packet_format format() const { return packet_format((byte2() & 0xC0u) >> 6); }
+    constexpr uint2_t       address() const { return (byte2() & 0x30u) >> 4; }
+    constexpr status_t      status_bank() const { return byte3(); }
+    constexpr status_t      status() const { return byte4(); }
 
     std::string        payload_as_string() const;
     static std::string payload_as_string(const universal_packet&);
@@ -70,15 +70,15 @@ struct flex_data_message_view
         assert(p.type() == packet_type::flex_data);
     }
 
-    constexpr group_t         group() const { return p.group(); }
-    constexpr packet_format_t format() const { return (p.byte2() & 0xC0u) >> 6; }
-    constexpr uint2_t         address() const { return (p.byte2() & 0x30u) >> 4; }
-    constexpr channel_t       channel() const { return (p.byte2() & 0x0Fu); }
-    constexpr status_t        status_bank() const { return p.byte3(); }
-    constexpr status_t        status() const { return p.byte4(); }
-    constexpr uint32_t        data1() const { return p.data[1]; }
-    constexpr uint32_t        data2() const { return p.data[2]; }
-    constexpr uint32_t        data3() const { return p.data[3]; }
+    constexpr group_t       group() const { return p.group(); }
+    constexpr packet_format format() const { return packet_format((p.byte2() & 0xC0u) >> 6); }
+    constexpr uint2_t       address() const { return (p.byte2() & 0x30u) >> 4; }
+    constexpr channel_t     channel() const { return (p.byte2() & 0x0Fu); }
+    constexpr status_t      status_bank() const { return p.byte3(); }
+    constexpr status_t      status() const { return p.byte4(); }
+    constexpr uint32_t      data1() const { return p.data[1]; }
+    constexpr uint32_t      data2() const { return p.data[2]; }
+    constexpr uint32_t      data3() const { return p.data[3]; }
 
     const std::string payload_as_string() const { return flex_data_message::payload_as_string(p); }
 
@@ -93,7 +93,7 @@ constexpr std::optional<flex_data_message_view> as_flex_data_message_view(const 
 //--------------------------------------------------------------------------
 
 constexpr flex_data_message make_flex_data_message(group_t,
-                                                   packet_format_t,
+                                                   packet_format,
                                                    uint2_t  addr,
                                                    uint4_t  channel,
                                                    status_t status_bank,
@@ -102,7 +102,7 @@ constexpr flex_data_message make_flex_data_message(group_t,
                                                    uint32_t data2 = 0,
                                                    uint32_t data3 = 0);
 constexpr flex_data_message make_flex_data_text_message(group_t,
-                                                        packet_format_t,
+                                                        packet_format,
                                                         uint2_t                 addr,
                                                         uint4_t                 channel,
                                                         status_t                status_bank,
@@ -134,23 +134,22 @@ constexpr flex_data_message::flex_data_message(group_t group)
   : universal_packet(0xD0000000u | ((group & 0x0F) << 24))
 {
 }
-constexpr flex_data_message::flex_data_message(group_t         group,
-                                               packet_format_t format,
-                                               uint2_t         address,
-                                               uint4_t         channel,
-                                               status_t        status_bank,
-                                               status_t        status,
-                                               uint32_t        data1,
-                                               uint32_t        data2,
-                                               uint32_t        data3)
+constexpr flex_data_message::flex_data_message(group_t       group,
+                                               packet_format format,
+                                               uint2_t       address,
+                                               uint4_t       channel,
+                                               status_t      status_bank,
+                                               status_t      status,
+                                               uint32_t      data1,
+                                               uint32_t      data2,
+                                               uint32_t      data3)
   : universal_packet(0xD0000000u | ((group & 0x0F) << 24) |
-                       ((((format & 0x03) << 6) | ((address & 0x03) << 4) | (channel & 0x0F)) << 16) |
+                       (((uint32_t(format) << 6) | ((address & 0x03) << 4) | (channel & 0x0F)) << 16) |
                        (status_bank << 8) | status,
                      data1,
                      data2,
                      data3)
 {
-    assert(format <= packet_format::end);
     assert(address <= 1u);
     assert(channel <= 15u);
     assert((address == 0) || (channel == 0));
@@ -198,15 +197,15 @@ constexpr std::optional<flex_data_message_view> as_flex_data_message_view(const 
 
 //--------------------------------------------------------------------------
 
-constexpr flex_data_message make_flex_data_message(group_t         group,
-                                                   packet_format_t format,
-                                                   uint2_t         addr,
-                                                   uint4_t         channel,
-                                                   status_t        status_bank,
-                                                   status_t        status,
-                                                   uint32_t        data1,
-                                                   uint32_t        data2,
-                                                   uint32_t        data3)
+constexpr flex_data_message make_flex_data_message(group_t       group,
+                                                   packet_format format,
+                                                   uint2_t       addr,
+                                                   uint4_t       channel,
+                                                   status_t      status_bank,
+                                                   status_t      status,
+                                                   uint32_t      data1,
+                                                   uint32_t      data2,
+                                                   uint32_t      data3)
 {
     return flex_data_message(group, format, addr, channel, status_bank, status, data1, data2, data3);
 }
@@ -214,7 +213,7 @@ constexpr flex_data_message make_flex_data_message(group_t         group,
 //--------------------------------------------------------------------------
 
 constexpr flex_data_message make_flex_data_text_message(group_t                 group,
-                                                        packet_format_t         format,
+                                                        packet_format           format,
                                                         uint2_t                 addr,
                                                         uint4_t                 channel,
                                                         status_t                status_bank,

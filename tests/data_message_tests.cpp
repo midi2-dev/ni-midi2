@@ -359,6 +359,7 @@ TEST(data_message, sysex7_packet_view)
         auto m = sysex7_packet_view{ p };
         EXPECT_EQ(7u, m.group());
         EXPECT_EQ(data_status::sysex7_start, m.status());
+        EXPECT_EQ(packet_format::start, m.format());
         EXPECT_EQ(2u, m.payload_size());
         EXPECT_EQ(0x06u, m.payload_byte(0));
         EXPECT_EQ(0x05u, m.payload_byte(1));
@@ -376,6 +377,7 @@ TEST(data_message, sysex7_packet_view)
         auto m = sysex7_packet_view{ p };
         EXPECT_EQ(0xEu, m.group());
         EXPECT_EQ(data_status::sysex7_continue, m.status());
+        EXPECT_EQ(packet_format::cont, m.format());
         EXPECT_EQ(6u, m.payload_size());
         EXPECT_EQ(0x12u, m.payload_byte(0));
         EXPECT_EQ(0x34u, m.payload_byte(1));
@@ -391,6 +393,7 @@ TEST(data_message, sysex7_packet_view)
         constexpr auto m = sysex7_packet_view{ p };
         EXPECT_EQ(7u, m.group());
         EXPECT_EQ(data_status::sysex7_start, m.status());
+        EXPECT_EQ(packet_format::start, m.format());
         EXPECT_EQ(2u, m.payload_size());
         EXPECT_EQ(0x06u, m.payload_byte(0));
         EXPECT_EQ(0x05u, m.payload_byte(1));
