@@ -217,6 +217,12 @@ TEST_F(stream_message, endpoint_discovery_view)
         EXPECT_EQ(3u, v.ump_version_minor());
         EXPECT_EQ(0x0203u, v.ump_version());
         EXPECT_EQ(discovery_filter::endpoint_name, v.filter());
+
+        EXPECT_FALSE(v.requests_info());
+        EXPECT_FALSE(v.requests_device_identity());
+        EXPECT_TRUE(v.requests_name());
+        EXPECT_FALSE(v.requests_product_instance_id());
+        EXPECT_FALSE(v.requests_stream_configuration());
     }
 
     {
@@ -232,6 +238,45 @@ TEST_F(stream_message, endpoint_discovery_view)
         EXPECT_EQ(1u, v.ump_version_minor());
         EXPECT_EQ(0x0101u, v.ump_version());
         EXPECT_EQ(discovery_filter::device_identity + discovery_filter::endpoint_name, v.filter());
+
+        EXPECT_FALSE(v.requests_info());
+        EXPECT_TRUE(v.requests_device_identity());
+        EXPECT_TRUE(v.requests_name());
+        EXPECT_FALSE(v.requests_product_instance_id());
+        EXPECT_FALSE(v.requests_stream_configuration());
+    }
+
+    {
+        const midi::stream_message m = make_endpoint_discovery_message(discovery_filter::endpoint_info);
+        const auto                 v = endpoint_discovery_view(m);
+
+        EXPECT_TRUE(v.requests_info());
+        EXPECT_FALSE(v.requests_device_identity());
+        EXPECT_FALSE(v.requests_name());
+        EXPECT_FALSE(v.requests_product_instance_id());
+        EXPECT_FALSE(v.requests_stream_configuration());
+    }
+
+    {
+        const midi::stream_message m = make_endpoint_discovery_message(discovery_filter::product_instance_id);
+        const auto                 v = endpoint_discovery_view(m);
+
+        EXPECT_FALSE(v.requests_info());
+        EXPECT_FALSE(v.requests_device_identity());
+        EXPECT_FALSE(v.requests_name());
+        EXPECT_TRUE(v.requests_product_instance_id());
+        EXPECT_FALSE(v.requests_stream_configuration());
+    }
+
+    {
+        const midi::stream_message m = make_endpoint_discovery_message(discovery_filter::stream_configuration);
+        const auto                 v = endpoint_discovery_view(m);
+
+        EXPECT_FALSE(v.requests_info());
+        EXPECT_FALSE(v.requests_device_identity());
+        EXPECT_FALSE(v.requests_name());
+        EXPECT_FALSE(v.requests_product_instance_id());
+        EXPECT_TRUE(v.requests_stream_configuration());
     }
 
     {
@@ -995,6 +1040,11 @@ TEST_F(stream_message, function_block_discovery_view)
         constexpr auto v = function_block_discovery_view{ m };
         EXPECT_EQ(5, v.function_block());
         EXPECT_EQ(discovery_filter::function_block_name, v.filter());
+
+        EXPECT_FALSE(v.requests_function_block(0));
+        EXPECT_TRUE(v.requests_function_block(5));
+        EXPECT_TRUE(v.requests_name());
+        EXPECT_FALSE(v.requests_info());
     }
 
     {
@@ -1008,6 +1058,42 @@ TEST_F(stream_message, function_block_discovery_view)
         const auto v = function_block_discovery_view{ m };
         EXPECT_EQ(0xE, v.function_block());
         EXPECT_EQ(discovery_filter::function_block_info, v.filter());
+
+        EXPECT_FALSE(v.requests_function_block(0));
+        EXPECT_FALSE(v.requests_function_block(5));
+        EXPECT_TRUE(v.requests_function_block(0xE));
+        EXPECT_FALSE(v.requests_name());
+        EXPECT_TRUE(v.requests_info());
+    }
+
+    {
+        constexpr midi::stream_message m =
+          make_function_block_discovery_message(0xFF, discovery_filter::function_block_all);
+
+        EXPECT_TRUE(is_stream_message(m));
+
+        EXPECT_EQ(0xF010FF03u, m.data[0]);
+        EXPECT_EQ(0u, m.data[1]);
+        EXPECT_EQ(0u, m.data[2]);
+        EXPECT_EQ(0u, m.data[3]);
+
+        EXPECT_EQ(4u, m.size());
+        EXPECT_EQ(packet_type::stream, m.type());
+        EXPECT_EQ(packet_format::complete, m.format());
+        EXPECT_EQ(stream_status::function_block_discovery, m.status());
+
+        EXPECT_TRUE(as_function_block_discovery_view(m));
+
+        auto v = function_block_discovery_view{ m };
+        EXPECT_EQ(0xFFu, v.function_block());
+        EXPECT_EQ(discovery_filter::function_block_all, v.filter());
+
+        for (uint8_t block = 0; block < 32; ++block)
+        {
+            EXPECT_TRUE(v.requests_function_block(block));
+        }
+        EXPECT_TRUE(v.requests_name());
+        EXPECT_TRUE(v.requests_info());
     }
 
     {

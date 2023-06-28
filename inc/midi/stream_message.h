@@ -110,6 +110,12 @@ struct endpoint_discovery_view
 
     constexpr uint8_t filter() const { return uint8_t(p.data[1] & 0b11111); }
 
+    constexpr bool requests_info() const { return (filter() & discovery_filter::endpoint_info); }
+    constexpr bool requests_device_identity() const { return (filter() & discovery_filter::device_identity); }
+    constexpr bool requests_name() const { return (filter() & discovery_filter::endpoint_name); }
+    constexpr bool requests_product_instance_id() const { return (filter() & discovery_filter::product_instance_id); }
+    constexpr bool requests_stream_configuration() const { return (filter() & discovery_filter::stream_configuration); }
+
   private:
     const universal_packet& p;
 };
@@ -256,6 +262,14 @@ struct function_block_discovery_view
 
     constexpr uint8_t function_block() const { return p.byte3(); }
     constexpr uint8_t filter() const { return p.byte4() & 0b1111; }
+
+    constexpr bool requests_function_block(uint8_t block) const
+    {
+        constexpr uint8_t all_blocks = 0xFF;
+        return (function_block() == all_blocks) || (function_block() == block);
+    }
+    constexpr bool requests_info() const { return (filter() & discovery_filter::function_block_info); }
+    constexpr bool requests_name() const { return (filter() & discovery_filter::function_block_name); }
 
   private:
     const universal_packet& p;
