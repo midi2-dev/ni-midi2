@@ -1,4 +1,4 @@
-# ni-midi2
+# ni-midi2 [![ni-midi2 CI](https://github.com/NativeInstruments/ni-midi2/actions/workflows/ci.yml/badge.svg)](https://github.com/NativeInstruments/ni-midi2/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/NativeInstruments/ni-midi2/branch/main/graph/badge.svg)](https://codecov.io/gh/NativeInstruments/ni-midi2)
 
 `ni-midi2` is a C++ library for working with MIDI 2 Universal MIDI Packets (UMP) and MIDI-CI 1.2 messages.
 
