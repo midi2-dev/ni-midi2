@@ -117,21 +117,10 @@ struct message : universal_sysex::message
     void set_source_muid(muid_t);
     void set_destination_muid(muid_t);
 
-    message(subtype_t      subtype,
-            muid_t         source_muid,
-            muid_t         destination_muid,
-            const uint7_t* data,
-            size_t         data_size,
-            uint7_t        device_id = 0x7F);
+    message(subtype_t subtype, muid_t source_muid, muid_t destination_muid, uint7_t device_id = 0x7F);
 
-    message(subtype_t                   subtype,
-            muid_t                      source_muid,
-            muid_t                      destination_muid,
-            const std::vector<uint7_t>& data,
-            uint7_t                     device_id = 0x7F);
-
-    static message make_with_capacity(
-      size_t capacity, subtype_t subtype, muid_t source_muid, muid_t destination_muid, uint7_t device_id = 0x7F);
+    static message make_with_payload_size(
+      size_t payload_size, subtype_t subtype, muid_t source_muid, muid_t destination_muid, uint7_t device_id = 0x7F);
 
   protected:
     explicit message(size_t capacity)
@@ -992,6 +981,8 @@ namespace discovery {
                                              uint7_t           categories,
                                              uint28_t          max_message_size)
     {
+        auto result = message::make_with_payload_size(16, subtype, source_muid, destination_muid);
+
         const uint7_t data[] = { static_cast<unsigned char>((i.manufacturer >> 16) & 0x7F),
                                  static_cast<unsigned char>((i.manufacturer >> 8) & 0x7F),
                                  static_cast<unsigned char>(i.manufacturer & 0x7F),
@@ -1008,8 +999,7 @@ namespace discovery {
                                  static_cast<unsigned char>((max_message_size >> 7) & 0x7F),
                                  static_cast<unsigned char>((max_message_size >> 14) & 0x7F),
                                  static_cast<unsigned char>((max_message_size >> 21) & 0x7F) };
-
-        auto result    = message{ subtype, source_muid, destination_muid, data, sizeof(data) };
+        result.add_data(data, sizeof(data));
         result.data[3] = message_version_1;
         return result;
     }
@@ -1022,6 +1012,8 @@ namespace discovery {
                                           uint28_t          max_message_size,
                                           uint7_t           output_path_id)
     {
+        auto result = message::make_with_payload_size(18, subtype, source_muid, destination_muid);
+
         const uint7_t data[] = { static_cast<unsigned char>((i.manufacturer >> 16) & 0x7F),
                                  static_cast<unsigned char>((i.manufacturer >> 8) & 0x7F),
                                  static_cast<unsigned char>(i.manufacturer & 0x7F),
@@ -1039,8 +1031,8 @@ namespace discovery {
                                  static_cast<unsigned char>((max_message_size >> 14) & 0x7F),
                                  static_cast<unsigned char>((max_message_size >> 21) & 0x7F),
                                  output_path_id };
-
-        return message{ subtype, source_muid, destination_muid, data, sizeof(data) };
+        result.add_data(data, sizeof(data));
+        return result;
     }
 } // namespace discovery
 
@@ -1156,7 +1148,10 @@ inline bool endpoint_information_inquiry_view::validate(const sysex7& sx)
 
 inline message make_endpoint_information_inquiry(muid_t source_muid, muid_t destination_muid, uint7_t status)
 {
-    return message(subtype::endpoint_information_inquiry, source_muid, destination_muid, &status, 1, 0x7F);
+    auto result =
+      message::make_with_payload_size(1, subtype::endpoint_information_inquiry, source_muid, destination_muid);
+    result.add_uint7(status);
+    return result;
 }
 
 //---- subtype::endpoint_information_reply
@@ -1195,8 +1190,9 @@ inline bool endpoint_information_reply_view::validate(const sysex7& sx)
 inline message make_endpoint_information_reply(
   muid_t source_muid, muid_t destination_muid, uint7_t status, const uint7_t* data, size_t data_size)
 {
-    auto m = message(subtype::endpoint_information_reply, source_muid, destination_muid, &status, 1, 0x7F);
-    m.data.reserve(m.data.size() + 2 + data_size);
+    auto m = message::make_with_payload_size(
+      3 + data_size, subtype::endpoint_information_reply, source_muid, destination_muid);
+    m.add_uint7(status);
     m.add_uint14(static_cast<uint14_t>(data_size));
     m.data.insert(m.data.end(), data, data + data_size);
     return m;
@@ -1270,7 +1266,8 @@ inline message make_ack_message(muid_t                  source_muid,
                                 const std::string_view& msg)
 {
     uint7_t d[] = { transaction, status_code, status_data, details[0], details[1], details[2], details[3], details[4] };
-    auto    m   = message(subtype::ack, source_muid, destination_muid, (uint7_t*)&d, sizeof(d), device_id);
+    auto m = message::make_with_payload_size(10 + msg.size(), subtype::ack, source_muid, destination_muid, device_id);
+    m.data.insert(m.data.end(), d, d + sizeof(d));
     m.add_uint14(static_cast<uint14_t>(msg.size()));
     m.data.insert(m.data.end(), msg.data(), msg.data() + msg.size());
     return m;
@@ -1288,14 +1285,14 @@ inline bool nak_view::validate(const sysex7& sx)
 
 inline message make_nak_message_v1(muid_t source_muid, muid_t destination_muid, uint7_t device_id)
 {
-    auto result    = message(subtype::nak, source_muid, destination_muid, nullptr, 0, device_id);
+    auto result    = message{ subtype::nak, source_muid, destination_muid, device_id };
     result.data[3] = message_version_1;
     return result;
 }
 
 inline message make_nak_message_v1(const capability_inquiry_view& r)
 {
-    auto result    = message(subtype::nak, r.destination_muid(), r.source_muid(), nullptr, 0, r.device_id());
+    auto result    = message{ subtype::nak, r.destination_muid(), r.source_muid(), r.device_id() };
     result.data[3] = message_version_1;
     return result;
 }
@@ -1310,7 +1307,8 @@ inline message make_nak_message(muid_t                  source_muid,
                                 const std::string_view& msg)
 {
     uint7_t d[] = { transaction, status_code, status_data, details[0], details[1], details[2], details[3], details[4] };
-    auto    m   = message(subtype::nak, source_muid, destination_muid, (uint7_t*)&d, sizeof(d), device_id);
+    auto m = message::make_with_payload_size(10 + msg.size(), subtype::nak, source_muid, destination_muid, device_id);
+    m.data.insert(m.data.end(), d, d + sizeof(d));
     m.add_uint14(static_cast<uint14_t>(msg.size()));
     m.data.insert(m.data.end(), msg.data(), msg.data() + msg.size());
     return m;
@@ -1323,7 +1321,9 @@ inline message make_nak_message(const capability_inquiry_view& r,
                                 const std::string_view&        msg)
 {
     uint7_t d[] = { r.subtype(), status_code, status_data, details[0], details[1], details[2], details[3], details[4] };
-    auto    m   = message(subtype::nak, r.destination_muid(), r.source_muid(), (uint7_t*)&d, sizeof(d), r.device_id());
+    auto    m   = message::make_with_payload_size(
+      10 + msg.size(), subtype::nak, r.destination_muid(), r.source_muid(), r.device_id());
+    m.data.insert(m.data.end(), d, d + sizeof(d));
     m.add_uint14(static_cast<uint14_t>(msg.size()));
     m.data.insert(m.data.end(), msg.data(), msg.data() + msg.size());
     return m;
@@ -1339,7 +1339,7 @@ inline bool invalidate_muid_view::validate(const sysex7& sx)
 
 inline message make_invalidate_muid_message(muid_t MUID)
 {
-    return message(subtype::invalidate_muid, MUID, broadcast_muid, nullptr, 0, 0x7F);
+    return message(subtype::invalidate_muid, MUID, broadcast_muid, 0x7F);
 }
 
 //-----------------------------------------------
@@ -1375,7 +1375,7 @@ inline bool profile_inquiry_view::validate(const sysex7& sx)
 
 inline message make_profile_inquiry_message(muid_t source_muid, muid_t destination_muid, uint7_t device_id)
 {
-    return message(subtype::profile_inquiry, source_muid, destination_muid, nullptr, 0, device_id);
+    return message(subtype::profile_inquiry, source_muid, destination_muid, device_id);
 }
 
 //---- subtype::profile_inquiry_reply
@@ -1471,7 +1471,9 @@ inline message make_profile_on_request(muid_t            source_muid,
                                        const profile_id& p,
                                        uint7_t           device_id)
 {
-    return message(subtype::set_profile_on, source_muid, destination_muid, &p.byte1, 5, device_id);
+    auto result = message::make_with_payload_size(5, subtype::set_profile_on, source_muid, destination_muid, device_id);
+    result.add_data(&p.byte1, 5);
+    return result;
 }
 
 //---- subtype::set_profile_off
@@ -1481,7 +1483,10 @@ inline message make_profile_off_request(muid_t            source_muid,
                                         const profile_id& p,
                                         uint7_t           device_id)
 {
-    return message(subtype::set_profile_off, source_muid, destination_muid, &p.byte1, 5, device_id);
+    auto result =
+      message::make_with_payload_size(5, subtype::set_profile_off, source_muid, destination_muid, device_id);
+    result.add_data(&p.byte1, 5);
+    return result;
 }
 
 //---- subtype::profile_enabled
@@ -1491,7 +1496,10 @@ inline message make_profile_enabled_notification(muid_t            source_muid,
                                                  const profile_id& p,
                                                  uint7_t           device_id)
 {
-    return message(subtype::profile_enabled, source_muid, destination_muid, &p.byte1, 5, device_id);
+    auto result =
+      message::make_with_payload_size(5, subtype::profile_enabled, source_muid, destination_muid, device_id);
+    result.add_data(&p.byte1, 5);
+    return result;
 }
 
 //---- subtype::profile_disabled
@@ -1501,7 +1509,10 @@ inline message make_profile_disabled_notification(muid_t            source_muid,
                                                   const profile_id& p,
                                                   uint7_t           device_id)
 {
-    return message(subtype::profile_disabled, source_muid, destination_muid, &p.byte1, 5, device_id);
+    auto result =
+      message::make_with_payload_size(5, subtype::profile_disabled, source_muid, destination_muid, device_id);
+    result.add_data(&p.byte1, 5);
+    return result;
 }
 
 //---- subtype::profile_added
@@ -1511,7 +1522,9 @@ inline message make_profile_added_notification(muid_t            source_muid,
                                                const profile_id& p,
                                                uint7_t           device_id)
 {
-    return message(subtype::profile_added, source_muid, destination_muid, &p.byte1, 5, device_id);
+    auto result = message::make_with_payload_size(5, subtype::profile_added, source_muid, destination_muid, device_id);
+    result.add_data(&p.byte1, 5);
+    return result;
 }
 
 //---- subtype::profile_removed
@@ -1521,7 +1534,10 @@ inline message make_profile_removed_notification(muid_t            source_muid,
                                                  const profile_id& p,
                                                  uint7_t           device_id)
 {
-    return message(subtype::profile_removed, source_muid, destination_muid, &p.byte1, 5, device_id);
+    auto result =
+      message::make_with_payload_size(5, subtype::profile_removed, source_muid, destination_muid, device_id);
+    result.add_data(&p.byte1, 5);
+    return result;
 }
 
 //---- subtype::profile_details_inquiry
@@ -1556,7 +1572,9 @@ inline bool profile_details_inquiry_view::validate(const sysex7& sx)
 inline message make_profile_details_inquiry(
   muid_t source_muid, muid_t destination_muid, const profile_id& p, uint7_t target, uint7_t device_id)
 {
-    message m(subtype::profile_details_inquiry, source_muid, destination_muid, &p.byte1, 5, device_id);
+    auto m =
+      message::make_with_payload_size(6, subtype::profile_details_inquiry, source_muid, destination_muid, device_id);
+    m.add_data(&p.byte1, 5);
     m.add_uint7(target);
     return m;
 }
@@ -1569,9 +1587,10 @@ inline message make_profile_details_reply(muid_t            source_muid,
                                           size_t            data_size,
                                           uint7_t           device_id)
 {
-    message m(subtype::profile_details_reply, source_muid, destination_muid, &p.byte1, 5, device_id);
+    auto m = message::make_with_payload_size(
+      8 + data_size, subtype::profile_details_reply, source_muid, destination_muid, device_id);
+    m.add_data(&p.byte1, 5);
     m.add_uint7(target);
-    m.data.reserve(m.data.size() + 2 + data_size);
     m.add_uint14(static_cast<uint14_t>(data_size));
     m.data.insert(m.data.end(), data, data + data_size);
     return m;
@@ -1829,8 +1848,11 @@ inline bool property_exchange_capabilities_view::validate(const sysex7& sx)
 inline message property_exchange::make_capabilities_message(
   subtype_t subtype, muid_t source_muid, muid_t destination_muid, uint7_t max_num_requests, uint7_t device_id)
 {
+    auto result = message::make_with_payload_size(3, subtype, source_muid, destination_muid, device_id);
+
     const uint7_t data[3] = { max_num_requests, property_exchange::version_major, property_exchange::version_minor };
-    return message(subtype, source_muid, destination_muid, data, 3, device_id);
+    result.add_data(data, sizeof(data));
+    return result;
 }
 
 //---- subtype::property_exchange_capabilities_inquiry
@@ -2314,7 +2336,7 @@ inline message make_notify_message(muid_t           source_muid,
 
 inline message make_process_inquiry_capabilities_inquiry(muid_t source_muid, muid_t destination_muid, uint7_t device_id)
 {
-    return message(subtype::process_inquiry_capabilities_inquiry, source_muid, destination_muid, nullptr, 0, device_id);
+    return message(subtype::process_inquiry_capabilities_inquiry, source_muid, destination_muid, device_id);
 }
 
 //---- subtype::process_inquiry_capabilities_reply
@@ -2341,7 +2363,10 @@ inline message make_process_inquiry_capabilities_reply(muid_t  source_muid,
                                                        uint7_t features,
                                                        uint7_t device_id)
 {
-    return message(subtype::process_inquiry_capabilities_reply, source_muid, destination_muid, &features, 1, device_id);
+    auto result = message::make_with_payload_size(
+      1, subtype::process_inquiry_capabilities_reply, source_muid, destination_muid, device_id);
+    result.add_data(&features, 1);
+    return result;
 }
 
 //---- subtype::midi_message_report_inquiry
@@ -2390,12 +2415,12 @@ inline message make_midi_message_report_inquiry(muid_t  source_muid,
                                                 uint7_t note_data_messages,
                                                 uint7_t device_id)
 {
-    return message(
-      subtype::midi_message_report_inquiry,
-      source_muid,
-      destination_muid,
-      std::vector<uint7_t>{ data_control, system_messages, 0, channel_controller_messages, note_data_messages },
-      device_id);
+    auto result = message::make_with_payload_size(
+      5, subtype::midi_message_report_inquiry, source_muid, destination_muid, device_id);
+
+    const uint7_t data[] = { data_control, system_messages, 0, channel_controller_messages, note_data_messages };
+    result.add_data(data, sizeof(data));
+    return result;
 }
 
 //---- subtype::midi_message_report_reply
@@ -2436,18 +2461,19 @@ inline message make_midi_message_report_reply(muid_t  source_muid,
                                               uint7_t note_data_messages,
                                               uint7_t device_id)
 {
-    return message(subtype::midi_message_report_reply,
-                   source_muid,
-                   broadcast_muid,
-                   std::vector<uint7_t>{ system_messages, 0, channel_controller_messages, note_data_messages },
-                   device_id);
+    auto result =
+      message::make_with_payload_size(5, subtype::midi_message_report_reply, source_muid, broadcast_muid, device_id);
+
+    const uint7_t data[] = { system_messages, 0, channel_controller_messages, note_data_messages };
+    result.add_data(data, sizeof(data));
+    return result;
 }
 
 //---- subtype::midi_message_report_end
 
 inline message make_midi_message_report_end(muid_t source_muid, uint7_t device_id)
 {
-    return message(subtype::midi_message_report_end, source_muid, broadcast_muid, nullptr, 0, device_id);
+    return message(subtype::midi_message_report_end, source_muid, broadcast_muid, device_id);
 }
 
 //--------------------------------------------------------------------------

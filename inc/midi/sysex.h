@@ -150,6 +150,7 @@ struct sysex7 : sysex
 
     // helpers
     void add_uint7(uint7_t);
+    void add_data(const uint7_t* data, size_t data_size);
 
     void     add_uint14(uint14_t);
     uint14_t make_uint14(size_t data_pos) const;
@@ -200,6 +201,14 @@ inline void sysex7::add_uint7(uint7_t value)
 
     const uint7_t d[] = { uint7_t(value & 0x7Fu) };
     data.insert(data.end(), d, d + sizeof(d));
+}
+
+inline void sysex7::add_data(const uint7_t* d, size_t data_size)
+{
+    assert(d);
+    assert(data_size);
+
+    data.insert(data.end(), d, d + data_size);
 }
 
 inline void sysex7::add_uint14(uint14_t value)

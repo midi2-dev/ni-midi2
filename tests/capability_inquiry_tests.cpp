@@ -24,6 +24,8 @@
 
 #include <midi/capability_inquiry.h>
 
+#include "sysex_tests.h"
+
 //-----------------------------------------------
 
 #include <cstring>
@@ -129,7 +131,9 @@ TEST_F(capability_inquiry, capability_inquiry_view)
 TEST_F(capability_inquiry, message_constructor)
 {
     {
-        midi::ci::message ci{ 0x1A, 0x7665544, 0xFFFFFFF, nullptr, 0, 0x08 };
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
+        midi::ci::message ci{ 0x1A, 0x7665544, 0xFFFFFFF, 0x08 };
 
         EXPECT_TRUE(midi::is_capability_inquiry_message(ci));
 
@@ -142,69 +146,14 @@ TEST_F(capability_inquiry, message_constructor)
         EXPECT_EQ(0xFFFFFFFu, ci.destination_muid());
 
         EXPECT_EQ(12u, ci.data.size());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
-        const midi::uint7_t d[] = { 0x1, 0x2, 0x3, 0x40, 0x7D };
-        midi::ci::message   ci{ 0x02, 0x7654321, 0x1234567, d, sizeof(d) };
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
-        EXPECT_TRUE(midi::is_capability_inquiry_message(ci));
-
-        EXPECT_EQ(0x7F, ci.device_id());
-        EXPECT_EQ(midi::universal_sysex::type::capability_inquiry, ci.type());
-        EXPECT_EQ(0x02, ci.subtype());
-
-        EXPECT_EQ(midi::ci::version, ci.message_version());
-        EXPECT_EQ(0x7654321u, ci.source_muid());
-        EXPECT_EQ(0x1234567u, ci.destination_muid());
-
-        EXPECT_EQ(17u, ci.data.size());
-        for (size_t i = ci.offset_of_data; i < ci.data.size(); ++i)
-        {
-            EXPECT_EQ(d[i - ci.offset_of_data], ci.data[i]);
-        }
-    }
-
-    {
-        std::vector<midi::uint7_t> d;
-        midi::ci::message          ci{ 0x04, 19922, 788, d };
-
-        EXPECT_TRUE(midi::is_capability_inquiry_message(ci));
-
-        EXPECT_EQ(0x7F, ci.device_id());
-        EXPECT_EQ(midi::universal_sysex::type::capability_inquiry, ci.type());
-        EXPECT_EQ(0x04, ci.subtype());
-
-        EXPECT_EQ(midi::ci::version, ci.message_version());
-        EXPECT_EQ(19922u, ci.source_muid());
-        EXPECT_EQ(788u, ci.destination_muid());
-
-        EXPECT_EQ(12u, ci.data.size());
-    }
-
-    {
-        std::vector<midi::uint7_t> d{ 9, 8, 7, 6, 5, 4, 3, 2, 1 };
-        midi::ci::message          ci{ 0x77, 42, 11, d, 0x40 };
-
-        EXPECT_TRUE(midi::is_capability_inquiry_message(ci));
-
-        EXPECT_EQ(0x40, ci.device_id());
-        EXPECT_EQ(midi::universal_sysex::type::capability_inquiry, ci.type());
-        EXPECT_EQ(0x77, ci.subtype());
-
-        EXPECT_EQ(midi::ci::version, ci.message_version());
-        EXPECT_EQ(42u, ci.source_muid());
-        EXPECT_EQ(11u, ci.destination_muid());
-
-        EXPECT_EQ(21u, ci.data.size());
-        for (size_t i = ci.offset_of_data; i < ci.data.size(); ++i)
-        {
-            EXPECT_EQ(d[i - ci.offset_of_data], ci.data[i]);
-        }
-    }
-
-    {
-        auto ci = midi::ci::message::make_with_capacity(256, 0x04, 19922, 788, 6);
+        auto ci = midi::ci::message::make_with_payload_size(244, 0x04, 19922, 788, 6);
 
         EXPECT_EQ(256u, ci.data.capacity());
 
@@ -217,6 +166,34 @@ TEST_F(capability_inquiry, message_constructor)
         EXPECT_EQ(788u, ci.destination_muid());
 
         EXPECT_EQ(12u, ci.data.size());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
+    }
+
+    {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
+        auto ci = midi::ci::message::make_with_payload_size(4, 0x04, 19922, 788, 6);
+
+        EXPECT_EQ(16u, ci.data.capacity());
+
+        EXPECT_EQ(0x06, ci.device_id());
+        EXPECT_EQ(midi::universal_sysex::type::capability_inquiry, ci.type());
+        EXPECT_EQ(0x04, ci.subtype());
+
+        EXPECT_EQ(midi::ci::version, ci.message_version());
+        EXPECT_EQ(19922u, ci.source_muid());
+        EXPECT_EQ(788u, ci.destination_muid());
+
+        EXPECT_EQ(12u, ci.data.size());
+
+        const midi::uint7_t payload[] = { 1, 2, 3, 4 };
+        ci.add_data(payload, sizeof(payload));
+
+        EXPECT_EQ(16u, ci.data.capacity());
+        EXPECT_EQ(16u, ci.data.size());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 }
 
@@ -299,7 +276,7 @@ TEST_F(capability_inquiry, message_muids)
     }
 
     {
-        midi::ci::message m{ 0x33, 0x1234567, 0xFFFFFFF, nullptr, 0 };
+        midi::ci::message m{ 0x33, 0x1234567, 0xFFFFFFF };
 
         EXPECT_EQ(0x1234567u, m.source_muid());
         EXPECT_EQ(0xFFFFFFFu, m.destination_muid());
@@ -421,6 +398,8 @@ TEST_F(capability_inquiry, discovery_message_view)
 TEST_F(capability_inquiry, make_discovery_message_v1)
 {
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto identity = midi::device_identity{ midi::manufacturer::native_instruments, 0x1730, 49, 0x00010005 };
 
         auto sx = midi::ci::discovery::make_discovery_message_v1(
@@ -446,6 +425,8 @@ TEST_F(capability_inquiry, make_discovery_message_v1)
 
         EXPECT_EQ(0x0C, v.categories());
         EXPECT_EQ(766u, v.maximum_message_size());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 }
 
@@ -531,6 +512,8 @@ TEST_F(capability_inquiry, discovery_inquiry)
     using VUT = midi::ci::discovery_inquiry_view;
 
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto identity = midi::device_identity{ midi::manufacturer::native_instruments, 0x1730, 49, 0x00010005 };
 
         auto sx = midi::ci::make_discovery_inquiry(0x2435465, identity, 0x0C, 766);
@@ -557,6 +540,8 @@ TEST_F(capability_inquiry, discovery_inquiry)
         EXPECT_EQ(0x0C, m.categories());
         EXPECT_EQ(766u, m.maximum_message_size());
         EXPECT_EQ(0x00u, m.output_path_id());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 }
 
@@ -565,6 +550,8 @@ TEST_F(capability_inquiry, discovery_inquiry)
 TEST_F(capability_inquiry, make_discovery_inquiry_v1)
 {
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto identity = midi::device_identity{ midi::manufacturer::native_instruments, 0x1730, 49, 0x00010005 };
 
         auto sx = midi::ci::make_discovery_inquiry_v1(0x2435465, identity, 0x0C, 766);
@@ -587,6 +574,8 @@ TEST_F(capability_inquiry, make_discovery_inquiry_v1)
 
         EXPECT_EQ(0x0C, m.categories());
         EXPECT_EQ(766u, m.maximum_message_size());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 }
 
@@ -676,6 +665,8 @@ TEST_F(capability_inquiry, discovery_reply)
     using VUT = midi::ci::discovery_reply_view;
 
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto identity = midi::device_identity{ midi::manufacturer::native_instruments, 0x1730, 61, 0x00010005 };
 
         auto sx = midi::ci::make_discovery_reply(0x3445566, 0x2435465, identity, 0x01, 256, 0x54);
@@ -703,6 +694,8 @@ TEST_F(capability_inquiry, discovery_reply)
         EXPECT_EQ(0x01, m.categories());
         EXPECT_EQ(256u, m.maximum_message_size());
         EXPECT_EQ(0x54u, m.output_path_id());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 }
 
@@ -711,6 +704,8 @@ TEST_F(capability_inquiry, discovery_reply)
 TEST_F(capability_inquiry, make_discovery_reply_v1)
 {
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto identity = midi::device_identity{ midi::manufacturer::native_instruments, 0x1730, 61, 0x00010005 };
 
         auto sx = midi::ci::make_discovery_reply_v1(0x3445566, 0x2435465, identity, 0x01, 256);
@@ -736,6 +731,8 @@ TEST_F(capability_inquiry, make_discovery_reply_v1)
         EXPECT_EQ(0x01, m.categories());
         EXPECT_EQ(256u, m.maximum_message_size());
         EXPECT_EQ(0x00u, m.output_path_id());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 }
 
@@ -791,6 +788,8 @@ TEST_F(capability_inquiry, make_endpoint_information_inquiry)
     using VUT = midi::ci::endpoint_information_inquiry_view;
 
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto sx = midi::ci::make_endpoint_information_inquiry(0x3445566, 0x2435465, 0x22);
 
         EXPECT_TRUE(midi::is_capability_inquiry_message(sx));
@@ -809,6 +808,8 @@ TEST_F(capability_inquiry, make_endpoint_information_inquiry)
         EXPECT_EQ(0x2435465u, m.destination_muid());
 
         EXPECT_EQ(0x22u, m.status());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 }
 
@@ -889,6 +890,8 @@ TEST_F(capability_inquiry, make_endpoint_information_reply)
     using VUT = midi::ci::endpoint_information_reply_view;
 
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         std::vector<midi::uint7_t> d{ 9, 8, 7, 6, 5, 4, 3, 2, 1 };
         auto sx = midi::ci::make_endpoint_information_reply(0x3445566, 0x2435465, 0x08, d.data(), d.size());
         EXPECT_EQ(24u, sx.data.size());
@@ -913,6 +916,8 @@ TEST_F(capability_inquiry, make_endpoint_information_reply)
 
         EXPECT_EQ(d,
                   std::vector<midi::uint7_t>(m.information_data(), m.information_data() + m.information_data_length()));
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 }
 
@@ -923,6 +928,8 @@ TEST_F(capability_inquiry, invalidate_muid)
     using VUT = midi::ci::invalidate_muid_view;
 
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto sx = midi::ci::make_invalidate_muid_message(0x2435465);
         EXPECT_EQ(12u, sx.data.size());
 
@@ -939,6 +946,8 @@ TEST_F(capability_inquiry, invalidate_muid)
         EXPECT_EQ(midi::ci::version, m.message_version());
         EXPECT_EQ(0x2435465u, m.source_muid());
         EXPECT_EQ(0xFFFFFFFu, m.destination_muid());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 }
 
@@ -1046,6 +1055,8 @@ TEST_F(capability_inquiry, make_ack_message)
     } details = { { 5, 4, 3, 2, 1 } };
 
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto sx = midi::ci::make_ack_message(0x2435465,
                                              0x1234567,
                                              0x4,
@@ -1077,6 +1088,8 @@ TEST_F(capability_inquiry, make_ack_message)
 
         EXPECT_EQ(14u, m.message_length());
         EXPECT_EQ(m.message(), "A message text");
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 }
 
@@ -1188,6 +1201,8 @@ TEST_F(capability_inquiry, make_nak_message_v1)
     using VUT = midi::capability_inquiry_view;
 
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto sx = midi::ci::make_nak_message_v1(0x2435465, 0x1234567, 8);
 
         EXPECT_TRUE(midi::is_capability_inquiry_message(sx));
@@ -1206,9 +1221,13 @@ TEST_F(capability_inquiry, make_nak_message_v1)
         EXPECT_EQ(0x1234567u, m.destination_muid());
 
         EXPECT_EQ(8, m.device_id());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto ridentity = midi::device_identity{ midi::manufacturer::native_instruments, 0x1730, 61, 0x00010005 };
         auto rsx       = midi::ci::make_discovery_reply_v1(0x3445566, 0x2435465, ridentity, 0x01, 256);
         auto r         = midi::ci::discovery_reply_view{ rsx };
@@ -1231,6 +1250,8 @@ TEST_F(capability_inquiry, make_nak_message_v1)
         EXPECT_EQ(0x3445566u, m.destination_muid());
 
         EXPECT_EQ(0x7Fu, m.device_id());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 2);
     }
 }
 
@@ -1246,6 +1267,8 @@ TEST_F(capability_inquiry, make_nak_message)
     } details = { { 5, 4, 3, 2, 1 } };
 
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto sx = midi::ci::make_nak_message(0x2435465,
                                              0x1234567,
                                              0x4,
@@ -1277,9 +1300,13 @@ TEST_F(capability_inquiry, make_nak_message)
 
         EXPECT_EQ(14u, m.message_length());
         EXPECT_EQ(m.message(), "A message text");
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         const auto msg = midi::ci::make_notify_message(0x29D4832, 0x57EC42A, 42, 0, 9);
         const auto v   = midi::capability_inquiry_view{ msg };
 
@@ -1307,6 +1334,8 @@ TEST_F(capability_inquiry, make_nak_message)
 
         EXPECT_EQ(7u, m.message_length());
         EXPECT_EQ(m.message(), "What?!?");
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 2);
     }
 }
 

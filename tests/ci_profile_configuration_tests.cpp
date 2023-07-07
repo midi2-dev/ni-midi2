@@ -24,6 +24,8 @@
 
 #include <midi/capability_inquiry.h>
 
+#include "sysex_tests.h"
+
 //-----------------------------------------------
 
 #include <cstring>
@@ -157,6 +159,8 @@ TEST_F(ci_profile_configuration, profile_inquiry)
     }
 
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto mut = midi::ci::make_profile_inquiry_message(0x7665544, 0x24D2B78, 0x08);
 
         EXPECT_TRUE(VUT::validate(mut));
@@ -171,9 +175,13 @@ TEST_F(ci_profile_configuration, profile_inquiry)
         EXPECT_EQ(midi::ci::version, m.message_version());
         EXPECT_EQ(0x7665544u, m.source_muid());
         EXPECT_EQ(0x24D2B78u, m.destination_muid());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto mut = midi::ci::make_profile_inquiry_message(0x7263544, 5);
 
         auto m = VUT{ mut };
@@ -185,6 +193,8 @@ TEST_F(ci_profile_configuration, profile_inquiry)
         EXPECT_EQ(midi::ci::version, m.message_version());
         EXPECT_EQ(0x7263544u, m.source_muid());
         EXPECT_EQ(5u, m.destination_muid());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 }
 
@@ -452,6 +462,8 @@ TEST_F(ci_profile_configuration, make_profile_inquiry_reply_from_carray)
     using VUT = midi::ci::profile_inquiry_reply_view;
 
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto mut = midi::ci::make_profile_inquiry_reply(0x7665544, 0x4711, nullptr, 0, nullptr, 0, 0x08);
         EXPECT_EQ(16u, mut.data.size());
 
@@ -476,6 +488,8 @@ TEST_F(ci_profile_configuration, make_profile_inquiry_reply_from_carray)
         EXPECT_EQ(0u, m.num_disabled_profiles());
         const auto disabled = m.disabled_profiles();
         EXPECT_EQ(0u, disabled.size());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
@@ -485,6 +499,8 @@ TEST_F(ci_profile_configuration, make_profile_inquiry_reply_from_carray)
         constexpr midi::uint14_t   num_disabled_profiles = 2;
         const midi::ci::profile_id disabled_profiles[]   = { { 0x7E, 0x01, 0x02, 0x03, 0x04 },
                                                              { 0x00, 0x21, 0x09, 11, 77 } };
+
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
         auto mut = midi::ci::make_profile_inquiry_reply(
           0x1234567, 0xCCCCCCC, enabled_profiles, num_enabled_profiles, disabled_profiles, num_disabled_profiles, 0x0A);
@@ -516,6 +532,8 @@ TEST_F(ci_profile_configuration, make_profile_inquiry_reply_from_carray)
             EXPECT_EQ(0, memcmp(disabled_profiles + p, &profile, 5));
             ++p;
         }
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
@@ -524,6 +542,8 @@ TEST_F(ci_profile_configuration, make_profile_inquiry_reply_from_carray)
 
         constexpr midi::uint14_t    num_disabled_profiles = 0;
         const midi::ci::profile_id* disabled_profiles     = nullptr;
+
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
         auto mut = midi::ci::make_profile_inquiry_reply(
           0x1133557, 0x2244668, enabled_profiles, num_enabled_profiles, disabled_profiles, num_disabled_profiles, 0x02);
@@ -556,6 +576,8 @@ TEST_F(ci_profile_configuration, make_profile_inquiry_reply_from_carray)
         EXPECT_FALSE(m.has_disabled_profiles());
         EXPECT_EQ(0u, m.num_disabled_profiles());
         EXPECT_TRUE(m.disabled_profiles().empty());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
@@ -566,6 +588,8 @@ TEST_F(ci_profile_configuration, make_profile_inquiry_reply_from_carray)
         const midi::ci::profile_id disabled_profiles[]   = { { 0x7E, 0x01, 0x02, 0x03, 0x04 },
                                                              { 0x00, 0x21, 0x09, 11, 77 },
                                                              { 0x7E, 0x03, 0x02, 0x01, 0x00 } };
+
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
         auto mut = midi::ci::make_profile_inquiry_reply(
           0x8563412, 0x4927364, enabled_profiles, num_enabled_profiles, disabled_profiles, num_disabled_profiles);
@@ -606,6 +630,8 @@ TEST_F(ci_profile_configuration, make_profile_inquiry_reply_from_carray)
             EXPECT_EQ(0, memcmp(disabled_profiles + p, &profile, 5));
             ++p;
         }
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
@@ -614,6 +640,8 @@ TEST_F(ci_profile_configuration, make_profile_inquiry_reply_from_carray)
 
         constexpr midi::uint14_t   num_disabled_profiles = 322;
         const midi::ci::profile_id disabled_profiles[num_disabled_profiles];
+
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
         auto mut = midi::ci::make_profile_inquiry_reply(
           0x7856341, 0x1234567, enabled_profiles, num_enabled_profiles, disabled_profiles, num_disabled_profiles);
@@ -654,6 +682,8 @@ TEST_F(ci_profile_configuration, make_profile_inquiry_reply_from_carray)
             EXPECT_EQ(0, memcmp(disabled_profiles + p, &profile, 5));
             ++p;
         }
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 }
 
@@ -664,6 +694,8 @@ TEST_F(ci_profile_configuration, make_profile_inquiry_reply_from_vector)
     using VUT = midi::ci::profile_inquiry_reply_view;
 
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto mut = midi::ci::make_profile_inquiry_reply(
           0xF665544, 0x7777777, std::vector<midi::ci::profile_id>{}, std::vector<midi::ci::profile_id>{}, 0x08);
         EXPECT_EQ(16u, mut.data.size());
@@ -689,12 +721,16 @@ TEST_F(ci_profile_configuration, make_profile_inquiry_reply_from_vector)
         EXPECT_EQ(0u, m.num_disabled_profiles());
         const auto disabled = m.disabled_profiles();
         EXPECT_EQ(0u, disabled.size());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
         const std::vector<midi::ci::profile_id> enabled_profiles;
         const std::vector<midi::ci::profile_id> disabled_profiles{ { 0x7E, 0x01, 0x02, 0x03, 0x04 },
                                                                    { 0x00, 0x21, 0x09, 11, 77 } };
+
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
         auto mut = midi::ci::make_profile_inquiry_reply(0x2345678, 5, enabled_profiles, disabled_profiles, 0x0A);
         EXPECT_EQ(26u, mut.data.size());
@@ -725,6 +761,8 @@ TEST_F(ci_profile_configuration, make_profile_inquiry_reply_from_vector)
             EXPECT_EQ(0, memcmp(disabled_profiles.data() + p, &profile, 5));
             ++p;
         }
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
@@ -732,6 +770,8 @@ TEST_F(ci_profile_configuration, make_profile_inquiry_reply_from_vector)
                                                                   { 0x00, 0x21, 0x09, 11, 77 } };
 
         const std::vector<midi::ci::profile_id> disabled_profiles;
+
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
         auto mut =
           midi::ci::make_profile_inquiry_reply(0xC335577, 0xACACACA, enabled_profiles, disabled_profiles, 0x02);
@@ -764,6 +804,8 @@ TEST_F(ci_profile_configuration, make_profile_inquiry_reply_from_vector)
         EXPECT_FALSE(m.has_disabled_profiles());
         EXPECT_EQ(0u, m.num_disabled_profiles());
         EXPECT_TRUE(m.disabled_profiles().empty());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
@@ -772,6 +814,8 @@ TEST_F(ci_profile_configuration, make_profile_inquiry_reply_from_vector)
         const std::vector<midi::ci::profile_id> disabled_profiles{ { 0x7E, 0x01, 0x02, 0x03, 0x04 },
                                                                    { 0x00, 0x21, 0x09, 11, 77 },
                                                                    { 0x7E, 0x04, 0x03, 0x02, 0x01 } };
+
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
         auto mut = midi::ci::make_profile_inquiry_reply(0x8563412, 0x1918172, enabled_profiles, disabled_profiles);
         EXPECT_EQ(36u, mut.data.size());
@@ -811,6 +855,8 @@ TEST_F(ci_profile_configuration, make_profile_inquiry_reply_from_vector)
             EXPECT_EQ(0, memcmp(disabled_profiles.data() + p, &profile, 5));
             ++p;
         }
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 }
 
@@ -822,6 +868,8 @@ TEST_F(ci_profile_configuration, profile_id_view)
 
     {
         const midi::ci::profile_id profile{ 0x01, 0x02, 0x03, 0x04, 0x05 };
+
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
         auto mut = midi::ci::make_profile_on_request(0x1234568, 0x2345689, profile, 0x0D);
         EXPECT_EQ(17u, mut.data.size());
@@ -838,10 +886,14 @@ TEST_F(ci_profile_configuration, profile_id_view)
         EXPECT_EQ(0x1234568u, m.source_muid());
         EXPECT_EQ(0x2345689u, m.destination_muid());
         EXPECT_EQ(profile, m.profile());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
         const midi::ci::profile_id profile{ 0x7E, 0x44, 0x33, 0x22, 0x11 };
+
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
         auto mut = midi::ci::make_profile_disabled_notification(0x7856312, 0x2345689, profile);
         EXPECT_EQ(17u, mut.data.size());
@@ -858,10 +910,14 @@ TEST_F(ci_profile_configuration, profile_id_view)
         EXPECT_EQ(0x7856312u, m.source_muid());
         EXPECT_EQ(0x2345689u, m.destination_muid());
         EXPECT_EQ(profile, m.profile());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
         const midi::ci::profile_id profile{ 0x7E, 0x44, 0x33, 0x22, 0x11 };
+
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
         auto mut = midi::ci::make_profile_added_notification(0x7863412, 0x2345689, profile);
         EXPECT_EQ(17u, mut.data.size());
@@ -878,6 +934,8 @@ TEST_F(ci_profile_configuration, profile_id_view)
         EXPECT_EQ(0x7863412u, m.source_muid());
         EXPECT_EQ(0x2345689u, m.destination_muid());
         EXPECT_EQ(profile, m.profile());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     // invalid type
@@ -977,6 +1035,8 @@ TEST_F(ci_profile_configuration, set_profile_on)
     {
         const midi::ci::profile_id profile{ 0x01, 0x02, 0x03, 0x04, 0x05 };
 
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto mut = midi::ci::make_profile_on_request(0x1234567, 0, profile, 0x0D);
         EXPECT_EQ(17u, mut.data.size());
 
@@ -992,10 +1052,14 @@ TEST_F(ci_profile_configuration, set_profile_on)
         EXPECT_EQ(0x1234567u, m.source_muid());
         EXPECT_EQ(0u, m.destination_muid());
         EXPECT_EQ(profile, m.profile());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
         const midi::ci::profile_id profile{ 0x7E, 0x44, 0x33, 0x22, 0x11 };
+
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
         auto mut = midi::ci::make_profile_on_request(0x8563412, 0x1FFFFFF, profile);
         EXPECT_EQ(17u, mut.data.size());
@@ -1012,6 +1076,8 @@ TEST_F(ci_profile_configuration, set_profile_on)
         EXPECT_EQ(0x8563412u, m.source_muid());
         EXPECT_EQ(0x1FFFFFFu, m.destination_muid());
         EXPECT_EQ(profile, m.profile());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
@@ -1034,6 +1100,8 @@ TEST_F(ci_profile_configuration, set_profile_off)
     {
         const midi::ci::profile_id profile{ 0x01, 0x02, 0x03, 0x04, 0x05 };
 
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto mut = midi::ci::make_profile_off_request(0x1234567, 4711, profile, 0x0D);
         EXPECT_EQ(17u, mut.data.size());
 
@@ -1049,10 +1117,14 @@ TEST_F(ci_profile_configuration, set_profile_off)
         EXPECT_EQ(0x1234567u, m.source_muid());
         EXPECT_EQ(4711u, m.destination_muid());
         EXPECT_EQ(profile, m.profile());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
         const midi::ci::profile_id profile{ 0x7E, 0x44, 0x33, 0x22, 0x11 };
+
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
         auto mut = midi::ci::make_profile_off_request(0x7563412, 42, profile);
         EXPECT_EQ(17u, mut.data.size());
@@ -1069,6 +1141,8 @@ TEST_F(ci_profile_configuration, set_profile_off)
         EXPECT_EQ(0x7563412u, m.source_muid());
         EXPECT_EQ(42u, m.destination_muid());
         EXPECT_EQ(profile, m.profile());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
@@ -1091,6 +1165,8 @@ TEST_F(ci_profile_configuration, profile_enabled)
     {
         const midi::ci::profile_id profile{ 0x01, 0x02, 0x03, 0x04, 0x05 };
 
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto mut = midi::ci::make_profile_enabled_notification(0x2345678, 0x0101010, profile, 0x0D);
         EXPECT_EQ(17u, mut.data.size());
 
@@ -1106,10 +1182,14 @@ TEST_F(ci_profile_configuration, profile_enabled)
         EXPECT_EQ(0x2345678u, m.source_muid());
         EXPECT_EQ(0x0101010u, m.destination_muid());
         EXPECT_EQ(profile, m.profile());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
         const midi::ci::profile_id profile{ 0x7E, 0x44, 0x33, 0x22, 0x11 };
+
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
         auto mut = midi::ci::make_profile_enabled_notification(0x7863412, 0x5647382, profile);
         EXPECT_EQ(17u, mut.data.size());
@@ -1126,6 +1206,8 @@ TEST_F(ci_profile_configuration, profile_enabled)
         EXPECT_EQ(0x7863412u, m.source_muid());
         EXPECT_EQ(0x5647382u, m.destination_muid());
         EXPECT_EQ(profile, m.profile());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
@@ -1148,6 +1230,8 @@ TEST_F(ci_profile_configuration, profile_disabled)
     {
         const midi::ci::profile_id profile{ 0x01, 0x02, 0x03, 0x04, 0x05 };
 
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto mut = midi::ci::make_profile_disabled_notification(0x1234567, 5, profile, 0x0D);
         EXPECT_EQ(17u, mut.data.size());
 
@@ -1163,10 +1247,14 @@ TEST_F(ci_profile_configuration, profile_disabled)
         EXPECT_EQ(0x1234567u, m.source_muid());
         EXPECT_EQ(5u, m.destination_muid());
         EXPECT_EQ(profile, m.profile());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
         const midi::ci::profile_id profile{ 0x7E, 0x44, 0x33, 0x22, 0x11 };
+
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
         auto mut = midi::ci::make_profile_disabled_notification(0x7856341, 0x9999999, profile);
         EXPECT_EQ(17u, mut.data.size());
@@ -1183,6 +1271,8 @@ TEST_F(ci_profile_configuration, profile_disabled)
         EXPECT_EQ(0x7856341u, m.source_muid());
         EXPECT_EQ(0x9999999u, m.destination_muid());
         EXPECT_EQ(profile, m.profile());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
@@ -1205,6 +1295,8 @@ TEST_F(ci_profile_configuration, profile_added)
     {
         const midi::ci::profile_id profile{ 0x01, 0x02, 0x03, 0x04, 0x05 };
 
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto mut = midi::ci::make_profile_added_notification(0x1234567, 5, profile, 0x0D);
         EXPECT_EQ(17u, mut.data.size());
 
@@ -1220,10 +1312,14 @@ TEST_F(ci_profile_configuration, profile_added)
         EXPECT_EQ(0x1234567u, m.source_muid());
         EXPECT_EQ(5u, m.destination_muid());
         EXPECT_EQ(profile, m.profile());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
         const midi::ci::profile_id profile{ 0x7E, 0x44, 0x33, 0x22, 0x11 };
+
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
         auto mut = midi::ci::make_profile_added_notification(0x7856341, 0x9999999, profile);
         EXPECT_EQ(17u, mut.data.size());
@@ -1240,6 +1336,8 @@ TEST_F(ci_profile_configuration, profile_added)
         EXPECT_EQ(0x7856341u, m.source_muid());
         EXPECT_EQ(0x9999999u, m.destination_muid());
         EXPECT_EQ(profile, m.profile());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
@@ -1262,6 +1360,8 @@ TEST_F(ci_profile_configuration, profile_removed)
     {
         const midi::ci::profile_id profile{ 0x01, 0x02, 0x03, 0x04, 0x05 };
 
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto mut = midi::ci::make_profile_removed_notification(0x1234567, 5, profile, 0x0D);
         EXPECT_EQ(17u, mut.data.size());
 
@@ -1282,6 +1382,8 @@ TEST_F(ci_profile_configuration, profile_removed)
     {
         const midi::ci::profile_id profile{ 0x7E, 0x44, 0x33, 0x22, 0x11 };
 
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto mut = midi::ci::make_profile_removed_notification(0x7856341, 0x9999999, profile);
         EXPECT_EQ(17u, mut.data.size());
 
@@ -1297,6 +1399,8 @@ TEST_F(ci_profile_configuration, profile_removed)
         EXPECT_EQ(0x7856341u, m.source_muid());
         EXPECT_EQ(0x9999999u, m.destination_muid());
         EXPECT_EQ(profile, m.profile());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
@@ -1400,6 +1504,8 @@ TEST_F(ci_profile_configuration, make_profile_details_inquiry)
     {
         const midi::ci::profile_id profile{ 0x7E, 0x44, 0x33, 0x22, 0x11 };
 
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto sx = midi::ci::make_profile_details_inquiry(0x2345678, 0x0101010, profile, 0x32, 0x7E);
         EXPECT_EQ(18u, sx.data.size());
 
@@ -1418,6 +1524,8 @@ TEST_F(ci_profile_configuration, make_profile_details_inquiry)
 
         EXPECT_EQ(profile, m.profile());
         EXPECT_EQ(0x32u, m.target());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 }
 
@@ -1488,6 +1596,8 @@ TEST_F(ci_profile_configuration, make_profile_details_reply)
         const midi::ci::profile_id       profile{ 0x7E, 0x44, 0x33, 0x22, 0x11 };
         const std::vector<midi::uint7_t> data{ 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 };
 
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto sx = midi::ci::make_profile_details_reply(0x2345678, 0x0101010, profile, 0x32, data.data(), data.size());
         EXPECT_EQ(31u, sx.data.size());
 
@@ -1509,6 +1619,8 @@ TEST_F(ci_profile_configuration, make_profile_details_reply)
 
         EXPECT_EQ(11u, m.target_data_length());
         EXPECT_EQ(0, memcmp(data.data(), m.target_data(), 11));
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 }
 

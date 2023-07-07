@@ -24,6 +24,8 @@
 
 #include <midi/capability_inquiry.h>
 
+#include "sysex_tests.h"
+
 //-----------------------------------------------
 
 #include <cstring>
@@ -150,6 +152,8 @@ TEST_F(ci_property_exchange, make_property_exchange_capabilities_inquiry)
     using VUT = midi::ci::property_exchange_capabilities_view;
 
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto sx = midi::ci::make_property_exchange_capabilities_inquiry(0x1234567, 0xFEDCBA9, 3, 0x05);
         EXPECT_EQ(15u, sx.data.size());
 
@@ -169,9 +173,13 @@ TEST_F(ci_property_exchange, make_property_exchange_capabilities_inquiry)
         EXPECT_EQ(3, m.maximum_number_of_requests());
         EXPECT_EQ(0, m.pe_version_major());
         EXPECT_EQ(0, m.pe_version_minor());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto sx = midi::ci::make_property_exchange_capabilities_inquiry(0x856312, 0x123456);
         EXPECT_EQ(15u, sx.data.size());
 
@@ -191,9 +199,13 @@ TEST_F(ci_property_exchange, make_property_exchange_capabilities_inquiry)
         EXPECT_EQ(1, m.maximum_number_of_requests());
         EXPECT_EQ(0, m.pe_version_major());
         EXPECT_EQ(0, m.pe_version_minor());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto sx = midi::ci::make_property_exchange_capabilities_inquiry(0x1234567, 0x9856312, 7);
         EXPECT_EQ(15u, sx.data.size());
 
@@ -213,6 +225,8 @@ TEST_F(ci_property_exchange, make_property_exchange_capabilities_inquiry)
         EXPECT_EQ(7, m.maximum_number_of_requests());
         EXPECT_EQ(0, m.pe_version_major());
         EXPECT_EQ(0, m.pe_version_minor());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 }
 
@@ -223,6 +237,8 @@ TEST_F(ci_property_exchange, reply_capabilities)
     using VUT = midi::ci::property_exchange_capabilities_view;
 
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto sx = midi::ci::make_property_exchange_capabilities_reply(0x1234567, 0xABCDEF0, 12, 0x08);
         EXPECT_EQ(15u, sx.data.size());
 
@@ -241,9 +257,13 @@ TEST_F(ci_property_exchange, reply_capabilities)
         EXPECT_EQ(12, m.maximum_number_of_requests());
         EXPECT_EQ(0, m.pe_version_major());
         EXPECT_EQ(0, m.pe_version_minor());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto sx = midi::ci::make_property_exchange_capabilities_reply(0x756341, 0x392817);
         EXPECT_EQ(15u, sx.data.size());
 
@@ -263,9 +283,13 @@ TEST_F(ci_property_exchange, reply_capabilities)
         EXPECT_EQ(1, m.maximum_number_of_requests());
         EXPECT_EQ(0, m.pe_version_major());
         EXPECT_EQ(0, m.pe_version_minor());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto sx = midi::ci::make_property_exchange_capabilities_reply(0x1234567, 0x392817F, 7);
         EXPECT_EQ(15u, sx.data.size());
 
@@ -285,6 +309,8 @@ TEST_F(ci_property_exchange, reply_capabilities)
         EXPECT_EQ(7, m.maximum_number_of_requests());
         EXPECT_EQ(0, m.pe_version_major());
         EXPECT_EQ(0, m.pe_version_minor());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 }
 
@@ -696,6 +722,8 @@ TEST_F(ci_property_exchange, get_property_data_inquiry)
         const char*  request  = "{\"resource\":\"ResourceList\"}";
         const size_t len      = strlen(request);
 
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto sx = midi::ci::make_get_property_data_inquiry(0x1234567, 0x4332211, resource, 0x11, 0x0A);
         EXPECT_EQ(21u + len, sx.data.size());
 
@@ -722,11 +750,15 @@ TEST_F(ci_property_exchange, get_property_data_inquiry)
 
         EXPECT_EQ(1u, m.number_of_chunks());
         EXPECT_EQ(1u, m.number_of_this_chunk());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
         std::string resource{ "ProgramList" };
         std::string request{ "{\"resource\":\"ProgramList\"}" };
+
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
         auto sx = midi::ci::make_get_property_data_inquiry(0x1135577, 0x4242, resource);
         EXPECT_EQ(21 + request.length(), sx.data.size());
@@ -754,6 +786,8 @@ TEST_F(ci_property_exchange, get_property_data_inquiry)
 
         EXPECT_EQ(1u, m.number_of_chunks());
         EXPECT_EQ(1u, m.number_of_this_chunk());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 }
 
@@ -824,6 +858,8 @@ TEST_F(ci_property_exchange, get_property_data_reply)
         const size_t        status_len = strlen(status);
         const midi::uint7_t chunk[]    = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
 
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto sx =
           midi::ci::make_get_property_data_reply(0x1234567, 0x1234568, 200, 1, 1, { chunk, sizeof(chunk) }, 12, 0x0A);
         EXPECT_EQ(21 + status_len + sizeof(chunk), sx.data.size());
@@ -855,11 +891,15 @@ TEST_F(ci_property_exchange, get_property_data_reply)
         EXPECT_EQ(m.chunk_end(), m.chunk_begin() + m.chunk_size());
 
         EXPECT_EQ(0, memcmp(m.chunk_begin(), chunk, m.chunk_size()));
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
         const std::vector<midi::uint7_t> chunk{ 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x00, 0x10, 0x20,
                                                 0x30, 0x40, 0x50, 0x60, 0x70, 0x77, 0x55, 0x33, 0x11, 0x19 };
+
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
         auto sx = midi::ci::make_get_property_data_reply(0x1133577,
                                                          0xFFAABB0,
@@ -895,11 +935,15 @@ TEST_F(ci_property_exchange, get_property_data_reply)
         EXPECT_EQ(m.chunk_end(), m.chunk_begin() + m.chunk_size());
 
         EXPECT_EQ(0, memcmp(m.chunk_begin(), chunk.data(), m.chunk_size()));
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
         const char*  status     = "{\"status\":404}";
         const size_t status_len = strlen(status);
+
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
         auto sx = midi::ci::make_get_property_data_reply(0x1133557, 7, 404, 0, 0, {}, 0);
         EXPECT_EQ(21 + status_len, sx.data.size());
@@ -929,11 +973,15 @@ TEST_F(ci_property_exchange, get_property_data_reply)
 
         EXPECT_EQ(0u, m.chunk_size());
         EXPECT_EQ(m.chunk_end(), m.chunk_begin() + m.chunk_size());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
         const char*  header     = "{\"status\":200,\"totalCount\":11}";
         const size_t header_len = strlen(header);
+
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
         auto sx = midi::ci::make_get_property_data_reply(
           0x1133557,
@@ -973,6 +1021,8 @@ TEST_F(ci_property_exchange, get_property_data_reply)
 
         EXPECT_EQ(0u, m.chunk_size());
         EXPECT_EQ(m.chunk_end(), m.chunk_begin() + m.chunk_size());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 }
 
@@ -1040,6 +1090,8 @@ TEST_F(ci_property_exchange, set_property_data_inquiry)
         const midi::uint7_t property[] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
         const std::string   request{ "{\"resource\":\"rawData\"}" };
 
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto sx = midi::ci::make_set_property_data_inquiry(
           0x1234567, 0xAAAAAAA, "rawData", 1, 1, { property, sizeof(property) }, 9, 0x0A);
         EXPECT_EQ(21u + request.length() + sizeof(property), sx.data.size());
@@ -1071,11 +1123,15 @@ TEST_F(ci_property_exchange, set_property_data_inquiry)
         EXPECT_EQ(m.chunk_end(), m.chunk_begin() + m.chunk_size());
 
         EXPECT_EQ(0, memcmp(m.chunk_begin(), property, m.chunk_size()));
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
         const std::vector<midi::uint7_t> property{ 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x00, 0x10, 0x20,
                                                    0x30, 0x40, 0x50, 0x60, 0x70, 0x77, 0x55, 0x33, 0x11, 0x19 };
+
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
         auto sx = midi::ci::make_set_property_data_inquiry(0x1135577,
                                                            0x9674353,
@@ -1111,9 +1167,13 @@ TEST_F(ci_property_exchange, set_property_data_inquiry)
         EXPECT_EQ(m.chunk_end(), m.chunk_begin() + m.chunk_size());
 
         EXPECT_EQ(0, memcmp(m.chunk_begin(), property.data(), m.chunk_size()));
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto sx = midi::ci::make_set_property_data_inquiry(0x1133577, 0x7487643, 0, 0, {});
         EXPECT_EQ(21u, sx.data.size());
 
@@ -1140,6 +1200,8 @@ TEST_F(ci_property_exchange, set_property_data_inquiry)
 
         EXPECT_EQ(0u, m.chunk_size());
         EXPECT_EQ(m.chunk_end(), m.chunk_begin());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 }
 
@@ -1208,6 +1270,8 @@ TEST_F(ci_property_exchange, set_property_data_reply)
         const char*  status     = "{\"status\":200}";
         const size_t status_len = strlen(status);
 
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto sx = midi::ci::make_set_property_data_reply(0x1234567, 0x3344556, 200, 5, 0x0A);
         EXPECT_EQ(21 + status_len, sx.data.size());
 
@@ -1236,11 +1300,15 @@ TEST_F(ci_property_exchange, set_property_data_reply)
 
         EXPECT_EQ(0u, m.chunk_size());
         EXPECT_EQ(m.chunk_end(), m.chunk_begin());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
         const char*  status     = "{\"status\":404,\"message\":\"Invalid Request.\"}";
         const size_t status_len = strlen(status);
+
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
         auto sx = midi::ci::make_set_property_data_reply(0x1135577, 0x2244668, 404, "Invalid Request.");
         EXPECT_EQ(21 + status_len, sx.data.size());
@@ -1270,6 +1338,8 @@ TEST_F(ci_property_exchange, set_property_data_reply)
 
         EXPECT_EQ(0u, m.chunk_size());
         EXPECT_EQ(m.chunk_end(), m.chunk_begin());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 }
 
@@ -1334,6 +1404,8 @@ TEST_F(ci_property_exchange, subscription)
         const char*  request  = "{\"resource\":\"ChannelList\",\"command\":\"start\",\"subscribeId\":\"aabbcc34\"}";
         const size_t len      = strlen(request);
 
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto sx = midi::ci::make_subscription_inquiry(0x1234567, 0x4332211, resource, command, subId, 0x11, 0x0A);
         EXPECT_EQ(21u + len, sx.data.size());
 
@@ -1360,6 +1432,8 @@ TEST_F(ci_property_exchange, subscription)
 
         EXPECT_EQ(0u, m.number_of_chunks());
         EXPECT_EQ(0u, m.number_of_this_chunk());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
@@ -1368,6 +1442,8 @@ TEST_F(ci_property_exchange, subscription)
         std::string subId{ "987xx" };
         std::string data{ "this is not valid JSON data" };
         std::string request{ "{\"resource\":\"ProgramList\",\"command\":\"full\",\"subscribeId\":\"987xx\"}" };
+
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
         auto sx = midi::ci::make_subscription_inquiry(0x1135577,
                                                       0x4242,
@@ -1404,6 +1480,8 @@ TEST_F(ci_property_exchange, subscription)
 
         EXPECT_EQ(5u, m.number_of_chunks());
         EXPECT_EQ(1u, m.number_of_this_chunk());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 }
 
@@ -1469,6 +1547,8 @@ TEST_F(ci_property_exchange, subscription_reply)
         const char*  status     = "{\"status\":200}";
         const size_t status_len = strlen(status);
 
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto sx = midi::ci::make_subscription_reply(0x1234567, 0x1234568, 200, 12, 0x07);
         EXPECT_EQ(21 + status_len, sx.data.size());
 
@@ -1496,11 +1576,15 @@ TEST_F(ci_property_exchange, subscription_reply)
         EXPECT_EQ(1u, m.number_of_this_chunk());
 
         EXPECT_EQ(0u, m.chunk_size());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
         const char*  status     = "{\"status\":404}";
         const size_t status_len = strlen(status);
+
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
         auto sx = midi::ci::make_subscription_reply(0x1133557, 7, 404, 0);
         EXPECT_EQ(21 + status_len, sx.data.size());
@@ -1530,6 +1614,8 @@ TEST_F(ci_property_exchange, subscription_reply)
 
         EXPECT_EQ(0u, m.chunk_size());
         EXPECT_EQ(m.chunk_end(), m.chunk_begin() + m.chunk_size());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 }
 
@@ -1595,6 +1681,8 @@ TEST_F(ci_property_exchange, notify)
         const char*  status     = "{\"status\":100}";
         const size_t status_len = strlen(status);
 
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         auto sx = midi::ci::make_notify_message(0x1234567, 0x1234568, 100, 12, 0x07);
         EXPECT_EQ(21 + status_len, sx.data.size());
 
@@ -1622,11 +1710,15 @@ TEST_F(ci_property_exchange, notify)
         EXPECT_EQ(1u, m.number_of_this_chunk());
 
         EXPECT_EQ(0u, m.chunk_size());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
         const char*  status     = "{\"status\":408}";
         const size_t status_len = strlen(status);
+
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
         auto sx = midi::ci::make_notify_message(0x1133557, 7, 408, 0);
         EXPECT_EQ(21 + status_len, sx.data.size());
@@ -1656,6 +1748,8 @@ TEST_F(ci_property_exchange, notify)
 
         EXPECT_EQ(0u, m.chunk_size());
         EXPECT_EQ(m.chunk_end(), m.chunk_begin() + m.chunk_size());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 }
 

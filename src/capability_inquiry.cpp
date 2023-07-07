@@ -31,12 +31,7 @@ namespace midi::ci {
 
 //-----------------------------------------------
 
-message::message(subtype_t      subtype,
-                 muid_t         source_muid,
-                 muid_t         destination_muid,
-                 const uint7_t* pData,
-                 size_t         data_size,
-                 uint7_t        device_id)
+message::message(subtype_t subtype, muid_t source_muid, muid_t destination_muid, uint7_t device_id)
   : universal_sysex::message(manufacturer::universal_non_realtime,
                              { device_id,
                                0x0D,
@@ -54,45 +49,31 @@ message::message(subtype_t      subtype,
     assert(subtype <= uint7_max);
     assert(source_muid <= uint28_max);
     assert(destination_muid <= uint28_max);
-    assert(data_size <= uint28_max);
     assert(device_id <= uint7_max);
-
-    if (pData && data_size)
-    {
-        data.reserve(offset_of_data + data_size);
-        data.insert(data.end(), pData, pData + data_size);
-    }
 }
 
 //-----------------------------------------------
 
-message::message(
-  subtype_t subtype, muid_t source_muid, muid_t destination_muid, const std::vector<uint7_t>& d, uint7_t device_id)
-  : universal_sysex::message(manufacturer::universal_non_realtime,
-                             { device_id,
-                               0x0D,
-                               subtype,
-                               version,
-                               static_cast<uint7_t>(source_muid & 0x7F),
-                               static_cast<uint7_t>((source_muid >> 7) & 0x7F),
-                               static_cast<uint7_t>((source_muid >> 14) & 0x7F),
-                               static_cast<uint7_t>((source_muid >> 21) & 0x7F),
-                               static_cast<uint7_t>(destination_muid & 0x7F),
-                               static_cast<uint7_t>((destination_muid >> 7) & 0x7F),
-                               static_cast<uint7_t>((destination_muid >> 14) & 0x7F),
-                               static_cast<uint7_t>((destination_muid >> 21) & 0x7F) })
+message message::make_with_payload_size(
+  size_t payload_size, subtype_t subtype, muid_t source_muid, muid_t destination_muid, uint7_t device_id)
 {
-    assert(subtype <= uint7_max);
-    assert(source_muid <= uint28_max);
-    assert(destination_muid <= uint28_max);
-    assert(d.size() <= uint28_max);
-    assert(device_id <= uint7_max);
+    auto result = message{ message::offset_of_data + payload_size };
 
-    if (d.size())
-    {
-        data.reserve(offset_of_data + d.size());
-        data.insert(data.end(), d.begin(), d.end());
-    }
+    const uint7_t data[] = { device_id,
+                             0x0D,
+                             subtype,
+                             version,
+                             static_cast<uint7_t>(source_muid & 0x7F),
+                             static_cast<uint7_t>((source_muid >> 7) & 0x7F),
+                             static_cast<uint7_t>((source_muid >> 14) & 0x7F),
+                             static_cast<uint7_t>((source_muid >> 21) & 0x7F),
+                             static_cast<uint7_t>(destination_muid & 0x7F),
+                             static_cast<uint7_t>((destination_muid >> 7) & 0x7F),
+                             static_cast<uint7_t>((destination_muid >> 14) & 0x7F),
+                             static_cast<uint7_t>((destination_muid >> 21) & 0x7F) };
+
+    result.add_data(data, sizeof(data));
+    return result;
 }
 
 //-----------------------------------------------
@@ -117,29 +98,6 @@ void message::set_destination_muid(muid_t m)
     data[offset_of_dmuid + 1] = static_cast<uint7_t>((m >> 7) & 0x7F);
     data[offset_of_dmuid + 2] = static_cast<uint7_t>((m >> 14) & 0x7F);
     data[offset_of_dmuid + 3] = static_cast<uint7_t>((m >> 21) & 0x7F);
-}
-
-//-----------------------------------------------
-
-message message::make_with_capacity(
-  size_t capacity, subtype_t subtype, muid_t source_muid, muid_t destination_muid, uint7_t device_id)
-{
-    const uint7_t data[] = { device_id,
-                             0x0D,
-                             subtype,
-                             version,
-                             static_cast<uint7_t>(source_muid & 0x7F),
-                             static_cast<uint7_t>((source_muid >> 7) & 0x7F),
-                             static_cast<uint7_t>((source_muid >> 14) & 0x7F),
-                             static_cast<uint7_t>((source_muid >> 21) & 0x7F),
-                             static_cast<uint7_t>(destination_muid & 0x7F),
-                             static_cast<uint7_t>((destination_muid >> 7) & 0x7F),
-                             static_cast<uint7_t>((destination_muid >> 14) & 0x7F),
-                             static_cast<uint7_t>((destination_muid >> 21) & 0x7F) };
-
-    auto result = message{ capacity };
-    result.data.insert(result.data.end(), data, data + sizeof(data));
-    return result;
 }
 
 //-----------------------------------------------
@@ -176,7 +134,12 @@ message make_profile_inquiry_reply(muid_t            source_muid,
     assert(num_enabled_profiles <= sysex7::uint14_max);
     assert(num_disabled_profiles <= sysex7::uint14_max);
 
-    message result(subtype::profile_inquiry_reply, source_muid, destination_muid, nullptr, 0, deviceID);
+    const size_t payload_size = profile_inquiry_reply_view::field_offsets::minimum_message_size +
+                                (num_enabled_profiles + num_disabled_profiles) * sizeof(profile_id) -
+                                message::offset_of_data;
+
+    auto result = message::make_with_payload_size(
+      payload_size, subtype::profile_inquiry_reply, source_muid, destination_muid, deviceID);
 
     auto add_profile = [&result](const profile_id& profile) {
         result.add_uint7(profile.byte1);
@@ -185,9 +148,6 @@ message make_profile_inquiry_reply(muid_t            source_muid,
         result.add_uint7(profile.byte4);
         result.add_uint7(profile.byte5);
     };
-
-    result.data.reserve(profile_inquiry_reply_view::field_offsets::minimum_message_size +
-                        (num_enabled_profiles + num_disabled_profiles) * sizeof(profile_id));
 
     result.add_uint14(num_enabled_profiles);
     for (auto profile = 0u; profile < num_enabled_profiles; ++profile)
@@ -235,13 +195,14 @@ message make_profile_specific_data_message(muid_t            source_muid,
                                            size_t            psd_data_size,
                                            uint7_t           deviceID)
 {
-    message result(subtype::profile_specific_data, source_muid, destination_muid, &p.byte1, 5, deviceID);
-    result.data.reserve(21 + psd_data_size);
+    auto result = message::make_with_payload_size(
+      9 + psd_data_size, subtype::profile_specific_data, source_muid, destination_muid, deviceID);
+    result.add_data(&p.byte1, 5);
 
     result.add_uint28(static_cast<uint28_t>(psd_data_size));
     if (psd_data_size)
     {
-        result.data.insert(result.data.end(), psd_data, psd_data + psd_data_size);
+        result.add_data(psd_data, psd_data_size);
     }
 
     return result;
@@ -294,7 +255,8 @@ message property_exchange::make_property_data_message(subtype_t     subtype,
                                                       uint7_t       request_id,
                                                       uint7_t       device_id)
 {
-    message result(subtype, source_muid, destination_muid, nullptr, 0, device_id);
+    auto result =
+      message::make_with_payload_size(9 + header.size + chunk.size, subtype, source_muid, destination_muid, device_id);
 
     assert((number_of_chunks && number_of_this_chunk) || ((chunk.data == nullptr) && (chunk.size == 0)));
     assert(number_of_this_chunk <= number_of_chunks);
@@ -302,14 +264,12 @@ message property_exchange::make_property_data_message(subtype_t     subtype,
     assert(!header.size || header.data);
     assert(!chunk.size || chunk.data);
 
-    result.data.reserve(result.data.size() + 9 + header.size + chunk.size);
-
     result.add_uint7(request_id);
 
     result.add_uint14(static_cast<uint14_t>(header.size));
     if (header.size)
     {
-        result.data.insert(result.data.end(), header.data, header.data + header.size);
+        result.add_data(header.data, header.size);
     }
 
     result.add_uint14(number_of_chunks);
@@ -318,7 +278,7 @@ message property_exchange::make_property_data_message(subtype_t     subtype,
     result.add_uint14(static_cast<uint14_t>(chunk.size));
     if (chunk.size)
     {
-        result.data.insert(result.data.end(), chunk.data, chunk.data + chunk.size);
+        result.add_data(chunk.data, chunk.size);
     }
 
     return result;
