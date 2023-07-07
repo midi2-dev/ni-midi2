@@ -30,18 +30,23 @@ namespace midi::universal_sysex {
 
 identity_reply::identity_reply(
   manufacturer_t sysex_id, uint14_t family, uint14_t family_member, uint28_t revision, uint7_t device_id)
-  : message(manufacturer::universal_non_realtime, { device_id, 0x06, subtype::identity_reply })
+  : message(manufacturer::universal_non_realtime)
 {
-    if (sysex_id < 0x10000) // 3 byte manufacturer SysEx ID?
+    const bool threeByteManufacturerID = (sysex_id < 0x10000);
+    data.reserve(threeByteManufacturerID ? 14 : 12);
+
+    data.push_back(device_id);
+    data.push_back(0x06);
+    data.push_back(subtype::identity_reply);
+
+    if (threeByteManufacturerID)
     {
-        data.reserve(14);
         data.push_back(0x00);
         data.push_back((sysex_id >> 8) & 0x7F);
         data.push_back(sysex_id & 0x7F);
     }
     else
     {
-        data.reserve(12);
         data.push_back((sysex_id >> 16) & 0x7F);
     }
 

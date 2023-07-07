@@ -2,6 +2,8 @@
 
 #include <midi/universal_sysex.h>
 
+#include "sysex_tests.h"
+
 //-----------------------------------------------
 
 class universal_sysex : public ::testing::Test
@@ -26,7 +28,7 @@ TEST_F(universal_sysex, sysex7)
     }
 
     {
-        sysex7 sx{ manufacturer::universal_realtime, std::vector<uint7_t>({ 0xAA }) };
+        sysex7 sx{ manufacturer::universal_realtime, midi::sysex7::data_type({ 0xAA }) };
 
         EXPECT_FALSE(midi::is_universal_sysex_message(sx));
 
@@ -109,7 +111,7 @@ TEST_F(universal_sysex, universal_sysex_view)
     }
 
     {
-        sysex7 sx{ manufacturer::universal_realtime, std::vector<uint7_t>({ 0xAA }) };
+        sysex7 sx{ manufacturer::universal_realtime, sysex7::data_type({ 0xAA }) };
 
         EXPECT_FALSE(as_universal_sysex_view(sx));
     }
@@ -184,6 +186,8 @@ TEST_F(universal_sysex, identity_request)
     }
 
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         identity_request idr;
 
         EXPECT_TRUE(midi::is_universal_sysex_message(idr));
@@ -195,9 +199,13 @@ TEST_F(universal_sysex, identity_request)
         EXPECT_TRUE(is_identity_request(idr));
 
         EXPECT_EQ(idr, make_identity_request());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 2);
     }
 
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         identity_request idr(5);
 
         EXPECT_TRUE(midi::is_universal_sysex_message(idr));
@@ -209,6 +217,8 @@ TEST_F(universal_sysex, identity_request)
         EXPECT_TRUE(is_identity_request(idr));
 
         EXPECT_EQ(idr, make_identity_request(5));
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 2);
     }
 }
 
@@ -291,6 +301,8 @@ TEST_F(universal_sysex, identity_reply)
     }
 
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         identity_reply idr{ manufacturer::native_instruments, 0x1800, 32, 0x00000100 };
 
         EXPECT_TRUE(midi::is_universal_sysex_message(idr));
@@ -310,9 +322,13 @@ TEST_F(universal_sysex, identity_reply)
         EXPECT_EQ(0x00000100u, i.revision);
 
         EXPECT_EQ(idr, make_identity_reply(manufacturer::native_instruments, 0x1800, 32, 0x00000100));
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 2);
     }
 
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         identity_reply idr{ manufacturer::waldorf, 0x0001, 0x0000, 0x01234567, 0x80 };
 
         EXPECT_TRUE(midi::is_universal_sysex_message(idr));
@@ -332,9 +348,13 @@ TEST_F(universal_sysex, identity_reply)
         EXPECT_EQ(0x1234567u, i.revision);
 
         EXPECT_EQ(idr, make_identity_reply(manufacturer::waldorf, 0x0001, 0x0000, 0x01234567, 0x80));
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 2);
     }
 
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         identity_reply idr{ device_identity{ manufacturer::waldorf, 0x0001, 0x0000, 0x2345678 } };
 
         EXPECT_TRUE(midi::is_universal_sysex_message(idr));
@@ -354,5 +374,7 @@ TEST_F(universal_sysex, identity_reply)
         EXPECT_EQ(0x2345678u, i.revision);
 
         EXPECT_EQ(idr, make_identity_reply(device_identity{ manufacturer::waldorf, 0x0001, 0x0000, 0x2345678 }));
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 2);
     }
 }

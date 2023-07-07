@@ -39,8 +39,43 @@ namespace midi {
 //! MIDI SysEx (7 bit)
 struct sysex
 {
-    manufacturer_t       manufacturerID{ 0 }; //!< manufacturer ID, \see midi::manufacturer
-    std::vector<uint8_t> data;                //!< SysEx data (without 0xF0 header, 0xF7 end byte and manufacturer ID)
+#if NIMIDI2_CUSTOM_SYSEX_DATA_ALLOCATOR
+    struct data_allocator
+    {
+        using value_type = uint8_t;
+        using size_type  = size_t;
+
+        using propagate_on_container_copy_assignment = std::true_type;
+        using propagate_on_container_move_assignment = std::true_type;
+        using propagate_on_container_swap            = std::true_type;
+        using is_always_equal                        = std::true_type;
+
+        //! deprecated, but still needed by some C++17 implementations
+        template<typename U>
+        struct rebind
+        {
+            using other = data_allocator;
+        };
+
+        constexpr data_allocator() noexcept { }
+        constexpr data_allocator(data_allocator const&) noexcept = default;
+
+        data_allocator& operator=(data_allocator const&) = default;
+        data_allocator& operator=(data_allocator&&)      = default;
+
+        bool operator==(data_allocator const&) const { return true; }
+        bool operator!=(data_allocator const&) const { return false; }
+
+        [[nodiscard]] value_type* allocate(std::size_t);    //!< user provided implementation required!
+        void deallocate(value_type*, std::size_t) noexcept; //!< user provided implementation required!
+    };
+    using data_type = std::vector<uint8_t, data_allocator>;
+#else
+    using data_type = std::vector<uint8_t>;
+#endif
+
+    manufacturer_t manufacturerID{ 0 }; //!< manufacturer ID, \see midi::manufacturer
+    data_type      data;                //!< SysEx data (without 0xF0 header, 0xF7 end byte and manufacturer ID)
 
     sysex() = default;
 
@@ -75,7 +110,7 @@ struct sysex
     /*! \param manufacturer manufacturer
         \param d data vector (without 0xF7 end byte)
     */
-    sysex(manufacturer_t manufacturer, std::vector<uint8_t> d)
+    sysex(manufacturer_t manufacturer, data_type d)
       : manufacturerID(manufacturer)
       , data(std::move(d))
     {

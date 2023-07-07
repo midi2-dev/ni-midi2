@@ -24,6 +24,8 @@
 
 #include <midi/sysex.h>
 
+#include "sysex_tests.h"
+
 #include "sysex7_test_data.h"
 
 //-----------------------------------------------
@@ -54,6 +56,31 @@ class sysex : public ::testing::Test
         return true;
     }
 };
+
+//-----------------------------------------------
+
+size_t   s_num_sysex_data_allocations{ 0 };
+unsigned num_sysex_data_allocations()
+{
+    return s_num_sysex_data_allocations;
+}
+
+//-----------------------------------------------
+
+#if NIMIDI2_CUSTOM_SYSEX_DATA_ALLOCATOR
+
+midi::sysex::data_allocator::value_type* midi::sysex::data_allocator::allocate(std::size_t n)
+{
+    ++s_num_sysex_data_allocations;
+    return new value_type[n];
+}
+
+void midi::sysex::data_allocator::deallocate(value_type* p, std::size_t) noexcept
+{
+    return delete[](p);
+}
+
+#endif // NIMIDI2_CUSTOM_SYSEX_DATA_ALLOCATOR
 
 //-----------------------------------------------
 
@@ -99,6 +126,8 @@ TEST_F(sysex, sysex_constructor)
 
     // one byte manufacturer plus 7bit data
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         midi::sysex sx{ manufacturer::casio, { 1, 2, 3, 4 } };
 
         EXPECT_EQ(0x440000u, sx.manufacturerID);
@@ -107,10 +136,14 @@ TEST_F(sysex, sysex_constructor)
         EXPECT_FALSE(sx.empty());
         EXPECT_TRUE(sx.is_7bit());
         EXPECT_FALSE(sx.is_8bit());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     // three byte manufacturer plus 8bit data
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         midi::sysex sx{ manufacturer::atari, { 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF } };
 
         EXPECT_EQ(0x000058u, sx.manufacturerID);
@@ -119,6 +152,8 @@ TEST_F(sysex, sysex_constructor)
         EXPECT_FALSE(sx.empty());
         EXPECT_FALSE(sx.is_7bit());
         EXPECT_TRUE(sx.is_8bit());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 }
 
@@ -172,19 +207,27 @@ TEST_F(sysex, sysex7)
     using namespace midi;
 
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         midi::sysex7 sx{ manufacturer::native_instruments, { 1, 2, 3, 4, 5, 6, 7, 8, 9 } };
 
         EXPECT_TRUE(sx.is_valid());
         EXPECT_TRUE(sx.is_7bit());
         EXPECT_FALSE(sx.is_8bit());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 
     {
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
         midi::sysex7 sx{ manufacturer::native_instruments, { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xAB } };
 
         EXPECT_FALSE(sx.is_valid());
         EXPECT_FALSE(sx.is_7bit());
         EXPECT_TRUE(sx.is_8bit());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
 }
 

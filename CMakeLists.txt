@@ -14,6 +14,8 @@ option( NIMIDI2_TREAT_WARNINGS_AS_ERRORS "Treat compile warnings as errors"   OF
 option( NIMIDI2_UNITY_BUILDS             "Build ni-midi2 with unity builds"   ON  )
 option( NIMIDI2_TESTS                    "Build ni-midi2 Tests"     ${IS_NIMIDI2} )
 
+option( NIMIDI2_CUSTOM_SYSEX_DATA_ALLOCATOR "Build with custom sysex data allocator" OFF )
+
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 include(code-coverage)
@@ -57,6 +59,10 @@ if( NIMIDI2_UNITY_BUILDS )
         UNITY_BUILD_BATCH_SIZE 32)
 endif()
 
+if ( NIMIDI2_CUSTOM_SYSEX_DATA_ALLOCATOR )
+    target_compile_definitions(ni-midi2 PUBLIC NIMIDI2_CUSTOM_SYSEX_DATA_ALLOCATOR=1)
+endif()
+
 if( NIMIDI2_TESTS )
     enable_testing()
 
@@ -74,7 +80,7 @@ if( NIMIDI2_TESTS )
         tests/midi1_channel_voice_message_tests.cpp
         tests/midi2_channel_voice_message_tests.cpp
         tests/channel_voice_message_tests.cpp
-        tests/sysex_tests.cpp
+        tests/sysex_tests.cpp tests/sysex_tests.h
         tests/sysex7_collector_tests.cpp
         tests/sysex7_test_data.cpp tests/sysex7_test_data.h
         tests/universal_sysex_tests.cpp

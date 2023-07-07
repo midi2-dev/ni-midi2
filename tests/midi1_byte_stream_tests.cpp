@@ -565,10 +565,10 @@ TEST_F(midi1_byte_stream, parser_sysex_intersperse_system_realtime_callback)
                                              0xFE, 0x64, 0x03, 0x72, 0x08, 0x74, 0x22, 0xF7, 0xFF };
 
     const midi::sysex7 sysex[] = {
-        { midi::manufacturer::educational, std::vector<std::uint8_t>{ 0x25, 0x50, 0x44 } },
+        { midi::manufacturer::educational, midi::sysex7::data_type{ 0x25, 0x50, 0x44 } },
         { midi::manufacturer::native_instruments,
-          std::vector<std::uint8_t>{ 0x44, 0x03, 0x44, 0x77, 0x07, 0x70, 0x72, 0x79 } },
-        { midi::manufacturer::denon, std::vector<std::uint8_t>{ 0x11, 0x12, 0x14, 0x64, 0x03, 0x72, 0x08, 0x74, 0x22 } }
+          midi::sysex7::data_type{ 0x44, 0x03, 0x44, 0x77, 0x07, 0x70, 0x72, 0x79 } },
+        { midi::manufacturer::denon, midi::sysex7::data_type{ 0x11, 0x12, 0x14, 0x64, 0x03, 0x72, 0x08, 0x74, 0x22 } }
     };
 
     const midi::universal_packet rt[] = { midi::make_system_message(0, midi::system_status::clock),
@@ -605,11 +605,10 @@ TEST_F(midi1_byte_stream, parser_sysex_intersperse_system_realtime_packets)
                                              0x79, 0xF7, 0xF0, 0x00, 0x02, 0x0B, 0xFC, 0x11, 0x12, 0x14,
                                              0xFE, 0x64, 0x03, 0x72, 0x08, 0x74, 0x22, 0xF7, 0xFF };
 
-    const midi::sysex7 sysex[] = {
-        { midi::manufacturer::native_instruments,
-          std::vector<std::uint8_t>{ 0x44, 0x03, 0x44, 0x77, 0x07, 0x70, 0x72, 0x79 } },
-        { midi::manufacturer::denon, std::vector<std::uint8_t>{ 0x11, 0x12, 0x14, 0x64, 0x03, 0x72, 0x08, 0x74, 0x22 } }
-    };
+    const midi::sysex7 sysex[] = { { midi::manufacturer::native_instruments,
+                                     midi::sysex::data_type{ 0x44, 0x03, 0x44, 0x77, 0x07, 0x70, 0x72, 0x79 } },
+                                   { midi::manufacturer::denon,
+                                     midi::sysex::data_type{ 0x11, 0x12, 0x14, 0x64, 0x03, 0x72, 0x08, 0x74, 0x22 } } };
 
     const midi::universal_packet packets[] = { midi::make_system_message(0, midi::system_status::clock),
                                                { 0x30047D25, 0x50440000 },
@@ -650,9 +649,8 @@ TEST_F(midi1_byte_stream, parser_sysex_intersperse_other_callback)
                                              0x44, 0x03, 0x44, 0x77, 0x9C, 0x07, 0x70, 0x72, 0x79, 0xF7, 0xF0, 0x00,
                                              0x02, 0x0B, 0x11, 0x12, 0x14, 0x64, 0x03, 0x72, 0x08, 0x74, 0x22, 0xF7 };
 
-    const midi::sysex7 sysex[] = {
-        { midi::manufacturer::denon, std::vector<std::uint8_t>{ 0x11, 0x12, 0x14, 0x64, 0x03, 0x72, 0x08, 0x74, 0x22 } }
-    };
+    const midi::sysex7 sysex[] = { { midi::manufacturer::denon,
+                                     midi::sysex::data_type{ 0x11, 0x12, 0x14, 0x64, 0x03, 0x72, 0x08, 0x74, 0x22 } } };
 
     const midi::universal_packet packets[] = {
         midi::make_system_message(0, midi::system_status::song_position, 0x44, 0x11),
@@ -716,12 +714,11 @@ TEST_F(midi1_byte_stream, parser_real_world_stream_callback)
                                              0x00, 0x02, 0x0B, 0xFC, 0x11, 0x12, 0x14, 0xFE, 0x64, 0x03,
                                              0x72, 0x08, 0x74, 0x22, 0xF7, 0xFF, 0xB4, 0x07, 0x10 };
 
-    const midi::sysex7 sysex[] = {
-        { midi::manufacturer::educational, std::vector<std::uint8_t>{ 0x25, 0x50, 0x44 } },
-        { midi::manufacturer::native_instruments,
-          std::vector<std::uint8_t>{ 0x44, 0x03, 0x44, 0x77, 0x07, 0x70, 0x72, 0x79 } },
-        { midi::manufacturer::denon, std::vector<std::uint8_t>{ 0x11, 0x12, 0x14, 0x64, 0x03, 0x72, 0x08, 0x74, 0x22 } }
-    };
+    const midi::sysex7 sysex[] = { { midi::manufacturer::educational, midi::sysex::data_type{ 0x25, 0x50, 0x44 } },
+                                   { midi::manufacturer::native_instruments,
+                                     midi::sysex::data_type{ 0x44, 0x03, 0x44, 0x77, 0x07, 0x70, 0x72, 0x79 } },
+                                   { midi::manufacturer::denon,
+                                     midi::sysex::data_type{ 0x11, 0x12, 0x14, 0x64, 0x03, 0x72, 0x08, 0x74, 0x22 } } };
 
     const midi::universal_packet packets[] = {
         midi::make_system_message(0, midi::system_status::clock),
@@ -768,12 +765,11 @@ TEST_F(midi1_byte_stream, parser_real_world_stream_packets)
                                              0x00, 0x02, 0x0B, 0xFC, 0x11, 0x12, 0x14, 0xFE, 0x64, 0x03,
                                              0x72, 0x08, 0x74, 0x22, 0x33, 0xF7, 0xFF, 0xB4, 0x07, 0x10 };
 
-    const midi::sysex7 sysex[] = {
-        { midi::manufacturer::educational, std::vector<std::uint8_t>{ 0x25, 0x50, 0x44 } },
-        { midi::manufacturer::native_instruments,
-          std::vector<std::uint8_t>{ 0x44, 0x03, 0x44, 0x77, 0x07, 0x70, 0x72, 0x79 } },
-        { midi::manufacturer::denon, std::vector<std::uint8_t>{ 0x11, 0x12, 0x14, 0x64, 0x03, 0x72, 0x08, 0x74, 0x22 } }
-    };
+    const midi::sysex7 sysex[] = { { midi::manufacturer::educational, midi::sysex::data_type{ 0x25, 0x50, 0x44 } },
+                                   { midi::manufacturer::native_instruments,
+                                     midi::sysex::data_type{ 0x44, 0x03, 0x44, 0x77, 0x07, 0x70, 0x72, 0x79 } },
+                                   { midi::manufacturer::denon,
+                                     midi::sysex::data_type{ 0x11, 0x12, 0x14, 0x64, 0x03, 0x72, 0x08, 0x74, 0x22 } } };
 
     const midi::universal_packet packets[] = {
         midi::make_system_message(0, midi::system_status::clock),
