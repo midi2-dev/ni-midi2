@@ -211,3 +211,73 @@ TEST_F(sysex7_collector, exceptional_collect)
 }
 
 //-----------------------------------------------
+
+TEST_F(sysex7_collector, limited_data_size_collect)
+{
+    using namespace midi;
+
+    {
+        bool output_generated = false;
+        auto cb               = [&](midi::sysex sx) {
+            output_generated = true;
+            EXPECT_EQ(sx.data.size(), 15);
+        };
+
+        auto c = midi::sysex7_collector{ cb };
+        c.set_max_sysex_data_size(256);
+
+        std::vector<universal_packet> packets{ { 0x30167E12, 0x34567809 },
+                                               { 0x30261A2B, 0x3C4D5E6F },
+                                               { 0x30340000, 0 } };
+
+        for (const auto& p : packets)
+        {
+            c.feed(p);
+        }
+
+        EXPECT_TRUE(output_generated);
+    }
+
+    {
+        bool output_generated = false;
+        auto cb               = [&](midi::sysex sx) { output_generated = true; };
+
+        auto c = midi::sysex7_collector{ cb };
+        c.set_max_sysex_data_size(12);
+
+        std::vector<universal_packet> packets{ { 0x30167E12, 0x34567809 },
+                                               { 0x30261A2B, 0x3C4D5E6F },
+                                               { 0x30320000, 0 } };
+
+        for (const auto& p : packets)
+        {
+            c.feed(p);
+        }
+
+        EXPECT_FALSE(output_generated);
+    }
+
+    {
+        bool output_generated = false;
+        auto cb               = [&](midi::sysex sx) {
+            output_generated = true;
+            EXPECT_EQ(sx.data.size(), 12);
+        };
+
+        auto c = midi::sysex7_collector{ cb };
+        c.set_max_sysex_data_size(12);
+
+        std::vector<universal_packet> packets{ { 0x30167E12, 0x34567809 },
+                                               { 0x30261A2B, 0x3C4D5E6F },
+                                               { 0x30310000, 0 } };
+
+        for (const auto& p : packets)
+        {
+            c.feed(p);
+        }
+
+        EXPECT_TRUE(output_generated);
+    }
+}
+
+//-----------------------------------------------

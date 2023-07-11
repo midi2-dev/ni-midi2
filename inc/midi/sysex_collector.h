@@ -44,12 +44,14 @@ class sysex7_collector
     explicit sysex7_collector(callback);
 
     void set_callback(callback);
+    void set_max_sysex_data_size(size_t); //!< limit maximum size of accepted sysex data
 
     void feed(const universal_packet&);
     void reset();
 
   private:
     sysex7   m_sysex7;
+    size_t   m_max_sysex_data_size{ 0 };
     status_t m_state{ data_status::sysex7_start };
     uint8_t  m_manufacturerIDBytesRead{ 0 };
     callback m_cb;

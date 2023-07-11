@@ -31,6 +31,16 @@ namespace midi {
 
 //--------------------------------------------------------------------------
 
+void sysex7_collector::set_max_sysex_data_size(size_t s)
+{
+    if ((m_max_sysex_data_size = s))
+    {
+        m_sysex7.data.reserve(m_max_sysex_data_size);
+    }
+}
+
+//--------------------------------------------------------------------------
+
 void sysex7_collector::feed(const universal_packet& p)
 {
     if (!is_sysex7_packet(p))
@@ -60,7 +70,20 @@ void sysex7_collector::feed(const universal_packet& p)
     const auto numBytes = m.payload_size();
     if (m_sysex7.data.size() + numBytes > m_sysex7.data.capacity())
     {
-        m_sysex7.data.reserve(std::max(size_t{ 128 }, 2 * m_sysex7.data.capacity()));
+        const bool limited_sysex_data_size = (m_max_sysex_data_size > 0);
+        size_t     new_capacity            = std::max(size_t{ 128 }, 2 * m_sysex7.data.capacity());
+        if (limited_sysex_data_size)
+        {
+            new_capacity = std::min(new_capacity, m_max_sysex_data_size);
+        }
+        m_sysex7.data.reserve(new_capacity);
+
+        if (limited_sysex_data_size && (m_sysex7.data.size() + numBytes > m_sysex7.data.capacity()))
+        {
+            // panic, data size exceeds m_max_sysex_data_size, wait for start of new sysex message
+            m_state = data_status::sysex7_start;
+            return;
+        }
     }
 
     for (unsigned b = 0; b < numBytes; ++b)
