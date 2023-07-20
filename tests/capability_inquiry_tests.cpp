@@ -293,7 +293,6 @@ TEST_F(capability_inquiry, message_muids)
 
 TEST_F(capability_inquiry, discovery_message_view)
 {
-    // TODO: move into inquiry/reply view tests
     {
         using VUT = midi::ci::discovery_inquiry_view;
 
