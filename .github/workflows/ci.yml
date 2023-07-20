@@ -2,7 +2,12 @@ name: ni-midi2 CI
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - 'bugfix/**'
+      - 'feature/**'
+      - 'release/**'
+
   pull_request:
     branches: [ main ]
 
