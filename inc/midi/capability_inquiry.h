@@ -982,24 +982,9 @@ namespace discovery {
                                              uint28_t          max_message_size)
     {
         auto result = message::make_with_payload_size(16, subtype, source_muid, destination_muid);
-
-        const uint7_t data[] = { static_cast<unsigned char>((i.manufacturer >> 16) & 0x7F),
-                                 static_cast<unsigned char>((i.manufacturer >> 8) & 0x7F),
-                                 static_cast<unsigned char>(i.manufacturer & 0x7F),
-                                 static_cast<unsigned char>(i.family & 0x7F),
-                                 static_cast<unsigned char>((i.family >> 8) & 0x7F),
-                                 static_cast<unsigned char>(i.model & 0x7F),
-                                 static_cast<unsigned char>((i.model >> 8) & 0x7F),
-                                 static_cast<unsigned char>(i.revision & 0x7F),
-                                 static_cast<unsigned char>((i.revision >> 8) & 0x7F),
-                                 static_cast<unsigned char>((i.revision >> 16) & 0x7F),
-                                 static_cast<unsigned char>((i.revision >> 24) & 0x7F),
-                                 categories,
-                                 static_cast<unsigned char>(max_message_size & 0x7F),
-                                 static_cast<unsigned char>((max_message_size >> 7) & 0x7F),
-                                 static_cast<unsigned char>((max_message_size >> 14) & 0x7F),
-                                 static_cast<unsigned char>((max_message_size >> 21) & 0x7F) };
-        result.add_data(data, sizeof(data));
+        result.add_device_identity(i);
+        result.add_uint7(categories);
+        result.add_uint28(max_message_size);
         result.data[3] = message_version_1;
         return result;
     }
@@ -1013,25 +998,10 @@ namespace discovery {
                                           uint7_t           output_path_id)
     {
         auto result = message::make_with_payload_size(18, subtype, source_muid, destination_muid);
-
-        const uint7_t data[] = { static_cast<unsigned char>((i.manufacturer >> 16) & 0x7F),
-                                 static_cast<unsigned char>((i.manufacturer >> 8) & 0x7F),
-                                 static_cast<unsigned char>(i.manufacturer & 0x7F),
-                                 static_cast<unsigned char>(i.family & 0x7F),
-                                 static_cast<unsigned char>((i.family >> 8) & 0x7F),
-                                 static_cast<unsigned char>(i.model & 0x7F),
-                                 static_cast<unsigned char>((i.model >> 8) & 0x7F),
-                                 static_cast<unsigned char>(i.revision & 0x7F),
-                                 static_cast<unsigned char>((i.revision >> 8) & 0x7F),
-                                 static_cast<unsigned char>((i.revision >> 16) & 0x7F),
-                                 static_cast<unsigned char>((i.revision >> 24) & 0x7F),
-                                 categories,
-                                 static_cast<unsigned char>(max_message_size & 0x7F),
-                                 static_cast<unsigned char>((max_message_size >> 7) & 0x7F),
-                                 static_cast<unsigned char>((max_message_size >> 14) & 0x7F),
-                                 static_cast<unsigned char>((max_message_size >> 21) & 0x7F),
-                                 output_path_id };
-        result.add_data(data, sizeof(data));
+        result.add_device_identity(i);
+        result.add_uint7(categories);
+        result.add_uint28(max_message_size);
+        result.add_uint7(output_path_id);
         return result;
     }
 } // namespace discovery

@@ -226,7 +226,6 @@ In case you plan to contribute please pass `-DNIMIDI2_TREAT_WARNINGS_AS_ERRORS=O
 
 ## TODOs
 
-* introduce custom memory allocation into `sysex` class (improved embedded support)
 * sysex7 data encoding
 * `extended_data_message_view`
 * `sysex8_view`

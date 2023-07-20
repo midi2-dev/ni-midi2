@@ -329,7 +329,7 @@ TEST_F(universal_sysex, identity_reply)
     {
         SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
-        identity_reply idr{ manufacturer::waldorf, 0x0001, 0x0000, 0x01234567, 0x80 };
+        identity_reply idr{ manufacturer::waldorf, 0x1234, 0x2A6F, 0x01234567, 0x80 };
 
         EXPECT_TRUE(midi::is_universal_sysex_message(idr));
 
@@ -343,11 +343,11 @@ TEST_F(universal_sysex, identity_reply)
 
         const auto i = identity_reply_view{ idr }.identity();
         EXPECT_EQ(manufacturer::waldorf, i.manufacturer);
-        EXPECT_EQ(0x0001u, i.family);
-        EXPECT_EQ(0x0000u, i.model);
+        EXPECT_EQ(0x1234u, i.family);
+        EXPECT_EQ(0x2A6Fu, i.model);
         EXPECT_EQ(0x1234567u, i.revision);
 
-        EXPECT_EQ(idr, make_identity_reply(manufacturer::waldorf, 0x0001, 0x0000, 0x01234567, 0x80));
+        EXPECT_EQ(idr, make_identity_reply(manufacturer::waldorf, 0x1234, 0x2A6F, 0x01234567, 0x80));
 
         SYSEX_ALLOCATOR_VERIFY_DIFF(c, 2);
     }
@@ -355,7 +355,7 @@ TEST_F(universal_sysex, identity_reply)
     {
         SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
-        identity_reply idr{ device_identity{ manufacturer::waldorf, 0x0001, 0x0000, 0x2345678 } };
+        identity_reply idr{ device_identity{ manufacturer::waldorf, 0x22A6, 0x3C3F, 0x2345678 } };
 
         EXPECT_TRUE(midi::is_universal_sysex_message(idr));
 
@@ -369,11 +369,11 @@ TEST_F(universal_sysex, identity_reply)
 
         const auto i = identity_reply_view{ idr }.identity();
         EXPECT_EQ(manufacturer::waldorf, i.manufacturer);
-        EXPECT_EQ(0x0001u, i.family);
-        EXPECT_EQ(0x0000u, i.model);
+        EXPECT_EQ(0x22A6u, i.family);
+        EXPECT_EQ(0x3C3Fu, i.model);
         EXPECT_EQ(0x2345678u, i.revision);
 
-        EXPECT_EQ(idr, make_identity_reply(device_identity{ manufacturer::waldorf, 0x0001, 0x0000, 0x2345678 }));
+        EXPECT_EQ(idr, make_identity_reply(device_identity{ manufacturer::waldorf, 0x22A6, 0x3C3F, 0x2345678 }));
 
         SYSEX_ALLOCATOR_VERIFY_DIFF(c, 2);
     }

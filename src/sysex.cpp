@@ -83,24 +83,17 @@ void sysex::clear()
 void sysex7::add_device_identity(const device_identity& identity)
 {
     assert((identity.manufacturer & 0xFF808080) == 0);
-    assert((identity.family & 0x8080) == 0);
-    assert((identity.model & 0x8080) == 0);
-    assert((identity.revision & 0x80808080) == 0);
+    assert((identity.family & 0xC000) == 0);
+    assert((identity.model & 0xC000) == 0);
+    assert((identity.revision & 0xF0000000) == 0);
 
     data.push_back((identity.manufacturer >> 16) & 0x7F);
     data.push_back((identity.manufacturer >> 8) & 0x7F);
     data.push_back(identity.manufacturer & 0x7F);
 
-    data.push_back(identity.family & 0x7F);
-    data.push_back((identity.family >> 8) & 0x7F);
-
-    data.push_back(identity.model & 0x7F);
-    data.push_back((identity.model >> 8) & 0x7F);
-
-    data.push_back(identity.revision & 0x7F);
-    data.push_back((identity.revision >> 8) & 0x7F);
-    data.push_back((identity.revision >> 16) & 0x7F);
-    data.push_back((identity.revision >> 24) & 0x7F);
+    add_uint14(identity.family);
+    add_uint14(identity.model);
+    add_uint28(identity.revision);
 }
 
 //-----------------------------------------------
@@ -108,13 +101,14 @@ void sysex7::add_device_identity(const device_identity& identity)
 device_identity sysex7::make_device_identity(size_t data_pos) const
 {
     assert(data_pos + 10 < data.size());
-    const auto* const d = data.data() + data_pos;
+
+    const auto d = data.data() + data_pos;
 
     device_identity result;
-    result.manufacturer = (d[0] << 16) | (d[1] << 8) | d[2];
-    result.family       = d[3] | (d[4] << 8);
-    result.model        = d[5] | (d[6] << 8);
-    result.revision     = d[7] | (d[8] << 8) | (d[9] << 16) | (d[10] << 24);
+    result.manufacturer = (uint14_t(d[0]) << 16) | (uint14_t(d[1]) << 8) | d[2];
+    result.family       = make_uint14(data_pos + 3);
+    result.model        = make_uint14(data_pos + 5);
+    result.revision     = make_uint28(data_pos + 7);
     return result;
 }
 

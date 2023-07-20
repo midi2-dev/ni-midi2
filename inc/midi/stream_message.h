@@ -166,10 +166,10 @@ struct device_identity_view
     constexpr device_identity identity() const
     {
         return { p.data[1] & 0x007F7F7Fu,
-                 // TODO: fix this (we need to assemble the numbers, not mask)
-                 uint16_t((p.data[2] >> 16) & 0x7F7Fu),
-                 uint16_t(p.data[2] & 0x7F7Fu),
-                 p.data[3] & 0x7F7F7F7Fu };
+                 uint14_t(((p.data[2] >> 24) & 0x7Fu) | ((p.data[2] >> 9) & 0x3F80u)),
+                 uint14_t(((p.data[2] >> 8) & 0x7Fu) | ((p.data[2] << 7) & 0x3F80u)),
+                 uint28_t(((p.data[3] >> 24) & 0x000007Fu) | ((p.data[3] >> 9) & 0x0003F80u) |
+                          ((p.data[3] << 6) & 0x1FC000u) | ((p.data[3] << 21) & 0xFE00000u)) };
     }
 
   private:
@@ -541,9 +541,10 @@ constexpr stream_message make_device_identity_message(const device_identity& i)
 {
     stream_message m{ stream_status::device_identity, packet_format::complete };
     m.data[1] = i.manufacturer;
-    // TODO: we need byte arithmetic here, 7 bit data!
-    m.data[2] = (i.family << 16) | i.model;
-    m.data[3] = i.revision;
+    m.data[2] = ((uint32_t(i.family) << 24) & 0x7F000000u) | ((uint32_t(i.family) << 9) & 0x007F0000u) |
+                ((uint32_t(i.model) << 8) & 0x00007F00u) | ((i.model >> 7) & 0x0000007Fu);
+    m.data[3] = ((i.revision << 24) & 0x7F000000u) | ((i.revision << 9) & 0x007F0000u) |
+                ((i.revision >> 6) & 0x00007F00u) | ((i.revision >> 21) & 0x0000007Fu);
     return m;
 }
 

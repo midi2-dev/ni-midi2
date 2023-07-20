@@ -299,7 +299,7 @@ TEST_F(capability_inquiry, discovery_message_view)
 
         midi::sysex7 sx{ midi::manufacturer::universal_non_realtime,
                          { 0x7F, 0x0D, 0x70, 0x01, 0x44, 0x33, 0x22, 0x11, 0x77, 0x55, 0x33, 0x11, 0x00, 0x21,
-                           0x09, 0x00, 0x18, 25,   0,    0,    0,    1,    0,    0x20, 0x00, 0x08, 0x00, 0x00 } };
+                           0x09, 0x00, 0x30, 25,   0,    0,    0,    4,    0,    0x20, 0x00, 0x08, 0x00, 0x00 } };
 
         EXPECT_TRUE(midi::is_capability_inquiry_message(sx));
         EXPECT_TRUE(VUT::validate(sx));
@@ -331,7 +331,7 @@ TEST_F(capability_inquiry, discovery_message_view)
 
         midi::sysex7 sx{ midi::manufacturer::universal_non_realtime,
                          { 0x7F, 0x0D, 0x71, 0x02, 0x44, 0x33, 0x22, 0x11, 0x77, 0x55, 0x33, 0x11, 0x00, 0x21, 0x09,
-                           0x00, 0x18, 25,   0,    0,    0,    1,    0,    0x20, 0x00, 0x08, 0x00, 0x00, 0x14, 12 } };
+                           0x00, 0x30, 25,   0,    0,    0,    1,    0,    0x20, 0x00, 0x08, 0x00, 0x00, 0x14, 12 } };
 
         EXPECT_TRUE(midi::is_capability_inquiry_message(sx));
         EXPECT_TRUE(VUT::validate(sx));
@@ -351,7 +351,7 @@ TEST_F(capability_inquiry, discovery_message_view)
         EXPECT_EQ(midi::manufacturer::native_instruments, identity.manufacturer);
         EXPECT_EQ(0x1800u, identity.family);
         EXPECT_EQ(25u, identity.model);
-        EXPECT_EQ(0x00010000u, identity.revision);
+        EXPECT_EQ(0x00004000u, identity.revision);
 
         EXPECT_EQ(0x20, m.categories());
         EXPECT_EQ(0x400u, m.maximum_message_size());
@@ -439,7 +439,7 @@ TEST_F(capability_inquiry, discovery_inquiry_view)
     {
         midi::sysex7 sx{ midi::manufacturer::universal_non_realtime,
                          { 0x7F, 0x0D, 0x70, 0x01, 0x44, 0x33, 0x22, 0x11, 0x7F, 0x7F, 0x7F, 0x7F, 0x00, 0x21,
-                           0x09, 0x00, 0x18, 25,   0,    0,    0,    1,    0,    0x20, 0x00, 0x08, 0x00, 0x00 } };
+                           0x09, 0x00, 0x30, 25,   0,    0,    0,    4,    0,    0x20, 0x00, 0x08, 0x00, 0x00 } };
 
         EXPECT_TRUE(midi::is_capability_inquiry_message(sx));
         EXPECT_TRUE(VUT::validate(sx));
@@ -469,7 +469,7 @@ TEST_F(capability_inquiry, discovery_inquiry_view)
     {
         midi::sysex7 sx{ midi::manufacturer::universal_non_realtime,
                          { 0x7F, 0x0D, 0x70, 0x02, 0x44, 0x33, 0x22, 0x11, 0x7F, 0x7F, 0x7F, 0x7F, 0x00, 0x21, 0x09,
-                           0x00, 0x18, 25,   0,    0,    0,    1,    0,    0x20, 0x00, 0x08, 0x00, 0x00, 0x11 } };
+                           0x00, 0x30, 25,   0,    0,    0,    1,    0,    0x20, 0x00, 0x08, 0x00, 0x00, 0x11 } };
 
         EXPECT_TRUE(midi::is_capability_inquiry_message(sx));
         EXPECT_TRUE(midi::ci::discovery_inquiry_view::validate(sx));
@@ -488,7 +488,7 @@ TEST_F(capability_inquiry, discovery_inquiry_view)
         EXPECT_EQ(midi::manufacturer::native_instruments, identity.manufacturer);
         EXPECT_EQ(0x1800u, identity.family);
         EXPECT_EQ(25u, identity.model);
-        EXPECT_EQ(0x00010000u, identity.revision);
+        EXPECT_EQ(0x00004000u, identity.revision);
 
         EXPECT_EQ(0x20, m.categories());
         EXPECT_EQ(0x400u, m.maximum_message_size());
@@ -588,7 +588,7 @@ TEST_F(capability_inquiry, discovery_reply_view)
     {
         midi::sysex7 sx{ midi::manufacturer::universal_non_realtime,
                          { 0x7F, 0x0D, 0x71, 0x01, 0x77, 0x55, 0x33, 0x11, 0x44, 0x33, 0x22, 0x11, 0x00, 0x21,
-                           0x09, 0x00, 0x18, 25,   0,    0,    0,    1,    0,    0x20, 0x00, 0x08, 0x00, 0x00 } };
+                           0x09, 0x01, 0x18, 25,   4,    1,    2,    4,    8,    0x20, 0x00, 0x08, 0x00, 0x00 } };
 
         EXPECT_TRUE(midi::is_capability_inquiry_message(sx));
         EXPECT_TRUE(VUT::validate(sx));
@@ -606,9 +606,9 @@ TEST_F(capability_inquiry, discovery_reply_view)
 
         const auto identity = m.identity();
         EXPECT_EQ(midi::manufacturer::native_instruments, identity.manufacturer);
-        EXPECT_EQ(0x1800u, identity.family);
-        EXPECT_EQ(25u, identity.model);
-        EXPECT_EQ(0x00010000u, identity.revision);
+        EXPECT_EQ(0x0C01u, identity.family);
+        EXPECT_EQ(0x0219u, identity.model);
+        EXPECT_EQ(0x01010101u, identity.revision);
 
         EXPECT_EQ(0x20, m.categories());
         EXPECT_EQ(0x400u, m.maximum_message_size());
@@ -619,7 +619,7 @@ TEST_F(capability_inquiry, discovery_reply_view)
     {
         midi::sysex7 sx{ midi::manufacturer::universal_non_realtime,
                          { 0x7F, 0x0D, 0x71, 0x02, 0x77, 0x55, 0x33, 0x11, 0x44, 0x33, 0x22, 0x11, 0x00, 0x21, 0x09,
-                           0x00, 0x18, 25,   0,    0,    0,    1,    0,    0x20, 0x00, 0x08, 0x00, 0x00, 0x77, 0x02 } };
+                           0x10, 0x30, 25,   0,    0,    0,    2,    0,    0x20, 0x00, 0x08, 0x00, 0x00, 0x77, 0x02 } };
 
         EXPECT_TRUE(midi::is_capability_inquiry_message(sx));
         EXPECT_TRUE(VUT::validate(sx));
@@ -637,9 +637,9 @@ TEST_F(capability_inquiry, discovery_reply_view)
 
         const auto identity = m.identity();
         EXPECT_EQ(midi::manufacturer::native_instruments, identity.manufacturer);
-        EXPECT_EQ(0x1800u, identity.family);
+        EXPECT_EQ(0x1810u, identity.family);
         EXPECT_EQ(25u, identity.model);
-        EXPECT_EQ(0x00010000u, identity.revision);
+        EXPECT_EQ(0x00008000u, identity.revision);
 
         EXPECT_EQ(0x20, m.categories());
         EXPECT_EQ(0x400u, m.maximum_message_size());

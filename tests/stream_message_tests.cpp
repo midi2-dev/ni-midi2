@@ -23,7 +23,7 @@
 #include <gtest/gtest.h>
 
 #include <midi/stream_message.h>
-#include <midi/sysex.h> // manufacturer
+#include <midi/universal_sysex.h>
 
 //-----------------------------------------------
 
@@ -431,8 +431,8 @@ TEST_F(stream_message, device_identity)
 
         EXPECT_EQ(0xF0020000u, m.data[0]);
         EXPECT_EQ(0x00002109u, m.data[1]);
-        EXPECT_EQ(0x17300031u, m.data[2]);
-        EXPECT_EQ(0x00010005u, m.data[3]);
+        EXPECT_EQ(0x302E3100u, m.data[2]);
+        EXPECT_EQ(0x05000400u, m.data[3]);
 
         EXPECT_EQ(4u, m.size());
         EXPECT_EQ(packet_type::stream, m.type());
@@ -450,15 +450,15 @@ TEST_F(stream_message, device_identity)
     }
 
     {
-        constexpr device_identity  identity{ midi::manufacturer::native_instruments, 0x2200, 61, 0x00020006 };
+        constexpr device_identity  identity{ midi::manufacturer::kurzweil, 0x2431, 0x2721, 0x04C23A56 };
         const midi::stream_message m = make_device_identity_message(identity);
 
         EXPECT_TRUE(is_stream_message(m));
 
         EXPECT_EQ(0xF0020000u, m.data[0]);
-        EXPECT_EQ(0x00002109u, m.data[1]);
-        EXPECT_EQ(0x2200003Du, m.data[2]);
-        EXPECT_EQ(0x00020006u, m.data[3]);
+        EXPECT_EQ(0x00070000u, m.data[1]);
+        EXPECT_EQ(0x3148214Eu, m.data[2]);
+        EXPECT_EQ(0x56740826u, m.data[3]);
 
         EXPECT_EQ(4u, m.size());
         EXPECT_EQ(packet_type::stream, m.type());
@@ -500,6 +500,62 @@ TEST_F(stream_message, device_identity_view)
 
     {
         EXPECT_FALSE(as_device_identity_view(make_endpoint_discovery_message(0x03)));
+    }
+}
+
+//-----------------------------------------------
+
+TEST_F(stream_message, device_identity_consistency)
+{
+    using namespace midi;
+
+    auto identity_from_sysex = [](const device_identity& i) {
+        sysex7 s{ midi::manufacturer::universal_non_realtime };
+        s.add_device_identity(i);
+        return s.make_device_identity(0);
+    };
+    auto from_identity_reply = [](const device_identity& i) {
+        const auto m = midi::universal_sysex::make_identity_reply(i);
+        auto       v = midi::universal_sysex::identity_reply_view{ m };
+        return v.identity();
+    };
+
+    {
+        for (uint14_t f = 0; f < 0x3FFFu; ++f)
+        {
+            const device_identity a{ midi::manufacturer::native_instruments, f, 0, 0 };
+            const device_identity b = device_identity_view{ make_device_identity_message(a) }.identity();
+            const device_identity c = identity_from_sysex(b);
+            const device_identity d = from_identity_reply(a);
+            EXPECT_EQ(a.family, b.family);
+            EXPECT_EQ(b.family, c.family);
+            EXPECT_EQ(c.family, d.family);
+            EXPECT_EQ(d.family, a.family);
+        }
+
+        for (uint14_t m = 0; m < 0x3FFFu; ++m)
+        {
+            const device_identity a{ midi::manufacturer::native_instruments, 0, m, 0 };
+            const device_identity b = device_identity_view{ make_device_identity_message(a) }.identity();
+            const device_identity c = identity_from_sysex(b);
+            const device_identity d = from_identity_reply(a);
+            EXPECT_EQ(a.model, b.model);
+            EXPECT_EQ(b.model, c.model);
+            EXPECT_EQ(c.model, d.model);
+            EXPECT_EQ(d.model, a.model);
+        }
+
+        for (uint28_t r = 0; r < 0x0FFFFFFFu; r += 177)
+        {
+            const device_identity a{ midi::manufacturer::native_instruments, 0, 0, r };
+            const device_identity b = device_identity_view{ make_device_identity_message(a) }.identity();
+            const device_identity c = identity_from_sysex(b);
+            const device_identity d = from_identity_reply(a);
+            EXPECT_EQ(a.revision, b.revision);
+            EXPECT_EQ(b.revision, c.revision);
+            EXPECT_EQ(c.revision, d.revision);
+            EXPECT_EQ(d.revision, a.revision);
+        }
     }
 }
 

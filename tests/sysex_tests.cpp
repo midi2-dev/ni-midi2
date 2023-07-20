@@ -252,12 +252,12 @@ TEST_F(sysex, sysex7_add_device_identity)
         EXPECT_EQ(0x21, sx.data[pos + 1]);
         EXPECT_EQ(0x09, sx.data[pos + 2]);
         EXPECT_EQ(0x30, sx.data[pos + 3]);
-        EXPECT_EQ(0x17, sx.data[pos + 4]);
+        EXPECT_EQ(0x2E, sx.data[pos + 4]);
         EXPECT_EQ(49, sx.data[pos + 5]);
         EXPECT_EQ(0x00, sx.data[pos + 6]);
         EXPECT_EQ(0x05, sx.data[pos + 7]);
         EXPECT_EQ(0x00, sx.data[pos + 8]);
-        EXPECT_EQ(0x01, sx.data[pos + 9]);
+        EXPECT_EQ(0x04, sx.data[pos + 9]);
         EXPECT_EQ(0x00, sx.data[pos + 10]);
     }
 
@@ -266,7 +266,7 @@ TEST_F(sysex, sysex7_add_device_identity)
 
         const auto pos = sx.data.size();
 
-        auto identity = device_identity{ midi::manufacturer::roland, 0x0807, 0x1234, 0x00500102 };
+        auto identity = device_identity{ midi::manufacturer::roland, 0x0807, 0x1234, 0x0CA98765 };
 
         sx.add_device_identity(identity);
 
@@ -276,13 +276,13 @@ TEST_F(sysex, sysex7_add_device_identity)
         EXPECT_EQ(0x00, sx.data[pos + 1]);
         EXPECT_EQ(0x00, sx.data[pos + 2]);
         EXPECT_EQ(0x07, sx.data[pos + 3]);
-        EXPECT_EQ(0x08, sx.data[pos + 4]);
+        EXPECT_EQ(0x10, sx.data[pos + 4]);
         EXPECT_EQ(0x34, sx.data[pos + 5]);
-        EXPECT_EQ(0x12, sx.data[pos + 6]);
-        EXPECT_EQ(0x02, sx.data[pos + 7]);
-        EXPECT_EQ(0x01, sx.data[pos + 8]);
-        EXPECT_EQ(0x50, sx.data[pos + 9]);
-        EXPECT_EQ(0x00, sx.data[pos + 10]);
+        EXPECT_EQ(0x24, sx.data[pos + 6]);
+        EXPECT_EQ(0x65, sx.data[pos + 7]);
+        EXPECT_EQ(0x0E, sx.data[pos + 8]);
+        EXPECT_EQ(0x26, sx.data[pos + 9]);
+        EXPECT_EQ(0x65, sx.data[pos + 10]);
 
         sx.add_device_identity(identity);
 
@@ -292,13 +292,13 @@ TEST_F(sysex, sysex7_add_device_identity)
         EXPECT_EQ(0x00, sx.data[pos + 12]);
         EXPECT_EQ(0x00, sx.data[pos + 13]);
         EXPECT_EQ(0x07, sx.data[pos + 14]);
-        EXPECT_EQ(0x08, sx.data[pos + 15]);
+        EXPECT_EQ(0x10, sx.data[pos + 15]);
         EXPECT_EQ(0x34, sx.data[pos + 16]);
-        EXPECT_EQ(0x12, sx.data[pos + 17]);
-        EXPECT_EQ(0x02, sx.data[pos + 18]);
-        EXPECT_EQ(0x01, sx.data[pos + 19]);
-        EXPECT_EQ(0x50, sx.data[pos + 20]);
-        EXPECT_EQ(0x00, sx.data[pos + 21]);
+        EXPECT_EQ(0x24, sx.data[pos + 17]);
+        EXPECT_EQ(0x65, sx.data[pos + 18]);
+        EXPECT_EQ(0x0E, sx.data[pos + 19]);
+        EXPECT_EQ(0x26, sx.data[pos + 20]);
+        EXPECT_EQ(0x65, sx.data[pos + 21]);
     }
 }
 
