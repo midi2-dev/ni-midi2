@@ -233,6 +233,106 @@ TEST_F(sysex, sysex7)
 
 //-----------------------------------------------
 
+TEST_F(sysex, sysex7_add_uintX)
+{
+    using namespace midi;
+
+    {
+        midi::sysex7 sx{ 0x123456 };
+
+        sx.add_uint7(0);
+        EXPECT_EQ(1u, sx.data.size());
+        EXPECT_EQ(0u, sx.data[0]);
+
+        sx.add_uint7(99);
+        EXPECT_EQ(2u, sx.data.size());
+        EXPECT_EQ(99u, sx.data[1]);
+
+        sx.add_uint7(127);
+        EXPECT_EQ(3u, sx.data.size());
+        EXPECT_EQ(127u, sx.data[2]);
+    }
+
+    {
+        midi::sysex7 sx{ 0x123456 };
+
+        sx.add_uint14(0);
+        EXPECT_EQ(2u, sx.data.size());
+        EXPECT_EQ(0u, sx.data[0]);
+        EXPECT_EQ(0u, sx.data[1]);
+
+        sx.add_uint14(99);
+        EXPECT_EQ(4u, sx.data.size());
+        EXPECT_EQ(99u, sx.data[2]);
+        EXPECT_EQ(0u, sx.data[3]);
+
+        sx.add_uint14(128);
+        EXPECT_EQ(6u, sx.data.size());
+        EXPECT_EQ(0u, sx.data[4]);
+        EXPECT_EQ(1u, sx.data[5]);
+
+        sx.add_uint14(0x3FFF);
+        EXPECT_EQ(8u, sx.data.size());
+        EXPECT_EQ(127u, sx.data[6]);
+        EXPECT_EQ(127u, sx.data[7]);
+    }
+
+    {
+        midi::sysex7 sx{ 0x123456 };
+
+        sx.add_uint28(0);
+        EXPECT_EQ(4u, sx.data.size());
+        EXPECT_EQ(0u, sx.data[0]);
+        EXPECT_EQ(0u, sx.data[1]);
+        EXPECT_EQ(0u, sx.data[2]);
+        EXPECT_EQ(0u, sx.data[3]);
+
+        sx.add_uint28(99);
+        EXPECT_EQ(8u, sx.data.size());
+        EXPECT_EQ(99u, sx.data[4]);
+        EXPECT_EQ(0u, sx.data[5]);
+        EXPECT_EQ(0u, sx.data[6]);
+        EXPECT_EQ(0u, sx.data[7]);
+
+        sx.add_uint28(128);
+        EXPECT_EQ(12u, sx.data.size());
+        EXPECT_EQ(0u, sx.data[8]);
+        EXPECT_EQ(1u, sx.data[9]);
+        EXPECT_EQ(0u, sx.data[10]);
+        EXPECT_EQ(0u, sx.data[11]);
+
+        sx.add_uint28(0x3FFF);
+        EXPECT_EQ(16u, sx.data.size());
+        EXPECT_EQ(127u, sx.data[12]);
+        EXPECT_EQ(127u, sx.data[13]);
+        EXPECT_EQ(0u, sx.data[14]);
+        EXPECT_EQ(0u, sx.data[15]);
+
+        sx.add_uint28(0x123456);
+        EXPECT_EQ(20u, sx.data.size());
+        EXPECT_EQ(0x56u, sx.data[16]);
+        EXPECT_EQ(0x68u, sx.data[17]);
+        EXPECT_EQ(0x48u, sx.data[18]);
+        EXPECT_EQ(0u, sx.data[19]);
+
+        sx.add_uint28(0x1234567);
+        EXPECT_EQ(24u, sx.data.size());
+        EXPECT_EQ(0x67u, sx.data[20]);
+        EXPECT_EQ(0x0Au, sx.data[21]);
+        EXPECT_EQ(0x0Du, sx.data[22]);
+        EXPECT_EQ(0x09u, sx.data[23]);
+
+        sx.add_uint28(0x0FFFFFFF);
+        EXPECT_EQ(28u, sx.data.size());
+        EXPECT_EQ(127u, sx.data[24]);
+        EXPECT_EQ(127u, sx.data[25]);
+        EXPECT_EQ(127u, sx.data[26]);
+        EXPECT_EQ(127u, sx.data[27]);
+    }
+}
+
+//-----------------------------------------------
+
 TEST_F(sysex, sysex7_add_device_identity)
 {
     using namespace midi;

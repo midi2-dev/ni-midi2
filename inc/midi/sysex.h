@@ -213,7 +213,7 @@ inline void sysex7::add_data(const uint7_t* d, size_t data_size)
 
 inline void sysex7::add_uint14(uint14_t value)
 {
-    assert(value < uint14_max);
+    assert(value <= uint14_max);
 
     const uint7_t d[] = { uint7_t(value & 0x7Fu), uint7_t((value >> 7) & 0x7Fu) };
     data.insert(data.end(), d, d + sizeof(d));
@@ -227,7 +227,7 @@ inline uint14_t sysex7::make_uint14(size_t data_pos) const
 
 inline void sysex7::add_uint28(uint28_t value)
 {
-    assert(value < uint28_max);
+    assert(value <= uint28_max);
 
     const uint7_t d[] = { uint7_t(value & 0x7Fu),
                           uint7_t((value >> 7) & 0x7Fu),

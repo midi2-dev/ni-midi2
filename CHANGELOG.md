@@ -1,6 +1,7 @@
 # v1.1.1
 
 * fix `device_identity` handling in MIDI CI and stream messages
+* fix faulty assertions in `sysex7::add_uint14` / `sysex7::add_uint28`
 
 # v1.1.0
 
