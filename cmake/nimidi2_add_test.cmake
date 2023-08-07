@@ -1,5 +1,5 @@
 
-function(ni_add_test Target)
+function(nimidi2_add_test Target)
 
   cmake_parse_arguments( PARSE_ARGV 1 NI_ADD_TEST "GTEST" "" "" )
 

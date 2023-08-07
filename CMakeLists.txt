@@ -19,8 +19,8 @@ option( NIMIDI2_CUSTOM_SYSEX_DATA_ALLOCATOR "Build with custom sysex data alloca
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 include(code-coverage)
-include(ni_add_test)
-include(ni_treat_warnings_as_errors)
+include(nimidi2_add_test)
+include(nimidi2_treat_warnings_as_errors)
 
 if(NOT CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 17)
@@ -53,6 +53,9 @@ add_library(ni-midi2 EXCLUDE_FROM_ALL ${LibSources})
 target_include_directories(ni-midi2 PUBLIC inc)
 add_library(ni::midi2 ALIAS ni-midi2)
 
+if (NIMIDI2_TREAT_WARNINGS_AS_ERRORS)
+    nimidi2_treat_warnings_as_errors(ni-midi2)
+endif()
 if( NIMIDI2_UNITY_BUILDS )
     set_target_properties(ni-midi2 PROPERTIES
         UNITY_BUILD ON
@@ -95,6 +98,9 @@ if( NIMIDI2_TESTS )
     add_executable(ni-midi2-tests ${TestSources})
     target_link_libraries(ni-midi2-tests PRIVATE ni::midi2)
 
+    if (NIMIDI2_TREAT_WARNINGS_AS_ERRORS)
+        nimidi2_treat_warnings_as_errors(ni-midi2-tests)
+    endif()
     if(NIMIDI2_UNITY_BUILDS)
         set_target_properties(ni-midi2-tests PROPERTIES UNITY_BUILD ON)
     endif()
@@ -102,5 +108,5 @@ if( NIMIDI2_TESTS )
     find_package(GTest "1.11.0" REQUIRED)
     target_link_libraries(ni-midi2-tests PRIVATE GTest::GTest GTest::gmock_main)
 
-    ni_add_test(ni-midi2-tests GTEST)
+    nimidi2_add_test(ni-midi2-tests GTEST)
 endif(NIMIDI2_TESTS)

@@ -1,4 +1,4 @@
-function( ni_treat_warnings_as_errors Target )
+function( nimidi2_treat_warnings_as_errors Target )
 
   if( CMAKE_GENERATOR MATCHES "Xcode" )
     set_target_properties( ${Target} PROPERTIES XCODE_ATTRIBUTE_GCC_TREAT_WARNINGS_AS_ERRORS "YES" )
