@@ -105,7 +105,7 @@ if( NIMIDI2_TESTS )
         set_target_properties(ni-midi2-tests PROPERTIES UNITY_BUILD ON)
     endif()
 
-    find_package(GTest "1.11.0" REQUIRED)
+    find_package(GTest REQUIRED)
     target_link_libraries(ni-midi2-tests PRIVATE GTest::GTest GTest::gmock_main)
 
     nimidi2_add_test(ni-midi2-tests GTEST)
