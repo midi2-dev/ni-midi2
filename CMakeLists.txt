@@ -86,6 +86,8 @@ if( NIMIDI2_TESTS )
         tests/sysex_tests.cpp tests/sysex_tests.h
         tests/sysex7_collector_tests.cpp
         tests/sysex7_test_data.cpp tests/sysex7_test_data.h
+        tests/sysex8_collector_tests.cpp
+        tests/sysex8_test_data.cpp tests/sysex8_test_data.h
         tests/universal_sysex_tests.cpp
         tests/capability_inquiry_tests.cpp
         tests/ci_profile_configuration_tests.cpp

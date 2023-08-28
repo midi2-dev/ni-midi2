@@ -58,16 +58,31 @@ class sysex7_collector
 };
 
 //--------------------------------------------------------------------------
-/*
+
 class sysex8_collector
 {
-public:
-  using callback = std::function<void (sysex8)>;
+  public:
+    using callback = std::function<void(const sysex8&, uint8_t stream_id)>;
 
-  void feed(const universal_packet&);
-  void reset();
+    explicit sysex8_collector(callback);
+
+    void set_callback(callback);
+    void set_max_sysex_data_size(size_t); //!< limit maximum size of accepted sysex data
+
+    void feed(const universal_packet&);
+    void reset();
+
+    uint8_t stream_id() const { return m_stream_id; }
+
+  private:
+    uint8_t       m_stream_id{ 0 };
+    sysex8        m_sysex8;
+    size_t        m_max_sysex_data_size{ 0 };
+    packet_format m_state{ packet_format::start };
+    enum { detect, one_byte, three_bytes, invalid, done } m_manufacturer_id_state = detect;
+    callback m_cb;
 };
-*/
+
 //--------------------------------------------------------------------------
 
 inline sysex7_collector::sysex7_collector(callback cb)
@@ -78,6 +93,19 @@ inline void sysex7_collector::set_callback(callback cb)
 {
     m_cb = std::move(cb);
 }
+
+//--------------------------------------------------------------------------
+
+inline sysex8_collector::sysex8_collector(callback cb)
+  : m_cb(std::move(cb))
+{
+}
+inline void sysex8_collector::set_callback(callback cb)
+{
+    m_cb = std::move(cb);
+}
+
+//--------------------------------------------------------------------------
 
 } // namespace midi
 

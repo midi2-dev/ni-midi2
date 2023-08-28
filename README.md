@@ -136,12 +136,10 @@ There are packet data views available for the majority of UMP message types.
     struct midi1_channel_voice_message_view;
     struct midi2_channel_voice_message_view;
 
-    struct data_message_view;
     struct sysex7_packet_view;
+    struct sysex8_packet_view;
 
-    struct flex_data_message;
-
-    struct stream_message;
+    struct flex_data_message_view;
 
     struct endpoint_discovery_view;
     struct endpoint_info_view;
@@ -178,7 +176,7 @@ The library provides a `midi1_byte_stream_parser` class and also free helper fun
 
 The `midi1_byte_stream_parser` can be configured to automatically parse and collect Sysex7 messages.
 
-### Sysex7 collector
+### Sysex collectors
 
 The `sysex7_collector` class allows to easily collect System Exclusive messages (like MIDI-CI 1.2).
 
@@ -190,8 +188,22 @@ The `sysex7_collector` class allows to easily collect System Exclusive messages 
         }
     };
 
-    while(b = readMIDI1Byte())
-        c.feed(b);
+    if (is_sysex7_packet(p))
+        c.feed(p);
+
+`sysex8_collector` does the same for System Exclusive 8 messages.
+
+    sysex8_collector c {
+        [](const sysex8 &s)
+        {
+            // do something with message
+            ...
+        }
+    };
+
+    if (is_sysex8_packet(p))
+        c.feed(p);
+
 
 ### Jitter Reduction Timestamps
 
@@ -227,8 +239,5 @@ In case you plan to contribute please pass `-DNIMIDI2_TREAT_WARNINGS_AS_ERRORS=O
 ## TODOs
 
 * sysex7 data encoding
-* `extended_data_message_view`
-* `sysex8_view`
-* `sysex8_collector`
 * support for mixed dataset
 * specific flex data message data views

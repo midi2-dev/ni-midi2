@@ -83,6 +83,8 @@ if ( NI_MIDI2_BUILD_TESTS )
         "${NI_NIMIDI2_PACKAGE_PATH}/tests/sysex_tests.cpp"
         "${NI_NIMIDI2_PACKAGE_PATH}/tests/sysex7_collector_tests.cpp"
         "${NI_NIMIDI2_PACKAGE_PATH}/tests/sysex7_test_data.cpp"
+        "${NI_NIMIDI2_PACKAGE_PATH}/tests/sysex8_collector_tests.cpp"
+        "${NI_NIMIDI2_PACKAGE_PATH}/tests/sysex8_test_data.cpp"
         "${NI_NIMIDI2_PACKAGE_PATH}/tests/universal_sysex_tests.cpp"
         "${NI_NIMIDI2_PACKAGE_PATH}/tests/capability_inquiry_tests.cpp"
         "${NI_NIMIDI2_PACKAGE_PATH}/tests/ci_profile_configuration_tests.cpp"

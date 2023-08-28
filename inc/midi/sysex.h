@@ -25,6 +25,7 @@
 //--------------------------------------------------------------------------
 
 #include <midi/data_message.h>
+#include <midi/extended_data_message.h>
 #include <midi/manufacturer.h>
 #include <midi/types.h>
 
@@ -183,6 +184,13 @@ struct sysex8 : sysex
     bool operator!=(const sysex8& other) const { return sysex::operator!=(other); }
 };
 
+//--------------------------------------------------------------------------
+
+template<typename Sender>
+void send_sysex8(const sysex8&, uint8_t stream_id, group_t, Sender&&);
+
+std::vector<extended_data_message> as_sysex8_packets(const sysex8&, uint8_t stream_id, group_t = 0);
+
 //----------------------------------------------- inline implementations
 
 inline bool sysex::operator==(const sysex& other) const
@@ -247,15 +255,18 @@ inline uint28_t sysex7::make_uint28(size_t data_pos) const
 template<typename Sender>
 void send_sysex7(const sysex7& sysex, group_t group, Sender&& sender)
 {
+    constexpr size_t max_payload_size = 6;
+
     // initialize first packet
-    auto p = (sysex.total_data_size() <= 6) ? make_sysex7_complete_packet(group) : make_sysex7_start_packet(group);
+    auto p = (sysex.total_data_size() <= max_payload_size) ? make_sysex7_complete_packet(group)
+                                                           : make_sysex7_start_packet(group);
 
     // write manufacturerID bytes
-    p.add_payload_byte((sysex.manufacturerID >> 16) & 0xFF);
+    p.add_payload_byte((sysex.manufacturerID >> 16) & 0x7F);
     if (sysex.manufacturerID & 0x00FFFF)
     {
-        p.add_payload_byte((sysex.manufacturerID >> 8) & 0xFF);
-        p.add_payload_byte(sysex.manufacturerID & 0xFF);
+        p.add_payload_byte((sysex.manufacturerID >> 8) & 0x7F);
+        p.add_payload_byte(sysex.manufacturerID & 0x7F);
     }
 
     // process data bytes
@@ -265,11 +276,12 @@ void send_sysex7(const sysex7& sysex, group_t group, Sender&& sender)
         p.add_payload_byte(b);
         --dataBytesLeft;
 
-        if (p.payload_size() == 6) // packet full?
+        if (p.payload_size() == max_payload_size) // packet full?
         {
             sender(p);
 
-            p = (dataBytesLeft <= 6) ? make_sysex7_end_packet(group) : make_sysex7_continue_packet(group);
+            p =
+              (dataBytesLeft <= max_payload_size) ? make_sysex7_end_packet(group) : make_sysex7_continue_packet(group);
         }
     }
 
@@ -287,6 +299,61 @@ inline std::vector<data_message> as_sysex7_packets(const sysex7& sysex, group_t 
     result.reserve(sysex.total_data_size() / 6 + 1);
 
     send_sysex7(sysex, group, [&](const data_message& p) { result.push_back(p); });
+
+    return result;
+}
+
+//--------------------------------------------------------------------------
+
+template<typename Sender>
+void send_sysex8(const sysex8& sysex, uint8_t stream_id, group_t group, Sender&& sender)
+{
+    constexpr size_t max_payload_size = 13;
+
+    // initialize first packet
+    auto p = (sysex.total_data_size() <= max_payload_size) ? make_sysex8_complete_packet(stream_id, group)
+                                                           : make_sysex8_start_packet(stream_id, group);
+
+    // write manufacturerID bytes
+    if (sysex.manufacturerID & 0x00FFFF)
+    {
+        p.add_payload_byte(0x80 + ((sysex.manufacturerID >> 8) & 0x7F));
+        p.add_payload_byte(sysex.manufacturerID & 0x7F);
+    }
+    else
+    {
+        p.add_payload_byte(0);
+        p.add_payload_byte((sysex.manufacturerID >> 16) & 0x7F);
+    }
+
+    // process data bytes
+    size_t dataBytesLeft = sysex.data.size();
+    for (auto b : sysex.data)
+    {
+        p.add_payload_byte(b);
+        --dataBytesLeft;
+
+        if (p.payload_size() == max_payload_size) // packet full?
+        {
+            sender(p);
+
+            p = (dataBytesLeft <= max_payload_size) ? make_sysex8_end_packet(stream_id, group)
+                                                    : make_sysex8_continue_packet(stream_id, group);
+        }
+    }
+
+    if (p.payload_size())
+    {
+        sender(p);
+    }
+}
+
+inline std::vector<extended_data_message> as_sysex8_packets(const sysex8& sysex, uint8_t stream_id, group_t group)
+{
+    std::vector<extended_data_message> result;
+    result.reserve((sysex.total_data_size() + 1) / 14 + 1);
+
+    send_sysex8(sysex, stream_id, group, [&](const extended_data_message& p) { result.push_back(p); });
 
     return result;
 }

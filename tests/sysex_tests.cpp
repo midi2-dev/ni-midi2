@@ -27,14 +27,16 @@
 #include "sysex_tests.h"
 
 #include "sysex7_test_data.h"
+#include "sysex8_test_data.h"
 
 //-----------------------------------------------
 
 class sysex : public ::testing::Test
 {
   public:
+    template<class other_packet_type>
     bool equal(const std::vector<midi::universal_packet>& p,
-               const std::vector<midi::data_message>&     d,
+               const std::vector<other_packet_type>&      d,
                const std::string&                         description)
     {
         using namespace midi;
@@ -441,6 +443,65 @@ TEST_F(sysex, sysex7_make_device_identity)
 
 //-----------------------------------------------
 
+TEST_F(sysex, operators)
+{
+    {
+        midi::sysex7 sx1{ 0x7, { 0x04, 0x19, 9, 0x22, 77 } };
+        midi::sysex7 sx2{ 0x7, { 0x04, 0x19, 99, 0x22, 77 } };
+        midi::sysex7 sx3{ 0x123456, { 0x04, 0x01, 0x90, 0x22, 77 } };
+        midi::sysex7 sx4{ 0x123456, { 0x04, 0x11, 0x90, 0x22, 77 } };
+
+        EXPECT_EQ(sx1, sx1);
+        EXPECT_NE(sx1, sx2);
+        EXPECT_NE(sx1, sx3);
+        EXPECT_NE(sx1, sx4);
+
+        EXPECT_NE(sx2, sx1);
+        EXPECT_EQ(sx2, sx2);
+        EXPECT_NE(sx2, sx3);
+        EXPECT_NE(sx2, sx4);
+
+        EXPECT_NE(sx3, sx1);
+        EXPECT_NE(sx3, sx2);
+        EXPECT_EQ(sx3, sx3);
+        EXPECT_NE(sx3, sx2);
+
+        EXPECT_NE(sx4, sx1);
+        EXPECT_NE(sx4, sx2);
+        EXPECT_NE(sx4, sx3);
+        EXPECT_EQ(sx4, sx4);
+    }
+
+    {
+        midi::sysex8 sx1{ 0x7, { 0x04, 0x19, 9, 0x22, 77 } };
+        midi::sysex8 sx2{ 0x7, { 0x04, 0x19, 99, 0x22, 77 } };
+        midi::sysex8 sx3{ 0x123456, { 0x04, 0x01, 0x90, 0x22, 77 } };
+        midi::sysex8 sx4{ 0x123456, { 0x04, 0x11, 0x90, 0x22, 77 } };
+
+        EXPECT_EQ(sx1, sx1);
+        EXPECT_NE(sx1, sx2);
+        EXPECT_NE(sx1, sx3);
+        EXPECT_NE(sx1, sx4);
+
+        EXPECT_NE(sx2, sx1);
+        EXPECT_EQ(sx2, sx2);
+        EXPECT_NE(sx2, sx3);
+        EXPECT_NE(sx2, sx4);
+
+        EXPECT_NE(sx3, sx1);
+        EXPECT_NE(sx3, sx2);
+        EXPECT_EQ(sx3, sx3);
+        EXPECT_NE(sx3, sx4);
+
+        EXPECT_NE(sx4, sx1);
+        EXPECT_NE(sx4, sx2);
+        EXPECT_NE(sx4, sx3);
+        EXPECT_EQ(sx4, sx4);
+    }
+}
+
+//-----------------------------------------------
+
 TEST_F(sysex, send_sysex7)
 {
     using namespace midi;
@@ -464,6 +525,38 @@ TEST_F(sysex, as_sysex7_packets)
     for (const auto& entry : sysex7_test_cases)
     {
         EXPECT_TRUE(equal(entry.packets, as_sysex7_packets(entry.sysex, entry.packets[0].group()), entry.description))
+          << entry.description;
+    }
+}
+
+//-----------------------------------------------
+
+TEST_F(sysex, send_sysex8)
+{
+    using namespace midi;
+
+    for (const auto& entry : sysex8_test_cases)
+    {
+        auto       it        = entry.packets.begin();
+        const auto stream_id = it->byte3();
+        send_sysex8(entry.sysex, stream_id, entry.packets[0].group(), [&](const extended_data_message& p) {
+            EXPECT_EQ(p, *it++) << entry.description;
+        });
+        EXPECT_EQ(it, entry.packets.end()) << entry.description;
+    }
+}
+
+//-----------------------------------------------
+
+TEST_F(sysex, as_sysex8_packets)
+{
+    using namespace midi;
+
+    for (const auto& entry : sysex8_test_cases)
+    {
+        const auto stream_id = entry.packets[0].byte3();
+        EXPECT_TRUE(
+          equal(entry.packets, as_sysex8_packets(entry.sysex, stream_id, entry.packets[0].group()), entry.description))
           << entry.description;
     }
 }
