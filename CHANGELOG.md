@@ -1,3 +1,13 @@
+# v1.2.0
+
+* add support for System Exclusive 8 messages
+* introduce `sysex7_packet`, move payload members from `data_message` into `sysex7_packet`
+
+## Migration guide
+
+`make_sysex7_<XXX>_packet` factory functions now return `sysex7_packet` instead of `data_packet`.
+This might require minor changes to variable types and function signatures.
+
 # v1.1.1
 
 * fix `device_identity` handling in MIDI CI and stream messages

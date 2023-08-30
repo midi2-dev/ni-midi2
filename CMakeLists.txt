@@ -36,7 +36,7 @@ set(LibSources
     inc/midi/midi1_byte_stream.h src/midi1_byte_stream.cpp
     inc/midi/midi1_channel_voice_message.h
     inc/midi/midi2_channel_voice_message.h
-    inc/midi/data_message.h src/data_message.cpp
+    inc/midi/data_message.h
     inc/midi/extended_data_message.h
     inc/midi/flex_data_message.h
     inc/midi/stream_message.h

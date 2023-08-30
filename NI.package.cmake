@@ -30,7 +30,6 @@ set( ni_midi2_sources
     "${NI_NIMIDI2_PACKAGE_PATH}/inc/midi/midi1_channel_voice_message.h"
     "${NI_NIMIDI2_PACKAGE_PATH}/inc/midi/midi2_channel_voice_message.h"
     "${NI_NIMIDI2_PACKAGE_PATH}/inc/midi/data_message.h"
-    "${NI_NIMIDI2_PACKAGE_PATH}/src/data_message.cpp"
     "${NI_NIMIDI2_PACKAGE_PATH}/inc/midi/extended_data_message.h"
     "${NI_NIMIDI2_PACKAGE_PATH}/inc/midi/flex_data_message.h"
     "${NI_NIMIDI2_PACKAGE_PATH}/inc/midi/stream_message.h"

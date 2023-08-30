@@ -13,7 +13,9 @@ The library provides the basic functionality of UMP 1.1 and MIDI-CI 1.2 by provi
     struct midi1_channel_voice_message;
     struct midi2_channel_voice_message;
     struct data_message;
+    struct sysex7_packet;
     struct extended_data_message;
+    struct sysex8_packet;
     struct flex_data_message;
     struct stream_message;
 

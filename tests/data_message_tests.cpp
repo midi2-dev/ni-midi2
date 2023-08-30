@@ -36,7 +36,6 @@ TEST(data_message, constructors)
         EXPECT_EQ(packet_type::data, m.type());
         EXPECT_EQ(0u, m.group());
         EXPECT_EQ(data_status::sysex7_complete, m.status());
-        EXPECT_EQ(0u, m.payload_size());
     }
 
     {
@@ -45,7 +44,33 @@ TEST(data_message, constructors)
         EXPECT_EQ(packet_type::data, m.type());
         EXPECT_EQ(0u, m.group());
         EXPECT_EQ(data_status::sysex7_end, m.status());
-        EXPECT_EQ(0u, m.payload_size());
+    }
+}
+
+//-----------------------------------------------
+
+TEST(data_message, sysex7_packet_constructors)
+{
+    using namespace midi;
+
+    {
+        constexpr midi::sysex7_packet p;
+
+        EXPECT_EQ(packet_type::data, p.type());
+        EXPECT_EQ(0u, p.group());
+        EXPECT_EQ(data_status::sysex7_complete, p.status());
+        EXPECT_EQ(packet_format::complete, p.format());
+        EXPECT_EQ(0u, p.payload_size());
+    }
+
+    {
+        constexpr midi::sysex7_packet p{ data_status::sysex7_end, 9 };
+
+        EXPECT_EQ(packet_type::data, p.type());
+        EXPECT_EQ(9u, p.group());
+        EXPECT_EQ(data_status::sysex7_end, p.status());
+        EXPECT_EQ(packet_format::end, p.format());
+        EXPECT_EQ(0u, p.payload_size());
     }
 }
 
@@ -61,6 +86,7 @@ TEST(data_message, make_sysex7_complete_packet)
         EXPECT_EQ(packet_type::data, m.type());
         EXPECT_EQ(0u, m.group());
         EXPECT_EQ(data_status::sysex7_complete, m.status());
+        EXPECT_EQ(packet_format::complete, m.format());
         EXPECT_EQ(0u, m.payload_size());
     }
 
@@ -70,6 +96,7 @@ TEST(data_message, make_sysex7_complete_packet)
         EXPECT_EQ(packet_type::data, m.type());
         EXPECT_EQ(5u, m.group());
         EXPECT_EQ(data_status::sysex7_complete, m.status());
+        EXPECT_EQ(packet_format::complete, m.format());
         EXPECT_EQ(0u, m.payload_size());
     }
 }
@@ -86,6 +113,7 @@ TEST(data_message, make_sysex7_start_packet)
         EXPECT_EQ(packet_type::data, m.type());
         EXPECT_EQ(0u, m.group());
         EXPECT_EQ(data_status::sysex7_start, m.status());
+        EXPECT_EQ(packet_format::start, m.format());
         EXPECT_EQ(0u, m.payload_size());
     }
 
@@ -95,6 +123,7 @@ TEST(data_message, make_sysex7_start_packet)
         EXPECT_EQ(packet_type::data, m.type());
         EXPECT_EQ(0xFu, m.group());
         EXPECT_EQ(data_status::sysex7_start, m.status());
+        EXPECT_EQ(packet_format::start, m.format());
         EXPECT_EQ(0u, m.payload_size());
     }
 }
@@ -111,6 +140,7 @@ TEST(data_message, make_sysex7_continue_packet)
         EXPECT_EQ(packet_type::data, m.type());
         EXPECT_EQ(0u, m.group());
         EXPECT_EQ(data_status::sysex7_continue, m.status());
+        EXPECT_EQ(packet_format::cont, m.format());
         EXPECT_EQ(0u, m.payload_size());
     }
 
@@ -120,6 +150,7 @@ TEST(data_message, make_sysex7_continue_packet)
         EXPECT_EQ(packet_type::data, m.type());
         EXPECT_EQ(9u, m.group());
         EXPECT_EQ(data_status::sysex7_continue, m.status());
+        EXPECT_EQ(packet_format::cont, m.format());
         EXPECT_EQ(0u, m.payload_size());
     }
 }
@@ -136,6 +167,7 @@ TEST(data_message, make_sysex7_end_packet)
         EXPECT_EQ(packet_type::data, m.type());
         EXPECT_EQ(0u, m.group());
         EXPECT_EQ(data_status::sysex7_end, m.status());
+        EXPECT_EQ(packet_format::end, m.format());
         EXPECT_EQ(0u, m.payload_size());
     }
 
@@ -145,13 +177,41 @@ TEST(data_message, make_sysex7_end_packet)
         EXPECT_EQ(packet_type::data, m.type());
         EXPECT_EQ(1u, m.group());
         EXPECT_EQ(data_status::sysex7_end, m.status());
+        EXPECT_EQ(packet_format::end, m.format());
         EXPECT_EQ(0u, m.payload_size());
     }
 }
 
 //-----------------------------------------------
 
-TEST(data_message, payload_size)
+TEST(extended_data_message, sysex7_packet_format)
+{
+    using namespace midi;
+
+    {
+        auto m = make_sysex7_complete_packet();
+        EXPECT_EQ(packet_format::complete, m.format());
+    }
+
+    {
+        auto m = make_sysex7_start_packet();
+        EXPECT_EQ(packet_format::start, m.format());
+    }
+
+    {
+        auto m = make_sysex7_continue_packet();
+        EXPECT_EQ(packet_format::cont, m.format());
+    }
+
+    {
+        auto m = make_sysex7_end_packet();
+        EXPECT_EQ(packet_format::end, m.format());
+    }
+}
+
+//-----------------------------------------------
+
+TEST(data_message, sysex7_payload_size)
 {
     using namespace midi;
 
@@ -182,7 +242,7 @@ TEST(data_message, payload_size)
 
 //-----------------------------------------------
 
-TEST(data_message, set_payload_size)
+TEST(data_message, sysex7_set_payload_size)
 {
     using namespace midi;
 
@@ -216,7 +276,7 @@ TEST(data_message, set_payload_size)
 
 //-----------------------------------------------
 
-TEST(data_message, payload_byte)
+TEST(data_message, sysex7_payload_byte)
 {
     using namespace midi;
 
@@ -240,7 +300,7 @@ TEST(data_message, payload_byte)
 
 //-----------------------------------------------
 
-TEST(data_message, add_payload_byte)
+TEST(data_message, sysex7_add_payload_byte)
 {
     using namespace midi;
 
@@ -301,7 +361,7 @@ TEST(data_message, add_payload_byte)
 
 //-----------------------------------------------
 
-TEST(data_message, set_payload_byte)
+TEST(data_message, sysex7_set_payload_byte)
 {
     using namespace midi;
 

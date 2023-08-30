@@ -41,14 +41,25 @@ struct data_message : universal_packet
     constexpr data_message();
     constexpr explicit data_message(status_t);
     ~data_message() = default;
+};
+
+//--------------------------------------------------------------------------
+
+struct sysex7_packet : data_message
+{
+    constexpr sysex7_packet() = default;
+    constexpr sysex7_packet(status_t, group_t);
+    ~sysex7_packet() = default;
+
+    constexpr packet_format format() const { return packet_format((status() >> 4) & 0b11); }
 
     constexpr uint8_t payload_byte(size_t b) const { return get_byte(2 + b); }
-    void              set_payload_byte(size_t, uint8_t);
+    constexpr void    set_payload_byte(size_t, uint8_t);
 
     constexpr size_t payload_size() const { return status() & 0x0F; }
-    void             set_payload_size(size_t);
+    constexpr void   set_payload_size(size_t);
 
-    void add_payload_byte(uint8_t);
+    constexpr void add_payload_byte(uint8_t);
 };
 
 //--------------------------------------------------------------------------
@@ -82,10 +93,10 @@ constexpr std::optional<sysex7_packet_view> as_sysex7_packet_view(const universa
 
 //--------------------------------------------------------------------------
 
-constexpr data_message make_sysex7_complete_packet(group_t = 0);
-constexpr data_message make_sysex7_start_packet(group_t = 0);
-constexpr data_message make_sysex7_continue_packet(group_t = 0);
-constexpr data_message make_sysex7_end_packet(group_t = 0);
+constexpr sysex7_packet make_sysex7_complete_packet(group_t = 0);
+constexpr sysex7_packet make_sysex7_start_packet(group_t = 0);
+constexpr sysex7_packet make_sysex7_continue_packet(group_t = 0);
+constexpr sysex7_packet make_sysex7_end_packet(group_t = 0);
 
 //--------------------------------------------------------------------------
 
@@ -98,35 +109,54 @@ constexpr data_message::data_message(status_t status)
 {
 }
 
-inline void data_message::set_payload_byte(size_t b, uint8_t data)
+//--------------------------------------------------------------------------
+
+constexpr sysex7_packet::sysex7_packet(status_t status, group_t group)
+  : data_message(status)
+{
+    set_group(group);
+}
+
+constexpr void sysex7_packet::set_payload_byte(size_t b, uint8_t data)
 {
     set_byte_7bit(2 + b, data);
 }
 
-constexpr data_message make_sysex7_complete_packet(group_t group)
+constexpr void sysex7_packet::set_payload_size(size_t size)
 {
-    data_message result{ data_status::sysex7_complete };
-    result.set_group(group);
-    return result;
+    assert(size <= 6);
+    set_byte(1, (status() & 0xF0) + (size & 0x0F));
 }
-constexpr data_message make_sysex7_start_packet(group_t group)
+
+constexpr void sysex7_packet::add_payload_byte(uint8_t byte)
 {
-    data_message result{ data_status::sysex7_start };
-    result.set_group(group);
-    return result;
+    const auto size = payload_size();
+    assert(size < 6);
+    set_byte_7bit(2 + size, byte);
+    set_payload_size(size + 1);
 }
-constexpr data_message make_sysex7_continue_packet(group_t group)
+
+//--------------------------------------------------------------------------
+
+constexpr sysex7_packet make_sysex7_complete_packet(group_t group)
 {
-    data_message result{ data_status::sysex7_continue };
-    result.set_group(group);
-    return result;
+    return sysex7_packet{ data_status::sysex7_complete, group };
 }
-constexpr data_message make_sysex7_end_packet(group_t group)
+constexpr sysex7_packet make_sysex7_start_packet(group_t group)
 {
-    data_message result{ data_status::sysex7_end };
-    result.set_group(group);
-    return result;
+    return sysex7_packet{ data_status::sysex7_start, group };
 }
+constexpr sysex7_packet make_sysex7_continue_packet(group_t group)
+{
+    return sysex7_packet{ data_status::sysex7_continue, group };
+}
+constexpr sysex7_packet make_sysex7_end_packet(group_t group)
+{
+    return sysex7_packet{ data_status::sysex7_end, group };
+}
+
+//--------------------------------------------------------------------------
+
 constexpr bool is_data_message(const universal_packet& p)
 {
     return p.type() == packet_type::data;
