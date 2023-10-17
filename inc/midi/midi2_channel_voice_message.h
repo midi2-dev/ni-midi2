@@ -49,7 +49,13 @@ struct midi2_channel_voice_message : universal_packet
 
 //--------------------------------------------------------------------------
 
-constexpr bool is_midi2_channel_voice_message(const universal_packet&);
+constexpr bool    is_midi2_channel_voice_message(const universal_packet&);
+constexpr bool    is_midi2_registered_controller_message(const universal_packet&);
+constexpr bool    is_midi2_assignable_controller_message(const universal_packet&);
+constexpr bool    is_midi2_registered_per_note_controller_message(const universal_packet&);
+constexpr bool    is_midi2_assignable_per_note_controller_message(const universal_packet&);
+constexpr bool    is_midi2_per_note_pitch_bend_message(const universal_packet&);
+constexpr uint8_t get_midi2_per_note_controller_index(const universal_packet&);
 
 //--------------------------------------------------------------------------
 
@@ -360,6 +366,33 @@ constexpr midi2_channel_voice_message make_per_note_pitch_bend_message(group_t  
                                                                        pitch_bend pb)
 {
     return { group, channel_voice_status::per_note_pitch_bend, channel, note_nr, 0, pb.value };
+}
+
+constexpr bool is_midi2_registered_controller_message(const universal_packet& p)
+{
+    return is_midi2_channel_voice_message(p) && (p.status() & 0xF0) == channel_voice_status::registered_controller;
+}
+constexpr bool is_midi2_assignable_controller_message(const universal_packet& p)
+{
+    return is_midi2_channel_voice_message(p) && (p.status() & 0xF0) == channel_voice_status::assignable_controller;
+}
+constexpr bool is_midi2_registered_per_note_controller_message(const universal_packet& p)
+{
+    return is_midi2_channel_voice_message(p) &&
+           (p.status() & 0xF0) == channel_voice_status::registered_per_note_controller;
+}
+constexpr bool is_midi2_assignable_per_note_controller_message(const universal_packet& p)
+{
+    return is_midi2_channel_voice_message(p) &&
+           (p.status() & 0xF0) == channel_voice_status::assignable_per_note_controller;
+}
+constexpr bool is_midi2_per_note_pitch_bend_message(const universal_packet& p)
+{
+    return is_midi2_channel_voice_message(p) && (p.status() & 0xF0) == channel_voice_status::per_note_pitch_bend;
+}
+constexpr uint8_t get_midi2_per_note_controller_index(const universal_packet& p)
+{
+    return p.byte4();
 }
 
 //--------------------------------------------------------------------------
