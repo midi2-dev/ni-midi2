@@ -97,6 +97,8 @@ if( NIMIDI2_TESTS )
         tests/midi1_byte_stream_tests.cpp
     )
 
+    source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${TestSources})
+
     add_executable(ni-midi2-tests ${TestSources})
     target_link_libraries(ni-midi2-tests PRIVATE ni::midi2)
 
