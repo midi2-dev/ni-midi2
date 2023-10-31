@@ -125,7 +125,6 @@ void sysex7_collector::feed(const universal_packet& p)
         if (m_cb)
         {
             m_cb(m_sysex7);
-            m_sysex7.clear();
         }
         reset();
         break;
@@ -139,7 +138,7 @@ void sysex7_collector::feed(const universal_packet& p)
 
 void sysex7_collector::reset()
 {
-    m_sysex7                  = sysex7{};
+    m_sysex7.clear();
     m_state                   = data_status::sysex7_start;
     m_manufacturerIDBytesRead = 0;
 }
@@ -250,7 +249,6 @@ void sysex8_collector::feed(const universal_packet& p)
         if (m_cb)
         {
             m_cb(m_sysex8, m_stream_id);
-            m_sysex8.clear();
         }
         reset();
         break;
@@ -264,8 +262,8 @@ void sysex8_collector::feed(const universal_packet& p)
 
 void sysex8_collector::reset()
 {
+    m_sysex8.clear();
     m_stream_id             = 0;
-    m_sysex8                = sysex8{};
     m_state                 = packet_format::start;
     m_manufacturer_id_state = detect;
 }
