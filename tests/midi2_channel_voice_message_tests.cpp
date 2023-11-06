@@ -131,6 +131,12 @@ TEST_F(midi2_channel_voice_message, midi2_channel_voice_message_view)
         EXPECT_EQ(10u, v.byte4());
         EXPECT_EQ(0x80000001u, v.data());
     }
+
+    {
+        const auto m   = midi::make_midi1_note_on_message(1, 1, 70, midi::velocity{ uint7_t{ 120 } });
+        const auto opt = as_midi2_channel_voice_message_view(m);
+        EXPECT_FALSE(opt.has_value());
+    }
 }
 
 //-----------------------------------------------
@@ -149,12 +155,14 @@ TEST_F(midi2_channel_voice_message, make_midi2_channel_voice_message)
         const auto m =
           make_midi2_channel_voice_message(4, channel_voice_status::per_note_pitch_bend, 14, 0x43, 0x00, 0x8000D123);
         EXPECT_EQ((universal_packet{ 0x446E4300, 0x8000D123 }), m);
+        EXPECT_TRUE(is_midi2_per_note_pitch_bend_message(m));
     }
 
     {
         constexpr auto m =
           make_midi2_channel_voice_message(12, channel_voice_status::registered_controller, 5, 4, 0x62, 0xABCDEF00);
         EXPECT_EQ((universal_packet{ 0x4C250462, 0xABCDEF00 }), m);
+        EXPECT_TRUE(is_midi2_registered_controller_message(m));
     }
 
     { // invalid channel in status
@@ -230,11 +238,15 @@ TEST_F(midi2_channel_voice_message, make_registered_per_note_controller_message)
         constexpr auto m =
           make_registered_per_note_controller_message(0xF, 0xE, 44, 77, controller_value{ 0x33445566u });
         EXPECT_EQ((universal_packet{ 0x4F0E2C4D, 0x33445566 }), m);
+        EXPECT_TRUE(is_midi2_registered_per_note_controller_message(m));
+        EXPECT_TRUE(get_midi2_per_note_controller_index(m) == 77);
     }
 
     {
         const auto m = make_registered_per_note_controller_message(1, 5, 0x33, 0x44, controller_value{ 0x55u });
         EXPECT_EQ((universal_packet{ 0x41053344, 0x00000055 }), m);
+        EXPECT_TRUE(is_midi2_registered_per_note_controller_message(m));
+        EXPECT_TRUE(get_midi2_per_note_controller_index(m) == 0x44);
     }
 }
 
@@ -248,6 +260,8 @@ TEST_F(midi2_channel_voice_message, make_assignable_per_note_controller_message)
         constexpr auto m =
           make_assignable_per_note_controller_message(0xE, 0xD, 0x12, 0x34, controller_value{ 0x44556677u });
         EXPECT_EQ((universal_packet{ 0x4E1D1234, 0x44556677 }), m);
+        EXPECT_TRUE(is_midi2_assignable_per_note_controller_message(m));
+        EXPECT_TRUE(get_midi2_per_note_controller_index(m) == 0x34);
     }
 
     {
@@ -304,6 +318,7 @@ TEST_F(midi2_channel_voice_message, make_registered_controller_message)
     {
         constexpr auto m = make_registered_controller_message(3, 7, 9, 0x45, controller_value{ 0x80101010u });
         EXPECT_EQ((universal_packet{ 0x43270945, 0x80101010 }), m);
+        EXPECT_TRUE(is_midi2_registered_controller_message(m));
     }
 
     { // invalid bank bits
@@ -326,6 +341,7 @@ TEST_F(midi2_channel_voice_message, make_assignable_controller_message)
     {
         constexpr auto m = make_assignable_controller_message(3, 7, 9, 0x45, controller_value{ 0x80101010u });
         EXPECT_EQ((universal_packet{ 0x43370945, 0x80101010 }), m);
+        EXPECT_TRUE(is_midi2_assignable_controller_message(m));
     }
 
     { // invalid bank bits
@@ -458,6 +474,76 @@ TEST_F(midi2_channel_voice_message, make_per_note_pitch_bend_message)
     {
         const auto m = make_per_note_pitch_bend_message(3, 7, 0x94, pitch_bend{ uint32_t{ 0x44126535 } });
         EXPECT_EQ((universal_packet{ 0x43679400, 0x44126535 }), m);
+    }
+}
+
+TEST_F(midi2_channel_voice_message, is_midi2_type_query_functions)
+{
+    using namespace midi;
+
+    {
+        constexpr auto m = make_midi1_note_on_message(1, 1, 60, velocity{ uint7_t{ 90 } });
+        EXPECT_FALSE(is_midi2_channel_voice_message(m));
+        EXPECT_FALSE(is_midi2_registered_controller_message(m));
+        EXPECT_FALSE(is_midi2_assignable_controller_message(m));
+        EXPECT_FALSE(is_midi2_registered_per_note_controller_message(m));
+        EXPECT_FALSE(is_midi2_assignable_per_note_controller_message(m));
+        EXPECT_FALSE(is_midi2_per_note_pitch_bend_message(m));
+    }
+
+    {
+        constexpr auto m =
+          make_midi2_channel_voice_message(12, channel_voice_status::registered_controller, 5, 4, 0x62, 0xABCDEF00);
+        EXPECT_TRUE(is_midi2_channel_voice_message(m));
+        EXPECT_TRUE(is_midi2_registered_controller_message(m));
+        EXPECT_FALSE(is_midi2_assignable_controller_message(m));
+        EXPECT_FALSE(is_midi2_registered_per_note_controller_message(m));
+        EXPECT_FALSE(is_midi2_assignable_per_note_controller_message(m));
+        EXPECT_FALSE(is_midi2_per_note_pitch_bend_message(m));
+    }
+
+    {
+        constexpr auto m = make_assignable_controller_message(3, 7, 9, 0x45, controller_value{ 0x80101010u });
+        EXPECT_TRUE(is_midi2_channel_voice_message(m));
+        EXPECT_FALSE(is_midi2_registered_controller_message(m));
+        EXPECT_TRUE(is_midi2_assignable_controller_message(m));
+        EXPECT_FALSE(is_midi2_registered_per_note_controller_message(m));
+        EXPECT_FALSE(is_midi2_assignable_per_note_controller_message(m));
+        EXPECT_FALSE(is_midi2_per_note_pitch_bend_message(m));
+    }
+
+    {
+        const auto m = make_registered_per_note_controller_message(1, 5, 0x33, 0x44, controller_value{ 0x55u });
+        EXPECT_TRUE(is_midi2_channel_voice_message(m));
+        EXPECT_FALSE(is_midi2_registered_controller_message(m));
+        EXPECT_FALSE(is_midi2_assignable_controller_message(m));
+        EXPECT_TRUE(is_midi2_registered_per_note_controller_message(m));
+        EXPECT_EQ(get_midi2_per_note_controller_index(m), 0x44);
+        EXPECT_FALSE(is_midi2_assignable_per_note_controller_message(m));
+        EXPECT_FALSE(is_midi2_per_note_pitch_bend_message(m));
+    }
+
+    {
+        const auto m =
+          make_assignable_per_note_controller_message(0xE, 0xD, 0x12, 0x34, controller_value{ 0x44556677u });
+        EXPECT_TRUE(is_midi2_channel_voice_message(m));
+        EXPECT_FALSE(is_midi2_registered_controller_message(m));
+        EXPECT_FALSE(is_midi2_assignable_controller_message(m));
+        EXPECT_FALSE(is_midi2_registered_per_note_controller_message(m));
+        EXPECT_TRUE(is_midi2_assignable_per_note_controller_message(m));
+        EXPECT_EQ(get_midi2_per_note_controller_index(m), 0x34);
+        EXPECT_FALSE(is_midi2_per_note_pitch_bend_message(m));
+    }
+
+    {
+        const auto m =
+          make_midi2_channel_voice_message(4, channel_voice_status::per_note_pitch_bend, 14, 0x43, 0x00, 0x8000D123);
+        EXPECT_TRUE(is_midi2_channel_voice_message(m));
+        EXPECT_FALSE(is_midi2_registered_controller_message(m));
+        EXPECT_FALSE(is_midi2_assignable_controller_message(m));
+        EXPECT_FALSE(is_midi2_registered_per_note_controller_message(m));
+        EXPECT_FALSE(is_midi2_assignable_per_note_controller_message(m));
+        EXPECT_TRUE(is_midi2_per_note_pitch_bend_message(m));
     }
 }
 
