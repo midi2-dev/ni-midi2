@@ -1,9 +1,2 @@
 libs
 test-reports
-
-# a user working directory
-ignore
-
-# clion/intellioj options
-.idea
-cmake-build-*
