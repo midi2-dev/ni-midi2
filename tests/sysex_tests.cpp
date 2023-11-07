@@ -79,7 +79,7 @@ midi::sysex::data_allocator::value_type* midi::sysex::data_allocator::allocate(s
 
 void midi::sysex::data_allocator::deallocate(value_type* p, std::size_t) noexcept
 {
-    return delete[](p);
+    return delete[] (p);
 }
 
 #endif // NIMIDI2_CUSTOM_SYSEX_DATA_ALLOCATOR

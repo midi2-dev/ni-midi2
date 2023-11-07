@@ -162,8 +162,8 @@ struct pitch_7_25
     constexpr note_nr_t note_nr() const;
 
     constexpr pitch_7_25& operator=(pitch_7_9);
-    constexpr pitch_7_25  operator+(const pitch_increment&) const;
-    constexpr pitch_7_25  operator+(float) const;
+    constexpr pitch_7_25 operator+(const pitch_increment&) const;
+    constexpr pitch_7_25 operator+(float) const;
 
     constexpr void operator+=(const pitch_increment&);
 

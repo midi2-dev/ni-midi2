@@ -26,10 +26,6 @@ Install `pre-commit` using Python `pip` or the packet manager of your choice:
     # apt on Ubuntu
     apt install pre-commit
 
-Additionally you have to install the clang-format wheel:
-
-    pip install clang-format
-
 Install the pre-commit hooks in the local checkout:
 
     cd path/to/ni-midi2

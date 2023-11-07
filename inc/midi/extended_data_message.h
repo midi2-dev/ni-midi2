@@ -56,13 +56,13 @@ struct sysex8_packet : extended_data_message
     constexpr packet_format format() const { return packet_format((status() >> 4) & 0b11); }
 
     constexpr uint8_t stream_id() const { return get_byte(2); }
-    constexpr void set_stream_id(uint8_t);
+    constexpr void    set_stream_id(uint8_t);
 
     constexpr uint8_t payload_byte(size_t b) const { return get_byte(3 + b); }
-    constexpr void set_payload_byte(size_t, uint8_t);
+    constexpr void    set_payload_byte(size_t, uint8_t);
 
     constexpr size_t payload_size() const;
-    constexpr void  set_payload_size(size_t);
+    constexpr void   set_payload_size(size_t);
 
     constexpr void add_payload_byte(uint8_t);
 };
@@ -84,7 +84,7 @@ struct sysex8_packet_view
 
     constexpr group_t       group() const { return p.group(); }
     constexpr packet_format format() const { return packet_format((p.status() >> 4) & 0b11); }
-    constexpr uint8_t stream_id() const { return p.get_byte(2); }
+    constexpr uint8_t       stream_id() const { return p.get_byte(2); }
     constexpr size_t        payload_size() const;
     constexpr uint8_t       payload_byte(size_t b) const { return p.get_byte(3 + b); }
 
@@ -118,10 +118,13 @@ constexpr extended_data_message::extended_data_message(status_t status)
 
 //--------------------------------------------------------------------------
 
-constexpr sysex8_packet::sysex8_packet() { data[0] |= 0x00010000u; }
+constexpr sysex8_packet::sysex8_packet()
+{
+    data[0] |= 0x00010000u;
+}
 constexpr sysex8_packet::sysex8_packet(status_t status, uint8_t stream_id, group_t group)
 {
-    data[0] = 0x50010000u | (group << 24)| (status << 16) | (stream_id << 8);
+    data[0] = 0x50010000u | (group << 24) | (status << 16) | (stream_id << 8);
 }
 
 constexpr void sysex8_packet::set_stream_id(uint8_t i)
@@ -138,7 +141,7 @@ constexpr size_t sysex8_packet::payload_size() const
 constexpr void sysex8_packet::set_payload_size(size_t size)
 {
     assert(size <= 13);
-    set_byte(1, (status() & 0xF0) + ((size+1) & 0x0F));
+    set_byte(1, (status() & 0xF0) + ((size + 1) & 0x0F));
 }
 
 constexpr void sysex8_packet::set_payload_byte(size_t b, uint8_t data)
@@ -163,7 +166,8 @@ constexpr bool is_extended_data_message(const universal_packet& p)
 
 constexpr bool is_sysex8_packet(const universal_packet& p)
 {
-    return is_extended_data_message(p) && ((p.status() & 0xF0) <= extended_data_status::sysex8_end) && ((p.status() & 0x0F) > 0) && ((p.status() & 0x0F) <= 14);
+    return is_extended_data_message(p) && ((p.status() & 0xF0) <= extended_data_status::sysex8_end) &&
+           ((p.status() & 0x0F) > 0) && ((p.status() & 0x0F) <= 14);
 }
 
 //--------------------------------------------------------------------------
