@@ -1,3 +1,10 @@
+# v1.3.0
+
+* add 'is_midi2_<xxx>_message' for per note and registered / assignable controller messages
+* add CI badges to README
+* `pre-commit` updates
+* sysex collectors: `clear()` sysex in `reset()`
+
 # v1.2.0
 
 * add support for System Exclusive 8 messages
