@@ -296,10 +296,14 @@ struct invalidate_muid_view : capability_inquiry_view
 {
     using capability_inquiry_view::capability_inquiry_view;
 
+    muid_t target_muid() const;
+
     static bool validate(const sysex7&);
+
+    struct field_offsets;
 };
 
-message make_invalidate_muid_message(muid_t);
+message make_invalidate_muid_message(muid_t source_muid, muid_t target_muid);
 
 //---- subtype::nak
 
@@ -1301,15 +1305,28 @@ inline message make_nak_message(const capability_inquiry_view& r,
 
 //---- subtype::invalidate_muid
 
+struct invalidate_muid_view::field_offsets : capability_inquiry_view::field_offsets
+{
+    static constexpr auto target_muid = payload;
+};
+
 inline bool invalidate_muid_view::validate(const sysex7& sx)
 {
     return ((universal_sysex_type_of(sx) == universal_sysex::type::capability_inquiry) &&
-            (universal_sysex_subtype_of(sx) == subtype::invalidate_muid));
+            (universal_sysex_subtype_of(sx) == subtype::invalidate_muid) &&
+            (sx.data.size() >= field_offsets::target_muid + 4u));
 }
 
-inline message make_invalidate_muid_message(muid_t MUID)
+inline muid_t invalidate_muid_view::target_muid() const
 {
-    return message(subtype::invalidate_muid, MUID, broadcast_muid, 0x7F);
+    return sx.make_uint28(field_offsets::target_muid);
+}
+
+inline message make_invalidate_muid_message(muid_t source_muid, muid_t target_muid)
+{
+    auto m = message::make_with_payload_size(4, subtype::invalidate_muid, source_muid, broadcast_muid, 0x7F);
+    m.add_uint28(target_muid);
+    return m;
 }
 
 //-----------------------------------------------

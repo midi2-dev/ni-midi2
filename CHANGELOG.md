@@ -1,3 +1,7 @@
+# v1.4.0
+
+* fix: add missing `target_muid` to `make_invalidate_muid_message` and `invalidate_muid_view`
+
 # v1.3.0
 
 * add 'is_midi2_<xxx>_message' for per note and registered / assignable controller messages

@@ -929,8 +929,8 @@ TEST_F(capability_inquiry, invalidate_muid)
     {
         SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
-        auto sx = midi::ci::make_invalidate_muid_message(0x2435465);
-        EXPECT_EQ(12u, sx.data.size());
+        auto sx = midi::ci::make_invalidate_muid_message(0x2435465, 0x9ABCDEF);
+        EXPECT_EQ(16u, sx.data.size());
 
         EXPECT_TRUE(midi::is_capability_inquiry_message(sx));
         EXPECT_TRUE(VUT::validate(sx));
@@ -945,6 +945,7 @@ TEST_F(capability_inquiry, invalidate_muid)
         EXPECT_EQ(midi::ci::version, m.message_version());
         EXPECT_EQ(0x2435465u, m.source_muid());
         EXPECT_EQ(0xFFFFFFFu, m.destination_muid());
+        EXPECT_EQ(0x9ABCDEFu, m.target_muid());
 
         SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
