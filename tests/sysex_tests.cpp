@@ -231,6 +231,16 @@ TEST_F(sysex, sysex7)
 
         SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
+
+#if NIMIDI2_PMR_SYSEX_DATA
+    {
+        std::pmr::synchronized_pool_resource mr;
+
+        midi::sysex7 sx{ manufacturer::native_instruments, { 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xAB }, &mr };
+
+        EXPECT_TRUE(sx.data.get_allocator().resource() == &mr);
+    }
+#endif
 }
 
 //-----------------------------------------------

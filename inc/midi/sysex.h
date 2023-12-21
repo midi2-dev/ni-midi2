@@ -32,6 +32,21 @@
 #include <cassert>
 #include <vector>
 
+#if NIMIDI2_PMR_SYSEX_DATA
+#include <memory_resource>
+
+#define NIMIDI2_PMR_SYSEX_DATA_ARG , std::pmr::memory_resource* mr = std::pmr::get_default_resource()
+#define NIMIDI2_PMR_SYSEX_DATA_DATA_INITIALIZER mr
+#define NIMIDI2_PMR_SYSEX_DATA_DATA_INITIALIZER_SUFFIX , NIMIDI2_PMR_SYSEX_DATA_DATA_INITIALIZER
+
+#else
+
+#define NIMIDI2_PMR_SYSEX_DATA_ARG
+#define NIMIDI2_PMR_SYSEX_DATA_DATA_INITIALIZER
+#define NIMIDI2_PMR_SYSEX_DATA_DATA_INITIALIZER_SUFFIX
+
+#endif
+
 //--------------------------------------------------------------------------
 
 namespace midi {
@@ -71,6 +86,8 @@ struct sysex
         void deallocate(value_type*, std::size_t) noexcept; //!< user provided implementation required!
     };
     using data_type = std::vector<uint8_t, data_allocator>;
+#elif NIMIDI2_PMR_SYSEX_DATA
+    using data_type = std::pmr::vector<uint8_t>;
 #else
     using data_type = std::vector<uint8_t>;
 #endif
@@ -81,8 +98,9 @@ struct sysex
     sysex() = default;
 
     /*! \param manufacturer manufacturer */
-    explicit sysex(manufacturer_t manufacturer)
+    explicit sysex(manufacturer_t manufacturer NIMIDI2_PMR_SYSEX_DATA_ARG)
       : manufacturerID(manufacturer)
+      , data(NIMIDI2_PMR_SYSEX_DATA_DATA_INITIALIZER)
     {
     }
 
@@ -90,8 +108,9 @@ struct sysex
     /*! \param manufacturer manufacturer
         \param capacity of data member
     */
-    sysex(manufacturer_t manufacturer, size_t capacity)
+    sysex(manufacturer_t manufacturer, size_t capacity NIMIDI2_PMR_SYSEX_DATA_ARG)
       : manufacturerID(manufacturer)
+      , data(NIMIDI2_PMR_SYSEX_DATA_DATA_INITIALIZER)
     {
         data.reserve(capacity);
     }
@@ -101,9 +120,9 @@ struct sysex
         \param buffer data buffer (without 0xF7 end byte)
         \param buffer_size number of bytes in\p buffer
     */
-    sysex(manufacturer_t manufacturer, const uint8_t* buffer, size_t buffer_size)
+    sysex(manufacturer_t manufacturer, const uint8_t* buffer, size_t buffer_size NIMIDI2_PMR_SYSEX_DATA_ARG)
       : manufacturerID(manufacturer)
-      , data(buffer, buffer + buffer_size)
+      , data(buffer, buffer + buffer_size NIMIDI2_PMR_SYSEX_DATA_DATA_INITIALIZER_SUFFIX)
     {
     }
 
@@ -111,11 +130,27 @@ struct sysex
     /*! \param manufacturer manufacturer
         \param d data vector (without 0xF7 end byte)
     */
-    sysex(manufacturer_t manufacturer, data_type d)
+    sysex(manufacturer_t manufacturer, data_type d NIMIDI2_PMR_SYSEX_DATA_ARG)
       : manufacturerID(manufacturer)
-      , data(std::move(d))
+      , data(std::move(d) NIMIDI2_PMR_SYSEX_DATA_DATA_INITIALIZER_SUFFIX)
     {
     }
+
+    sysex(manufacturer_t manufacturer, std::initializer_list<uint8_t> d NIMIDI2_PMR_SYSEX_DATA_ARG)
+      : manufacturerID(manufacturer)
+      , data(d.begin(), d.end() NIMIDI2_PMR_SYSEX_DATA_DATA_INITIALIZER_SUFFIX)
+    {
+    }
+
+#if NIMIDI2_PMR_SYSEX_DATA
+    sysex(manufacturer_t              manufacturer,
+          const std::vector<uint8_t>& d,
+          std::pmr::memory_resource*  mr = std::pmr::get_default_resource())
+      : manufacturerID(manufacturer)
+      , data(d.begin(), d.end(), mr)
+    {
+    }
+#endif
 
     size_t total_data_size() const;
 

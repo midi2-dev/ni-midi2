@@ -15,6 +15,11 @@ option( NIMIDI2_UNITY_BUILDS             "Build ni-midi2 with unity builds"   ON
 option( NIMIDI2_TESTS                    "Build ni-midi2 Tests"     ${IS_NIMIDI2} )
 
 option( NIMIDI2_CUSTOM_SYSEX_DATA_ALLOCATOR "Build with custom sysex data allocator" OFF )
+option( NIMIDI2_PMR_SYSEX_DATA              "Build with sysex data use pmr"          OFF )
+
+if (NIMIDI2_PMR_SYSEX_DATA AND NIMIDI2_CUSTOM_SYSEX_DATA_ALLOCATOR)
+    message(FATAL_ERROR "NIMIDI2_PMR_SYSEX_DATA and NIMIDI2_CUSTOM_SYSEX_DATA_ALLOCATOR are mutually exclusibe")
+endif()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
@@ -23,7 +28,11 @@ include(nimidi2_add_test)
 include(nimidi2_treat_warnings_as_errors)
 
 if(NOT CMAKE_CXX_STANDARD)
-    set(CMAKE_CXX_STANDARD 17)
+    if (NOT NIMIDI2_PMR_SYSEX_DATA)
+        set(CMAKE_CXX_STANDARD 17)
+    else()
+        set(CMAKE_CXX_STANDARD 20) # pmr requires at least c++20
+    endif()
 endif()
 
 set(LibSources
@@ -64,6 +73,10 @@ endif()
 
 if ( NIMIDI2_CUSTOM_SYSEX_DATA_ALLOCATOR )
     target_compile_definitions(ni-midi2 PUBLIC NIMIDI2_CUSTOM_SYSEX_DATA_ALLOCATOR=1)
+endif()
+
+if ( NIMIDI2_PMR_SYSEX_DATA )
+    target_compile_definitions(ni-midi2 PUBLIC NIMIDI2_PMR_SYSEX_DATA=1)
 endif()
 
 if( NIMIDI2_TESTS )

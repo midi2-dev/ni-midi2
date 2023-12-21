@@ -56,6 +56,12 @@ target_include_directories( ni-midi2
 )
 add_library(ni::midi2 ALIAS ni-midi2)
 
+option( NIMIDI2_PMR_SYSEX_DATA "Build with sysex data use pmr" OFF )
+
+if (NIMIDI2_PMR_SYSEX_DATA)
+    target_compile_definitions(ni-midi2 PUBLIC NIMIDI2_PMR_SYSEX_DATA)
+endif()
+
 ###### Tests ######
 
 option( NI_MIDI2_BUILD_TESTS "Build ni-midi tests" ${NI_3RDPARTY_BUILD_TESTS} )
