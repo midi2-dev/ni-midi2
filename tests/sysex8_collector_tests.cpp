@@ -205,7 +205,7 @@ TEST_F(sysex8_collector, stream_id_switch)
     // discard incomplete packet
     {
         bool                   output_generated = false;
-        auto                   cb               = [&](const midi::sysex8& sx, uint8_t) { output_generated = true; };
+        auto                   cb               = [&](const midi::sysex8&, uint8_t) { output_generated = true; };
         midi::sysex8_collector c(cb);
 
         c.feed({ 0x5512AC80, 0 });
@@ -226,7 +226,7 @@ TEST_F(sysex8_collector, other_stream_id_ignored)
         midi::sysex8 result{ 0x001234, { 0xAA, 0xBB, 0xCC } };
 
         bool output_generated = false;
-        auto cb               = [&](const midi::sysex8& sx, uint8_t stream_id) {
+        auto cb               = [&](const midi::sysex8& sx, uint8_t /*stream_id*/) {
             output_generated = true;
             EXPECT_EQ(sx, result);
         };

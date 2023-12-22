@@ -240,7 +240,7 @@ TEST_F(sysex7_collector, limited_data_size_collect)
 
     {
         bool output_generated = false;
-        auto cb               = [&](midi::sysex sx) { output_generated = true; };
+        auto cb               = [&](midi::sysex) { output_generated = true; };
 
         auto c = midi::sysex7_collector{ cb };
         c.set_max_sysex_data_size(12);

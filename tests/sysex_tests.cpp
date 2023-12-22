@@ -64,7 +64,7 @@ class sysex : public ::testing::Test
 size_t   s_num_sysex_data_allocations{ 0 };
 unsigned num_sysex_data_allocations()
 {
-    return s_num_sysex_data_allocations;
+    return unsigned(s_num_sysex_data_allocations);
 }
 
 //-----------------------------------------------
