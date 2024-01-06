@@ -22,10 +22,8 @@
 
 #include <gtest/gtest.h>
 
+#include <midi/midi1_channel_voice_message.h>
 #include <midi/midi2_channel_voice_message.h>
-
-#include <array>
-#include <utility> // pair
 
 //-----------------------------------------------
 
