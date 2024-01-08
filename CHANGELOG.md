@@ -1,3 +1,9 @@
+# v1.5.0
+
+* sysex: support for polymorphic memory resources
+* minor unit test tweaks
+* CI: verify non-unity builds and pmr sysex option
+
 # v1.4.0
 
 * fix: add missing `target_muid` to `make_invalidate_muid_message` and `invalidate_muid_view`
