@@ -46,6 +46,20 @@ jobs:
             cc: "gcc-9"
             cxx: "g++-9"
 
+          - name: "sysex pmr (Ubuntu 22.04, GCC-11)"
+            os: ubuntu-22.04
+            cmake_options: "-DNIMIDI2_PMR_SYSEX_DATA=ON"
+            build_type: Release
+            cc: "gcc-11"
+            cxx: "g++-11"
+
+          - name: "non-unity builds (Ubuntu 22.04, GCC-11)"
+            os: ubuntu-22.04
+            cmake_options: "-DNIMIDI2_UNITY_BUILDS=OFF"
+            build_type: Release
+            cc: "gcc-11"
+            cxx: "g++-11"
+
           - name: "Code-Coverage (Ubuntu 22.04, GCC-10)"
             os: ubuntu-22.04
             build_type: Coverage
@@ -83,7 +97,7 @@ jobs:
 
     - name: Configure CMake + Install Dependencies
       run: |
-        cmake -B ${{ github.workspace }}/build . -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
+        cmake -B ${{ github.workspace }}/build . -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} ${{ matrix.config.cmake_options }} -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
 
     - name: Build
       run: |
