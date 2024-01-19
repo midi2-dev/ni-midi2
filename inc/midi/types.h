@@ -24,6 +24,7 @@
 
 //--------------------------------------------------------------------------
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
@@ -625,12 +626,17 @@ constexpr pitch_increment::pitch_increment(double d)
 
 constexpr void pitch_increment::operator+=(const pitch_increment& inc)
 {
-    value += inc.value;
+    value = static_cast<int32_t>(std::clamp(int64_t(value) + inc.value,
+                                            int64_t(std::numeric_limits<int32_t>::min()),
+                                            int64_t(std::numeric_limits<int32_t>::max())));
 }
 
 constexpr pitch_increment pitch_increment::operator+(const pitch_increment& inc) const
 {
-    return pitch_increment{ value + inc.value };
+    auto result = static_cast<int32_t>(std::clamp(int64_t(value) + inc.value,
+                                                  int64_t(std::numeric_limits<int32_t>::min()),
+                                                  int64_t(std::numeric_limits<int32_t>::max())));
+    return pitch_increment{ result };
 }
 
 //--------------------------------------------------------------------------
@@ -742,7 +748,9 @@ constexpr pitch_7_25& pitch_7_25::operator=(pitch_7_9 pitch)
 
 constexpr pitch_7_25 pitch_7_25::operator+(const pitch_increment& inc) const
 {
-    return pitch_7_25{ static_cast<uint32_t>(value) + inc.value };
+    auto result = static_cast<uint32_t>(
+      std::clamp(int64_t(value) + inc.value, int64_t(0), int64_t(std::numeric_limits<uint32_t>::max())));
+    return pitch_7_25{ result };
 }
 
 constexpr pitch_7_25 pitch_7_25::operator+(float detune) const
@@ -776,7 +784,8 @@ constexpr pitch_7_25 pitch_7_25::operator+(double detune) const
 
 constexpr void pitch_7_25::operator+=(const pitch_increment& inc)
 {
-    value = static_cast<uint32_t>(value) + inc.value;
+    value = static_cast<uint32_t>(
+      std::clamp(int64_t(value) + inc.value, int64_t(0), int64_t(std::numeric_limits<uint32_t>::max())));
 }
 
 //--------------------------------------------------------------------------
@@ -786,8 +795,10 @@ constexpr pitch_increment operator*(const pitch_bend& pb, const pitch_bend_sensi
     if (auto result = std::int64_t(pb.value) - std::int64_t(0x80000000))
     {
         result *= sens.value;
+        result /= 2147483648;
 
-        return pitch_increment{ static_cast<int32_t>(result >> 31) };
+        return pitch_increment{ static_cast<int32_t>(std::clamp(
+          result, int64_t(std::numeric_limits<int32_t>::min()), int64_t(std::numeric_limits<int32_t>::max()))) };
     }
 
     return pitch_increment{ int32_t{ 0 } };
@@ -826,6 +837,11 @@ constexpr controller_value controller_value::operator+(controller_increment inc)
         return controller_value{ uint32_t{ 0xFFFFFFFF } };
 
     return controller_value{ static_cast<uint32_t>(r) };
+}
+
+constexpr void controller_value::operator+=(controller_increment inc)
+{
+    value = (*this + inc).value;
 }
 
 //--------------------------------------------------------------------------

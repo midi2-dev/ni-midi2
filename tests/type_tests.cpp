@@ -943,6 +943,24 @@ TEST(pitch_increment, operator_plus_assign)
 
         EXPECT_EQ(-12 * one - pt5, a.value);
     }
+
+    // underflow
+    {
+        pitch_increment a{ std::numeric_limits<int32_t>::min() + 1 };
+
+        a += pitch_increment{ int32_t{ -2 } };
+
+        EXPECT_EQ(std::numeric_limits<int32_t>::min(), a.value);
+    }
+
+    // overflow
+    {
+        pitch_increment a{ std::numeric_limits<int32_t>::max() - 12345 };
+
+        a += pitch_increment{ int32_t{ 12346 } };
+
+        EXPECT_EQ(std::numeric_limits<int32_t>::max(), a.value);
+    }
 }
 
 //-----------------------------------------------
@@ -964,6 +982,15 @@ TEST(pitch_increment, operator_plus)
     EXPECT_EQ(pitch_increment{ 15.f }.value, (pitch_increment{ 12.5f } + pitch_increment{ 2.5f }).value);
     EXPECT_EQ(pitch_increment{ -9.5f }.value, (pitch_increment{ 8.f } + pitch_increment{ -17.5f }).value);
     EXPECT_EQ(pitch_increment{ 3 * one }.value, (pitch_increment{ one } + pitch_increment{ 2.f }).value);
+
+    // underflow
+    EXPECT_EQ(
+      pitch_increment{ std::numeric_limits<int32_t>::min() }.value,
+      (pitch_increment{ std::numeric_limits<int32_t>::min() + 56483 } + pitch_increment{ int32_t{ -56499 } }).value);
+    // overflow
+    EXPECT_EQ(
+      pitch_increment{ std::numeric_limits<int32_t>::max() }.value,
+      (pitch_increment{ std::numeric_limits<int32_t>::max() - 123456 } + pitch_increment{ int32_t{ 1234567 } }).value);
 }
 
 //-----------------------------------------------
@@ -1573,6 +1600,29 @@ TEST(pitch_7_25, note_nr)
 
 //-----------------------------------------------
 
+TEST(pitch_7_25, symmetric_double_conversions)
+{
+    using namespace midi;
+
+    for (note_nr_t n = 0; n < 0x80; ++n)
+    {
+        pitch_7_25 a{ n };
+        pitch_7_25 b{ a.as_double() };
+        EXPECT_EQ(a, b);
+    }
+
+    constexpr auto min = pitch_7_25{ uint32_t{ 0x00000000 } };
+    constexpr auto max = pitch_7_25{ uint32_t{ 0xFFFFFFFF } };
+    constexpr auto inc = pitch_increment{ int32_t{ 0x1000 } };
+
+    for (auto p = min; p != max; p += inc)
+    {
+        EXPECT_EQ(p, pitch_7_25{ p.as_double() });
+    }
+}
+
+//-----------------------------------------------
+
 TEST(pitch_7_25, assign_pitch_7_9)
 {
     using namespace midi;
@@ -1633,6 +1683,11 @@ TEST(pitch_7_25, operator_plus_pitch_increment)
 
     EXPECT_FLOAT_EQ(98.9f, (pitch_7_25{ note_nr_t{ 99 } } + pitch_increment{ -0.1f }).as_float());
     EXPECT_FLOAT_EQ(117.12f, (pitch_7_25{ 117.56f } + pitch_increment{ -.44f }).as_float());
+
+    // underflow
+    EXPECT_EQ(0.f, (pitch_7_25{ 0.1f } + pitch_increment{ -1.5f }).as_float());
+    // overflow
+    EXPECT_FLOAT_EQ(128., (pitch_7_25{ 127.9 } + pitch_increment{ 0.2 }).as_double());
 }
 
 //-----------------------------------------------
@@ -1655,7 +1710,10 @@ TEST(pitch_7_25, operator_plus_float)
     EXPECT_FLOAT_EQ(98.9f, (pitch_7_25{ note_nr_t{ 99 } } + -0.1f).as_float());
     EXPECT_FLOAT_EQ(117.12f, (pitch_7_25{ 117.56f } + -.44f).as_float());
 
+    // underflow
     EXPECT_EQ(0x00000000u, (pitch_7_25{ 1.f } + -1.23f).value);
+    // overflow
+    EXPECT_EQ(0xFFFFFFFFu, (pitch_7_25{ 127.5f } + 0.6f).value);
 }
 
 //-----------------------------------------------
@@ -1664,21 +1722,24 @@ TEST(pitch_7_25, operator_plus_double)
 {
     using namespace midi;
 
-    EXPECT_FLOAT_EQ(19.5, (pitch_7_25{ 19. } + 0.5).as_float());
-    EXPECT_FLOAT_EQ(64.75, (pitch_7_25{ note_nr_t{ 64 } } + 0.75).as_float());
+    EXPECT_FLOAT_EQ(19.5, (pitch_7_25{ 19. } + 0.5).as_double());
+    EXPECT_FLOAT_EQ(64.75, (pitch_7_25{ note_nr_t{ 64 } } + 0.75).as_double());
 
-    EXPECT_FLOAT_EQ(99.1, (pitch_7_25{ note_nr_t{ 99 } } + 0.1).as_float());
-    EXPECT_FLOAT_EQ(118., (pitch_7_25{ 117.56 } + .44).as_float());
+    EXPECT_FLOAT_EQ(99.1, (pitch_7_25{ note_nr_t{ 99 } } + 0.1).as_double());
+    EXPECT_FLOAT_EQ(118., (pitch_7_25{ 117.56 } + .44).as_double());
 
     EXPECT_EQ(0xFFFFFFFFu, (pitch_7_25{ 127.77 } + 1.23).value);
 
-    EXPECT_FLOAT_EQ(18.5, (pitch_7_25{ 19. } + -0.5).as_float());
-    EXPECT_FLOAT_EQ(63.25, (pitch_7_25{ note_nr_t{ 64 } } + -0.75).as_float());
+    EXPECT_FLOAT_EQ(18.5, (pitch_7_25{ 19. } + -0.5).as_double());
+    EXPECT_FLOAT_EQ(63.25, (pitch_7_25{ note_nr_t{ 64 } } + -0.75).as_double());
 
-    EXPECT_FLOAT_EQ(98.9, (pitch_7_25{ note_nr_t{ 99 } } + -0.1).as_float());
-    EXPECT_FLOAT_EQ(117.12, (pitch_7_25{ 117.56 } + -.44).as_float());
+    EXPECT_FLOAT_EQ(98.9, (pitch_7_25{ note_nr_t{ 99 } } + -0.1).as_double());
+    EXPECT_FLOAT_EQ(117.12, (pitch_7_25{ 117.56 } + -.44).as_double());
 
+    // underflow
     EXPECT_EQ(0x00000000u, (pitch_7_25{ 1. } + -1.23).value);
+    // overflow
+    EXPECT_EQ(0xFFFFFFFFu, (pitch_7_25{ 120. } + 10.5).value);
 }
 
 //-----------------------------------------------
@@ -1719,6 +1780,24 @@ TEST(pitch_7_25, operator_plus_assign_pitch_increment)
         p += minus_pt5;
 
         EXPECT_EQ(pitch_7_25{ 48.5f }, p);
+    }
+
+    // underflow
+    {
+        pitch_7_25 p{ note_nr_t{ 4 } };
+
+        p += pitch_increment{ -4.1f };
+
+        EXPECT_EQ(0x00000000, p.value);
+    }
+    // overflow
+    EXPECT_EQ(0xFFFFFFFFu, (pitch_7_25{ 120. } + 10.5).value);
+    {
+        pitch_7_25 p{ note_nr_t{ 68 } };
+
+        p += pitch_increment{ 60.1 };
+
+        EXPECT_EQ(0xFFFFFFFF, p.value);
     }
 }
 
@@ -1774,6 +1853,20 @@ TEST(pitch_bend_sensitivity, operator_times)
         EXPECT_EQ(a, pitch_bend_sensitivity{ 4.f } * pitch_bend{ -1.f });
 
         EXPECT_FLOAT_EQ(n.as_float() - 4.f, (n + a).as_float());
+    }
+
+    // underflow
+    {
+        const auto a = pitch_bend{ -1.f } * pitch_bend_sensitivity{ 96.f };
+
+        EXPECT_EQ(std::numeric_limits<int32_t>::min(), a.value);
+    }
+
+    // overflow
+    {
+        const auto a = pitch_bend{ 1.f } * pitch_bend_sensitivity{ 96.f };
+
+        EXPECT_EQ(std::numeric_limits<int32_t>::max(), a.value);
     }
 }
 
@@ -2132,6 +2225,7 @@ TEST(controller_value, plus_controller_increment)
 
         EXPECT_EQ(0u, (v + controller_increment{ 0 }).value);
         EXPECT_EQ(44u, (v + controller_increment{ 44 }).value);
+        // underflow
         EXPECT_EQ(0u, (v + controller_increment{ -5 }).value);
     }
 
@@ -2166,8 +2260,58 @@ TEST(controller_value, plus_controller_increment)
         const controller_value v{ uint32_t{ 0xFFFFFFFF } };
 
         EXPECT_EQ(0xFFFFFFFFu, (v + controller_increment{ 0 }).value);
+        // overflow
         EXPECT_EQ(0xFFFFFFFFu, (v + controller_increment{ 44 }).value);
         EXPECT_EQ(0xFFFFFFFAu, (v + controller_increment{ -5 }).value);
+    }
+}
+
+//-----------------------------------------------
+
+TEST(controller_value, operator_plus_assign)
+{
+    using namespace midi;
+
+    {
+        controller_value v{ uint32_t{ 0 } };
+
+        v += controller_increment{ 0 };
+        EXPECT_EQ(0u, v.value);
+
+        v += controller_increment{ 44 };
+        EXPECT_EQ(44u, v.value);
+
+        v += controller_increment{ -5 };
+        EXPECT_EQ(39u, v.value);
+
+        // underflow
+        v += controller_increment{ -40 };
+        EXPECT_EQ(0u, v.value);
+    }
+
+    {
+        controller_value v{ uint32_t{ 0x379AFF43 } };
+
+        v += controller_increment{ 0 };
+        EXPECT_EQ(0x379AFF43u, v.value);
+
+        v += controller_increment{ 44 };
+        EXPECT_EQ(0x379AFF6Fu, v.value);
+
+        // underflow
+        v += controller_increment{ -932904815 };
+        EXPECT_EQ(0x00000000u, v.value);
+    }
+
+    {
+        controller_value v{ uint32_t{ 0xFFFFFFFF } };
+
+        // overflow
+        v += controller_increment{ 44 };
+        EXPECT_EQ(0xFFFFFFFFu, v.value);
+
+        v += controller_increment{ -5 };
+        EXPECT_EQ(0xFFFFFFFAu, v.value);
     }
 }
 
