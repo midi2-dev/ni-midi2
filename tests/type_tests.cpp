@@ -220,6 +220,104 @@ TEST(velocity, construct_from_float)
 
 //-----------------------------------------------
 
+TEST(velocity, construct_from_double)
+{
+    using namespace midi;
+
+    {
+        velocity v{ 0. };
+
+        EXPECT_EQ(0u, v.value);
+    }
+
+    {
+        velocity v{ 0.00001 };
+
+        EXPECT_EQ(0u, v.value);
+    }
+
+    {
+        velocity v{ 0.00002 };
+
+        EXPECT_LT(0u, v.value);
+    }
+
+    {
+        velocity v{ 0.125 };
+
+        EXPECT_EQ(0x2000u, v.value);
+    }
+
+    {
+        velocity v{ 0.2 };
+
+        EXPECT_LT(0x3000u, v.value);
+        EXPECT_GT(0x3800u, v.value);
+    }
+
+    {
+        velocity v{ 0.25 };
+
+        EXPECT_EQ(0x4000u, v.value);
+    }
+
+    {
+        velocity v{ 0.5 };
+
+        EXPECT_EQ(0x8000u, v.value);
+    }
+
+    {
+        velocity v{ 0.75 };
+
+        EXPECT_EQ(0xBFFFu, v.value);
+    }
+
+    {
+        velocity v{ 0.9999 };
+
+        EXPECT_GT(0xFFFFu, v.value);
+    }
+
+    {
+        velocity v{ 1. };
+
+        EXPECT_EQ(0xFFFFu, v.value);
+    }
+
+    {
+        velocity v{ -0.01 };
+
+        EXPECT_EQ(0, v.value);
+    }
+
+    {
+        velocity v{ -0.8 };
+
+        EXPECT_EQ(0, v.value);
+    }
+
+    {
+        velocity v{ -99. };
+
+        EXPECT_EQ(0, v.value);
+    }
+
+    {
+        velocity v{ 1.01 };
+
+        EXPECT_EQ(0xFFFFu, v.value);
+    }
+
+    {
+        velocity v{ 42. };
+
+        EXPECT_EQ(0xFFFFu, v.value);
+    }
+}
+
+//-----------------------------------------------
+
 TEST(velocity, equality)
 {
     using namespace midi;
@@ -249,6 +347,18 @@ TEST(velocity, as_float)
 
 //-----------------------------------------------
 
+TEST(velocity, as_double)
+{
+    using namespace midi;
+
+    EXPECT_FLOAT_EQ(0., velocity{ uint7_t{ 0 } }.as_double());
+    EXPECT_FLOAT_EQ(0.25, velocity{ uint7_t{ 32 } }.as_double());
+    EXPECT_FLOAT_EQ(0.5, velocity{ uint16_t{ 0x8000 } }.as_double());
+    EXPECT_FLOAT_EQ(1., velocity{ uint16_t{ 0xFFFF } }.as_double());
+}
+
+//-----------------------------------------------
+
 TEST(velocity, as_uint7)
 {
     using namespace midi;
@@ -271,15 +381,19 @@ TEST(velocity, symmetric_float_conversions)
     {
         velocity a{ n };
         velocity b{ a.as_float() };
+        velocity c{ a.as_double() };
         EXPECT_EQ(a, b);
+        EXPECT_EQ(a, c);
     }
 
     for (uint16_t v = 0; v < 0xFFFF; ++v)
     {
         velocity a{ v };
         velocity b{ a.as_float() };
+        velocity c{ a.as_double() };
 
         EXPECT_EQ(a.value, b.value);
+        EXPECT_EQ(a.value, c.value);
     }
 }
 
@@ -437,6 +551,61 @@ TEST(pitch_bend, construct_from_float)
 
 //-----------------------------------------------
 
+TEST(pitch_bend, construct_from_double)
+{
+    using namespace midi;
+
+    {
+        pitch_bend pb{ -1. };
+
+        EXPECT_EQ(0x00000000u, pb.value);
+    }
+
+    {
+        pitch_bend pb{ -0.5 };
+
+        EXPECT_EQ(0x40000000u, pb.value);
+    }
+
+    {
+        pitch_bend pb{ 0. };
+
+        EXPECT_EQ(0x80000000, pb.value);
+    }
+
+    {
+        pitch_bend pb{ 0.5 };
+
+        EXPECT_EQ(0xBFFFFFFF, pb.value);
+    }
+
+    {
+        pitch_bend pb{ 1. };
+
+        EXPECT_EQ(0xFFFFFFFFu, pb.value);
+    }
+
+    {
+        pitch_bend pb{ -1.02 };
+
+        EXPECT_EQ(0x00000000u, pb.value);
+    }
+
+    {
+        pitch_bend pb{ 1.04 };
+
+        EXPECT_EQ(0xFFFFFFFFu, pb.value);
+    }
+
+    {
+        pitch_bend pb{ 99. };
+
+        EXPECT_EQ(0xFFFFFFFFu, pb.value);
+    }
+}
+
+//-----------------------------------------------
+
 TEST(pitch_bend, equality)
 {
     using namespace midi;
@@ -467,6 +636,19 @@ TEST(pitch_bend, as_float)
 
 //-----------------------------------------------
 
+TEST(pitch_bend, as_double)
+{
+    using namespace midi;
+
+    EXPECT_FLOAT_EQ(-1.0f, pitch_bend{ uint32_t{ 0x00000000 } }.as_double());
+    EXPECT_FLOAT_EQ(-0.5f, pitch_bend{ uint32_t{ 0x40000000 } }.as_double());
+    EXPECT_FLOAT_EQ(0.0f, pitch_bend{ uint32_t{ 0x80000000 } }.as_double());
+    EXPECT_FLOAT_EQ(0.5f, pitch_bend{ uint32_t{ 0xBFFFFFFF } }.as_double());
+    EXPECT_FLOAT_EQ(1.0f, pitch_bend{ uint32_t{ 0xFFFFFFFF } }.as_double());
+}
+
+//-----------------------------------------------
+
 TEST(pitch_bend, as_uint14)
 {
     using namespace midi;
@@ -489,6 +671,27 @@ TEST(pitch_bend, reset)
     pb.reset();
 
     EXPECT_EQ(0x80000000, pb.value);
+}
+
+//-----------------------------------------------
+
+TEST(pitch_bend, symmetric_double_conversions)
+{
+    using namespace midi;
+
+    for (uint16_t n = 0; n < 0x3FFF; ++n)
+    {
+        pitch_bend a{ n };
+        pitch_bend b{ a.as_double() };
+        EXPECT_EQ(a, b);
+    }
+
+    for (uint64_t v = 0; v < 0xFFFFFFFF; v += 0x1234)
+    {
+        pitch_bend a{ uint32_t(v) };
+        pitch_bend b{ a.as_double() };
+        EXPECT_EQ(a.value, b.value);
+    }
 }
 
 //-----------------------------------------------
@@ -600,6 +803,75 @@ TEST(pitch_increment, construct_from_float)
 
     {
         pitch_increment inc{ -99.23f };
+
+        EXPECT_EQ(std::numeric_limits<int32_t>::min(), inc.value);
+    }
+}
+
+//-----------------------------------------------
+
+TEST(pitch_increment, construct_from_double)
+{
+    using namespace midi;
+
+    constexpr int32_t one = 0x2000000;
+
+    {
+        pitch_increment inc{ 0. };
+
+        EXPECT_EQ(0, inc.value);
+    }
+
+    {
+        pitch_increment inc{ 1. };
+
+        EXPECT_EQ(one, inc.value);
+    }
+
+    {
+        pitch_increment inc{ -1. };
+
+        EXPECT_EQ(-one, inc.value);
+    }
+
+    {
+        pitch_increment inc{ 0.5 };
+
+        EXPECT_EQ(0x1000000, inc.value);
+    }
+
+    {
+        pitch_increment inc{ -4. };
+
+        EXPECT_EQ(-4 * one, inc.value);
+    }
+
+    {
+        pitch_increment inc{ 17.25 };
+
+        EXPECT_EQ(17 * one + 0x800000, inc.value);
+    }
+
+    {
+        pitch_increment inc{ -47.75 };
+
+        EXPECT_EQ(-47 * one - 0x1800000, inc.value);
+    }
+
+    {
+        pitch_increment inc{ 63.99999999 };
+
+        EXPECT_EQ(0x7FFFFFFF, inc.value);
+    }
+
+    {
+        pitch_increment inc{ 67. };
+
+        EXPECT_EQ(std::numeric_limits<int32_t>::max(), inc.value);
+    }
+
+    {
+        pitch_increment inc{ -99.23 };
 
         EXPECT_EQ(std::numeric_limits<int32_t>::min(), inc.value);
     }
@@ -867,6 +1139,67 @@ TEST(pitch_7_9, construct_from_float)
 
 //-----------------------------------------------
 
+TEST(pitch_7_9, construct_from_double)
+{
+    using namespace midi;
+
+    {
+        pitch_7_9 p{ 0.f };
+
+        EXPECT_EQ(0x0000u, p.value);
+    }
+
+    {
+        pitch_7_9 p{ 64.5 };
+
+        EXPECT_EQ(0x8100u, p.value);
+    }
+
+    {
+        pitch_7_9 p{ 17.25 };
+
+        EXPECT_EQ(0x2280u, p.value);
+    }
+
+    {
+        pitch_7_9 p{ 99.75 };
+
+        EXPECT_EQ(0xC780u, p.value);
+    }
+
+    {
+        pitch_7_9 p{ 127.9999 };
+
+        EXPECT_EQ(0xFFFFu, p.value);
+    }
+
+    {
+        pitch_7_9 p{ -0.5 };
+
+        EXPECT_EQ(0x0000u, p.value);
+    }
+
+    {
+        pitch_7_9 p{ -99.23 };
+
+        EXPECT_EQ(0x0000u, p.value);
+    }
+
+    {
+        pitch_7_9 p{ 128. };
+
+        EXPECT_EQ(0xFFFFu, p.value);
+    }
+
+    {
+        pitch_7_9 p{ 1000. };
+
+        EXPECT_EQ(0xFFFFu, p.value);
+    }
+}
+
+//-----------------------------------------------
+
 TEST(pitch_7_9, equality)
 {
     using namespace midi;
@@ -896,6 +1229,19 @@ TEST(pitch_7_9, as_float)
 
 //-----------------------------------------------
 
+TEST(pitch_7_9, as_double)
+{
+    using namespace midi;
+
+    EXPECT_FLOAT_EQ(0.0, pitch_7_9{ uint16_t{ 0x0000 } }.as_float());
+    EXPECT_FLOAT_EQ(32., pitch_7_9{ uint16_t{ 0x4000 } }.as_float());
+    EXPECT_FLOAT_EQ(64.25, pitch_7_9{ uint16_t{ 0x8080 } }.as_float());
+    EXPECT_FLOAT_EQ(96.125, pitch_7_9{ uint16_t{ 0xC040 } }.as_float());
+    EXPECT_FLOAT_EQ(127.5, pitch_7_9{ uint16_t{ 0xFF00 } }.as_float());
+}
+
+//-----------------------------------------------
+
 TEST(pitch_7_9, note_nr)
 {
     using namespace midi;
@@ -918,15 +1264,19 @@ TEST(pitch_7_9, symmetric_float_conversions)
     {
         pitch_7_9 a{ n };
         pitch_7_9 b{ a.as_float() };
+        pitch_7_9 c{ a.as_double() };
         EXPECT_EQ(a, b);
+        EXPECT_EQ(a, c);
     }
 
     for (uint16_t v = 0; v < 0xFFFF; ++v)
     {
         pitch_7_9 a{ v };
         pitch_7_9 b{ a.as_float() };
+        pitch_7_9 c{ a.as_double() };
 
         EXPECT_EQ(a.value, b.value);
+        EXPECT_EQ(a.value, c.value);
     }
 }
 
@@ -1106,6 +1456,67 @@ TEST(pitch_7_25, construct_from_float)
 
 //-----------------------------------------------
 
+TEST(pitch_7_25, construct_from_double)
+{
+    using namespace midi;
+
+    {
+        pitch_7_25 p{ 0. };
+
+        EXPECT_EQ(0x00000000u, p.value);
+    }
+
+    {
+        pitch_7_25 p{ 64.5 };
+
+        EXPECT_EQ(0x81000000u, p.value);
+    }
+
+    {
+        pitch_7_25 p{ 17.25 };
+
+        EXPECT_EQ(0x22800000u, p.value);
+    }
+
+    {
+        pitch_7_25 p{ 99.75 };
+
+        EXPECT_EQ(0xC7800000u, p.value);
+    }
+
+    {
+        pitch_7_25 p{ 127.99999999 };
+
+        EXPECT_EQ(0xFFFFFFFFu, p.value);
+    }
+
+    {
+        pitch_7_25 p{ -0.5 };
+
+        EXPECT_EQ(0x00000000u, p.value);
+    }
+
+    {
+        pitch_7_25 p{ -99.23 };
+
+        EXPECT_EQ(0x00000000u, p.value);
+    }
+
+    {
+        pitch_7_25 p{ 128. };
+
+        EXPECT_EQ(0xFFFFFFFFu, p.value);
+    }
+
+    {
+        pitch_7_25 p{ 1000. };
+
+        EXPECT_EQ(0xFFFFFFFFu, p.value);
+    }
+}
+
+//-----------------------------------------------
+
 TEST(pitch_7_25, equality)
 {
     using namespace midi;
@@ -1131,6 +1542,19 @@ TEST(pitch_7_25, as_float)
     EXPECT_EQ(64.25f, pitch_7_25{ uint32_t{ 0x80800000 } }.as_float());
     EXPECT_EQ(96.125f, pitch_7_25{ uint32_t{ 0xC0400000 } }.as_float());
     EXPECT_EQ(127.5f, pitch_7_25{ uint32_t{ 0xFF000000 } }.as_float());
+}
+
+//-----------------------------------------------
+
+TEST(pitch_7_25, as_double)
+{
+    using namespace midi;
+
+    EXPECT_EQ(0.0, pitch_7_25{ uint32_t{ 0x00000000 } }.as_double());
+    EXPECT_EQ(32., pitch_7_25{ uint32_t{ 0x40000000 } }.as_double());
+    EXPECT_EQ(64.25, pitch_7_25{ uint32_t{ 0x80800000 } }.as_double());
+    EXPECT_EQ(96.125, pitch_7_25{ uint32_t{ 0xC0400000 } }.as_double());
+    EXPECT_EQ(127.5, pitch_7_25{ uint32_t{ 0xFF000000 } }.as_double());
 }
 
 //-----------------------------------------------
@@ -1232,6 +1656,29 @@ TEST(pitch_7_25, operator_plus_float)
     EXPECT_FLOAT_EQ(117.12f, (pitch_7_25{ 117.56f } + -.44f).as_float());
 
     EXPECT_EQ(0x00000000u, (pitch_7_25{ 1.f } + -1.23f).value);
+}
+
+//-----------------------------------------------
+
+TEST(pitch_7_25, operator_plus_double)
+{
+    using namespace midi;
+
+    EXPECT_FLOAT_EQ(19.5, (pitch_7_25{ 19. } + 0.5).as_float());
+    EXPECT_FLOAT_EQ(64.75, (pitch_7_25{ note_nr_t{ 64 } } + 0.75).as_float());
+
+    EXPECT_FLOAT_EQ(99.1, (pitch_7_25{ note_nr_t{ 99 } } + 0.1).as_float());
+    EXPECT_FLOAT_EQ(118., (pitch_7_25{ 117.56 } + .44).as_float());
+
+    EXPECT_EQ(0xFFFFFFFFu, (pitch_7_25{ 127.77 } + 1.23).value);
+
+    EXPECT_FLOAT_EQ(18.5, (pitch_7_25{ 19. } + -0.5).as_float());
+    EXPECT_FLOAT_EQ(63.25, (pitch_7_25{ note_nr_t{ 64 } } + -0.75).as_float());
+
+    EXPECT_FLOAT_EQ(98.9, (pitch_7_25{ note_nr_t{ 99 } } + -0.1).as_float());
+    EXPECT_FLOAT_EQ(117.12, (pitch_7_25{ 117.56 } + -.44).as_float());
+
+    EXPECT_EQ(0x00000000u, (pitch_7_25{ 1. } + -1.23).value);
 }
 
 //-----------------------------------------------
@@ -1548,6 +1995,73 @@ TEST(controller_value, construct_from_float)
 
 //-----------------------------------------------
 
+TEST(controller_value, construct_from_double)
+{
+    using namespace midi;
+
+    {
+        controller_value v{ 0. };
+
+        EXPECT_EQ(0x00000000u, v.value);
+    }
+
+    {
+        controller_value v{ 0.25 };
+
+        EXPECT_EQ(0x40000000u, v.value);
+    }
+
+    {
+        controller_value v{ 0.5 };
+
+        EXPECT_EQ(0x80000000, v.value);
+    }
+
+    {
+        controller_value v{ 0.75 };
+
+        EXPECT_EQ(0xBFFFFFFF, v.value);
+    }
+
+    {
+        controller_value v{ 1. };
+
+        EXPECT_EQ(0xFFFFFFFFu, v.value);
+    }
+
+    {
+        controller_value v{ -0.01 };
+
+        EXPECT_EQ(0x00000000u, v.value);
+    }
+
+    {
+        controller_value v{ -0.5 };
+
+        EXPECT_EQ(0x00000000u, v.value);
+    }
+
+    {
+        controller_value v{ -108. };
+
+        EXPECT_EQ(0x00000000u, v.value);
+    }
+
+    {
+        controller_value v{ 1.4 };
+
+        EXPECT_EQ(0xFFFFFFFFu, v.value);
+    }
+
+    {
+        controller_value v{ 99. };
+
+        EXPECT_EQ(0xFFFFFFFFu, v.value);
+    }
+}
+
+//-----------------------------------------------
+
 TEST(controller_value, equality)
 {
     using namespace midi;
@@ -1574,6 +2088,19 @@ TEST(controller_value, as_float)
     EXPECT_FLOAT_EQ(0.5f, controller_value{ uint32_t{ 0x80000000 } }.as_float());
     EXPECT_FLOAT_EQ(0.75f, controller_value{ uint32_t{ 0xBFFFFFFF } }.as_float());
     EXPECT_FLOAT_EQ(1.0f, controller_value{ uint32_t{ 0xFFFFFFFF } }.as_float());
+}
+
+//-----------------------------------------------
+
+TEST(controller_value, as_double)
+{
+    using namespace midi;
+
+    EXPECT_FLOAT_EQ(0.0, controller_value{ uint32_t{ 0x00000000 } }.as_double());
+    EXPECT_FLOAT_EQ(0.25, controller_value{ uint32_t{ 0x40000000 } }.as_double());
+    EXPECT_FLOAT_EQ(0.5, controller_value{ uint32_t{ 0x80000000 } }.as_double());
+    EXPECT_FLOAT_EQ(0.75, controller_value{ uint32_t{ 0xBFFFFFFF } }.as_double());
+    EXPECT_FLOAT_EQ(1.0, controller_value{ uint32_t{ 0xFFFFFFFF } }.as_double());
 }
 
 //-----------------------------------------------

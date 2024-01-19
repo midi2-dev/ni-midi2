@@ -82,8 +82,10 @@ struct velocity
     constexpr explicit velocity(uint16_t);
     constexpr explicit velocity(uint7_t);
     constexpr explicit velocity(float);
+    constexpr explicit velocity(double);
 
-    constexpr float   as_float() const; // [0..1]
+    constexpr float   as_float() const;  // [0..1]
+    constexpr double  as_double() const; // [0..1]
     constexpr uint7_t as_uint7() const;
 
     constexpr bool operator==(const velocity&) const;
@@ -100,8 +102,10 @@ struct pitch_bend
     constexpr explicit pitch_bend(uint32_t);
     constexpr explicit pitch_bend(uint14_t);
     constexpr explicit pitch_bend(float);
+    constexpr explicit pitch_bend(double);
 
-    constexpr float    as_float() const; // [-1..1]
+    constexpr float    as_float() const;  // [-1..1]
+    constexpr double   as_double() const; // [-1..1]
     constexpr uint14_t as_uint14() const;
 
     constexpr void reset();
@@ -119,6 +123,7 @@ struct pitch_increment
     constexpr pitch_increment() = default;
     constexpr explicit pitch_increment(int32_t);
     constexpr explicit pitch_increment(float);
+    constexpr explicit pitch_increment(double);
 
     constexpr void operator+=(const pitch_increment&);
 
@@ -138,8 +143,10 @@ struct pitch_7_9
     constexpr explicit pitch_7_9(uint16_t);
     constexpr explicit pitch_7_9(note_nr_t);
     constexpr explicit pitch_7_9(float);
+    constexpr explicit pitch_7_9(double);
 
-    constexpr float     as_float() const; // [0..128)
+    constexpr float     as_float() const;  // [0..128)
+    constexpr double    as_double() const; // [0..128)
     constexpr note_nr_t note_nr() const;
 
     constexpr bool operator==(const pitch_7_9&) const;
@@ -157,13 +164,16 @@ struct pitch_7_25
     constexpr explicit pitch_7_25(pitch_7_9);
     constexpr explicit pitch_7_25(note_nr_t);
     constexpr explicit pitch_7_25(float);
+    constexpr explicit pitch_7_25(double);
 
-    constexpr float     as_float() const; // [0..128)
+    constexpr float     as_float() const;  // [0..128)
+    constexpr double    as_double() const; // [0..128)
     constexpr note_nr_t note_nr() const;
 
     constexpr pitch_7_25& operator=(pitch_7_9);
     constexpr pitch_7_25 operator+(const pitch_increment&) const;
     constexpr pitch_7_25 operator+(float) const;
+    constexpr pitch_7_25 operator+(double) const;
 
     constexpr void operator+=(const pitch_increment&);
 
@@ -205,8 +215,10 @@ struct controller_value
     constexpr explicit controller_value(uint32_t);
     constexpr explicit controller_value(uint7_t);
     constexpr explicit controller_value(float);
+    constexpr explicit controller_value(double);
 
-    constexpr float   as_float() const; // [0..1]
+    constexpr float   as_float() const;  // [0..1]
+    constexpr double  as_double() const; // [0..1]
     constexpr uint7_t as_uint7() const;
 
     constexpr void operator+=(controller_increment);
@@ -479,18 +491,18 @@ constexpr uint32_t upsample_x_to_ybit(uint32_t v, uint8_t x, uint8_t y)
 //--------------------------------------------------------------------------
 
 namespace impl {
-    template<typename T>
-    constexpr T from_float_0_1(float f)
+    template<typename T, typename F> // F must be float or double
+    constexpr T from_float_0_1(F f)
     {
-        if (f <= 0.f)
+        if (f <= F(0))
             return 0;
 
-        if (f >= 1.f)
+        if (f >= F(1))
             return std::numeric_limits<T>::max();
 
         constexpr auto max = std::numeric_limits<T>::max();
 
-        if (f <= .5f)
+        if (f <= F(0.5))
         {
             constexpr auto scale = static_cast<double>(max) + 1.;
             const double   d     = f * scale;
@@ -503,36 +515,66 @@ namespace impl {
         const double d = (f - 0.5) * scale;
         return mid + static_cast<T>(d);
     }
+
+    template<typename T, typename F> // F must be float or double
+    constexpr F to_float_0_1(T value)
+    {
+        constexpr auto max    = std::numeric_limits<T>::max();
+        constexpr auto center = (max >> 1) + 1;
+
+        if (value <= center)
+            return static_cast<F>(value / static_cast<double>(center) / 2.);
+        else
+            return static_cast<F>(value / static_cast<double>(max));
+    }
+
 } // namespace impl
 
 //--------------------------------------------------------------------------
 
 constexpr velocity::velocity(float f)
-  : value(impl::from_float_0_1<decltype(value)>(f))
+  : value(impl::from_float_0_1<decltype(value), float>(f))
+{
+}
+
+constexpr velocity::velocity(double d)
+  : value(impl::from_float_0_1<decltype(value), double>(d))
 {
 }
 
 constexpr float velocity::as_float() const
 {
-    if (value <= 0x8000)
-        return static_cast<float>(value / static_cast<double>(0x8000) / 2.);
-    else
-        return static_cast<float>(value / static_cast<double>(0xFFFF));
+    return impl::to_float_0_1<decltype(value), float>(value);
+}
+
+constexpr double velocity::as_double() const
+{
+    return impl::to_float_0_1<decltype(value), double>(value);
 }
 
 //--------------------------------------------------------------------------
 
 constexpr pitch_bend::pitch_bend(float f)
-  : value(impl::from_float_0_1<decltype(value)>((f + 1.f) / 2.f))
+  : value(impl::from_float_0_1<decltype(value), float>((f + 1.f) / 2.f))
+{
+}
+
+constexpr pitch_bend::pitch_bend(double d)
+  : value(impl::from_float_0_1<decltype(value), double>((d + 1.) / 2.))
 {
 }
 
 constexpr float pitch_bend::as_float() const
 {
+    return static_cast<float>(as_double());
+}
+
+constexpr double pitch_bend::as_double() const
+{
     if (value >= 0x80000000)
-        return static_cast<float>((value - 0x80000000) / static_cast<double>(0x7FFFFFFF));
+        return (value - 0x80000000) / static_cast<double>(0x7FFFFFFF);
     else
-        return static_cast<float>((0x80000000 - value) / (-static_cast<double>(0x80000000)));
+        return (0x80000000 - value) / (-static_cast<double>(0x80000000));
 }
 
 //--------------------------------------------------------------------------
@@ -554,6 +596,30 @@ constexpr pitch_increment::pitch_increment(float f)
     else
     {
         value = -static_cast<int32_t>(pitch_7_25(-f).value);
+    }
+}
+
+constexpr pitch_increment::pitch_increment(double d)
+{
+    if (d >= 64.)
+    {
+        value = std::numeric_limits<int32_t>::max();
+    }
+    else if (d <= -64.)
+    {
+        value = std::numeric_limits<int32_t>::min();
+    }
+    else if (d >= 0.)
+    {
+        const auto result = pitch_7_25(d).value;
+        if (result <= std::numeric_limits<int32_t>::max())
+            value = result;
+        else
+            value = std::numeric_limits<int32_t>::max();
+    }
+    else
+    {
+        value = -static_cast<int32_t>(pitch_7_25(-d).value);
     }
 }
 
@@ -587,10 +653,34 @@ constexpr pitch_7_9::pitch_7_9(float f)
     }
 }
 
+constexpr pitch_7_9::pitch_7_9(double d)
+{
+    constexpr int fractional_bits = 9;
+    if (d <= 0.)
+    {
+        value = 0;
+    }
+    else if (d >= 128.)
+    {
+        value = 0xFFFF;
+    }
+    else
+    {
+        auto result = std::round(d * (1 << fractional_bits));
+        value       = (result < 0x10000) ? static_cast<uint16_t>(result) : 0xFFFF;
+    }
+}
+
 constexpr float pitch_7_9::as_float() const
 {
     constexpr int fractional_bits = 9;
     return static_cast<float>(value) / static_cast<float>(1 << fractional_bits);
+}
+
+constexpr double pitch_7_9::as_double() const
+{
+    constexpr int fractional_bits = 9;
+    return static_cast<double>(value) / static_cast<double>(1 << fractional_bits);
 }
 
 //--------------------------------------------------------------------------
@@ -613,10 +703,35 @@ constexpr pitch_7_25::pitch_7_25(float f)
     }
 }
 
-constexpr float pitch_7_25::as_float() const
+//--------------------------------------------------------------------------
+
+constexpr pitch_7_25::pitch_7_25(double d)
 {
     constexpr int fractional_bits = 25;
-    return static_cast<float>(static_cast<double>(value) / static_cast<double>(1 << fractional_bits));
+    if (d <= 0.)
+    {
+        value = 0;
+    }
+    else if (d >= 128.)
+    {
+        value = 0xFFFFFFFF;
+    }
+    else
+    {
+        auto result = std::round(d * float(1 << fractional_bits));
+        value       = (result < 4294967296.) ? static_cast<uint32_t>(result) : 0xFFFFFFFF;
+    }
+}
+
+constexpr float pitch_7_25::as_float() const
+{
+    return static_cast<float>(as_double());
+}
+
+constexpr double pitch_7_25::as_double() const
+{
+    constexpr int fractional_bits = 25;
+    return static_cast<double>(value) / static_cast<double>(1 << fractional_bits);
 }
 
 constexpr pitch_7_25& pitch_7_25::operator=(pitch_7_9 pitch)
@@ -632,9 +747,14 @@ constexpr pitch_7_25 pitch_7_25::operator+(const pitch_increment& inc) const
 
 constexpr pitch_7_25 pitch_7_25::operator+(float detune) const
 {
+    return operator+(double(detune));
+}
+
+constexpr pitch_7_25 pitch_7_25::operator+(double detune) const
+{
     int64_t r = value;
 
-    if (detune >= 0.f)
+    if (detune >= 0.)
     {
         pitch_7_25 inc(detune);
         r += inc.value;
@@ -676,16 +796,23 @@ constexpr pitch_increment operator*(const pitch_bend& pb, const pitch_bend_sensi
 //--------------------------------------------------------------------------
 
 constexpr controller_value::controller_value(float f)
-  : value(impl::from_float_0_1<decltype(value)>(f))
+  : value(impl::from_float_0_1<decltype(value), float>(f))
+{
+}
+
+constexpr controller_value::controller_value(double d)
+  : value(impl::from_float_0_1<decltype(value), double>(d))
 {
 }
 
 constexpr float controller_value::as_float() const
 {
-    if (value <= 0x80000000)
-        return static_cast<float>(value / static_cast<double>(0x80000000) / 2.);
-    else
-        return static_cast<float>(value / static_cast<double>(0xFFFFFFFF));
+    return impl::to_float_0_1<decltype(value), float>(value);
+}
+
+constexpr double controller_value::as_double() const
+{
+    return impl::to_float_0_1<decltype(value), double>(value);
 }
 
 constexpr controller_value controller_value::operator+(controller_increment inc) const
