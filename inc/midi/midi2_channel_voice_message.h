@@ -107,19 +107,19 @@ constexpr midi2_channel_voice_message make_midi2_channel_voice_message(
   group_t, status_t, channel_t, uint7_t index1, uint7_t index2, uint32_t data);
 
 constexpr midi2_channel_voice_message make_midi2_note_off_message(
-  group_t, status_t, note_nr_t, velocity, uint8_t attribute = 0, uint16_t attribute_data = 0);
-constexpr midi2_channel_voice_message make_midi2_note_on_message(group_t, status_t, note_nr_t, velocity);
-constexpr midi2_channel_voice_message make_midi2_note_on_message(group_t, status_t, note_nr_t, velocity, pitch_7_9);
+  group_t, channel_t, note_nr_t, velocity, uint8_t attribute = 0, uint16_t attribute_data = 0);
+constexpr midi2_channel_voice_message make_midi2_note_on_message(group_t, channel_t, note_nr_t, velocity);
+constexpr midi2_channel_voice_message make_midi2_note_on_message(group_t, channel_t, note_nr_t, velocity, pitch_7_9);
 constexpr midi2_channel_voice_message make_midi2_note_on_message(
-  group_t, status_t, note_nr_t, velocity, uint8_t attribute, uint16_t attribute_data);
+  group_t, channel_t, note_nr_t, velocity, uint8_t attribute, uint16_t attribute_data);
 
-constexpr midi2_channel_voice_message make_midi2_poly_pressure_message(group_t, status_t, note_nr_t, controller_value);
+constexpr midi2_channel_voice_message make_midi2_poly_pressure_message(group_t, channel_t, note_nr_t, controller_value);
 constexpr midi2_channel_voice_message make_registered_per_note_controller_message(
-  group_t, status_t, note_nr_t, uint8_t controller, controller_value);
+  group_t, channel_t, note_nr_t, uint8_t controller, controller_value);
 constexpr midi2_channel_voice_message make_assignable_per_note_controller_message(
-  group_t, status_t, note_nr_t, uint8_t controller, controller_value);
+  group_t, channel_t, note_nr_t, uint8_t controller, controller_value);
 constexpr midi2_channel_voice_message make_per_note_management_message(group_t,
-                                                                       status_t,
+                                                                       channel_t,
                                                                        note_nr_t,
                                                                        note_management_flags);
 
@@ -193,7 +193,7 @@ constexpr midi2_channel_voice_message make_midi2_note_off_message(
 //--------------------------------------------------------------------------
 
 constexpr midi2_channel_voice_message make_midi2_note_on_message(group_t   group,
-                                                                 status_t  channel,
+                                                                 channel_t channel,
                                                                  note_nr_t note_nr,
                                                                  velocity  vel)
 {
@@ -222,7 +222,7 @@ constexpr midi2_channel_voice_message make_midi2_note_on_message(
 //--------------------------------------------------------------------------
 
 constexpr midi2_channel_voice_message make_midi2_poly_pressure_message(group_t          group,
-                                                                       status_t         channel,
+                                                                       channel_t        channel,
                                                                        note_nr_t        note_nr,
                                                                        controller_value pressure)
 {
@@ -248,7 +248,7 @@ constexpr midi2_channel_voice_message make_assignable_per_note_controller_messag
 //--------------------------------------------------------------------------
 
 constexpr midi2_channel_voice_message make_per_note_management_message(group_t               group,
-                                                                       status_t              channel,
+                                                                       channel_t             channel,
                                                                        note_nr_t             note_nr,
                                                                        note_management_flags flags)
 {
@@ -258,7 +258,7 @@ constexpr midi2_channel_voice_message make_per_note_management_message(group_t  
 //--------------------------------------------------------------------------
 
 constexpr midi2_channel_voice_message make_midi2_control_change_message(group_t          group,
-                                                                        status_t         channel,
+                                                                        channel_t        channel,
                                                                         uint7_t          controller,
                                                                         controller_value v)
 {
@@ -322,7 +322,7 @@ constexpr midi2_channel_voice_message make_relative_assignable_controller_messag
 //--------------------------------------------------------------------------
 
 constexpr midi2_channel_voice_message make_midi2_program_change_message(group_t   group,
-                                                                        status_t  channel,
+                                                                        channel_t channel,
                                                                         program_t program)
 {
     return {
@@ -333,7 +333,7 @@ constexpr midi2_channel_voice_message make_midi2_program_change_message(group_t 
 //--------------------------------------------------------------------------
 
 constexpr midi2_channel_voice_message make_midi2_program_change_message(group_t   group,
-                                                                        status_t  channel,
+                                                                        channel_t channel,
                                                                         program_t program,
                                                                         uint14_t  bank)
 {
@@ -345,7 +345,7 @@ constexpr midi2_channel_voice_message make_midi2_program_change_message(group_t 
 //--------------------------------------------------------------------------
 
 constexpr midi2_channel_voice_message make_midi2_channel_pressure_message(group_t          group,
-                                                                          status_t         channel,
+                                                                          channel_t        channel,
                                                                           controller_value pressure)
 {
     return { group, channel_voice_status::channel_pressure, channel, 0, 0, pressure.value };
@@ -361,7 +361,7 @@ constexpr midi2_channel_voice_message make_midi2_pitch_bend_message(group_t grou
 //--------------------------------------------------------------------------
 
 constexpr midi2_channel_voice_message make_per_note_pitch_bend_message(group_t    group,
-                                                                       status_t   channel,
+                                                                       channel_t  channel,
                                                                        note_nr_t  note_nr,
                                                                        pitch_bend pb)
 {

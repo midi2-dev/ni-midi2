@@ -95,16 +95,16 @@ constexpr std::optional<flex_data_message_view> as_flex_data_message_view(const 
 constexpr flex_data_message make_flex_data_message(group_t,
                                                    packet_format,
                                                    packet_address,
-                                                   uint4_t  channel,
-                                                   status_t status_bank,
-                                                   status_t status,
-                                                   uint32_t data1 = 0,
-                                                   uint32_t data2 = 0,
-                                                   uint32_t data3 = 0);
+                                                   channel_t channel,
+                                                   status_t  status_bank,
+                                                   status_t  status,
+                                                   uint32_t  data1 = 0,
+                                                   uint32_t  data2 = 0,
+                                                   uint32_t  data3 = 0);
 constexpr flex_data_message make_flex_data_text_message(group_t,
                                                         packet_format,
                                                         packet_address,
-                                                        uint4_t                 channel,
+                                                        channel_t               channel,
                                                         status_t                status_bank,
                                                         status_t                status,
                                                         const std::string_view& text);
@@ -122,9 +122,9 @@ constexpr flex_data_message make_set_metronome_message(group_t,
                                                        uint8_t num_subdivision_clicks1,
                                                        uint8_t num_subdivision_clicks2);
 constexpr flex_data_message make_set_key_signature_message(
-  group_t, packet_address, uint4_t channel, uint4_t sharps_or_flats, uint4_t tonic_note);
+  group_t, packet_address, channel_t channel, uint4_t sharps_or_flats, uint4_t tonic_note);
 constexpr flex_data_message make_set_chord_message(
-  group_t, packet_address, uint4_t channel, uint32_t data1, uint32_t data2, uint32_t data3);
+  group_t, packet_address, channel_t channel, uint32_t data1, uint32_t data2, uint32_t data3);
 
 //--------------------------------------------------------------------------
 // constexpr implementations
@@ -137,7 +137,7 @@ constexpr flex_data_message::flex_data_message(group_t group)
 constexpr flex_data_message::flex_data_message(group_t        group,
                                                packet_format  format,
                                                packet_address address,
-                                               uint4_t        channel,
+                                               channel_t      channel,
                                                status_t       status_bank,
                                                status_t       status,
                                                uint32_t       data1,
@@ -199,7 +199,7 @@ constexpr std::optional<flex_data_message_view> as_flex_data_message_view(const 
 constexpr flex_data_message make_flex_data_message(group_t        group,
                                                    packet_format  format,
                                                    packet_address addr,
-                                                   uint4_t        channel,
+                                                   channel_t      channel,
                                                    status_t       status_bank,
                                                    status_t       status,
                                                    uint32_t       data1,
@@ -214,7 +214,7 @@ constexpr flex_data_message make_flex_data_message(group_t        group,
 constexpr flex_data_message make_flex_data_text_message(group_t                 group,
                                                         packet_format           format,
                                                         packet_address          addr,
-                                                        uint4_t                 channel,
+                                                        channel_t               channel,
                                                         status_t                status_bank,
                                                         status_t                status,
                                                         const std::string_view& text)
@@ -273,7 +273,7 @@ constexpr flex_data_message make_set_metronome_message(group_t group,
 }
 
 constexpr flex_data_message make_set_key_signature_message(
-  group_t group, packet_address addr, uint4_t channel, uint4_t sharps_or_flats, uint4_t tonic_note)
+  group_t group, packet_address addr, channel_t channel, uint4_t sharps_or_flats, uint4_t tonic_note)
 {
     auto result = make_flex_data_message(group, packet_format::complete, addr, channel, 0x00, 0x05);
     result.set_byte(4, (sharps_or_flats << 4) | (tonic_note & 0x0F));
@@ -281,7 +281,7 @@ constexpr flex_data_message make_set_key_signature_message(
 }
 
 constexpr flex_data_message make_set_chord_message(
-  group_t group, packet_address addr, uint4_t channel, uint32_t data1, uint32_t data2, uint32_t data3)
+  group_t group, packet_address addr, channel_t channel, uint32_t data1, uint32_t data2, uint32_t data3)
 {
     return make_flex_data_message(group, packet_format::complete, addr, channel, 0x00, 0x06, data1, data2, data3);
 }

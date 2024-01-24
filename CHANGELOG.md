@@ -1,3 +1,7 @@
+# v1.5.1
+
+* fix channel parameters to `channel_t` type alias
+
 # v1.5.0
 
 * sysex: support for polymorphic memory resources
