@@ -1,3 +1,8 @@
+# v1.6.0
+
+* add support for double precision numbers
+* fix under/overflows in +operators
+
 # v1.5.1
 
 * fix channel parameters to `channel_t` type alias
