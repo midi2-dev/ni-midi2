@@ -49,13 +49,33 @@ struct midi2_channel_voice_message : universal_packet
 
 //--------------------------------------------------------------------------
 
-constexpr bool    is_midi2_channel_voice_message(const universal_packet&);
-constexpr bool    is_midi2_registered_controller_message(const universal_packet&);
-constexpr bool    is_midi2_assignable_controller_message(const universal_packet&);
-constexpr bool    is_midi2_registered_per_note_controller_message(const universal_packet&);
-constexpr bool    is_midi2_assignable_per_note_controller_message(const universal_packet&);
-constexpr bool    is_midi2_per_note_pitch_bend_message(const universal_packet&);
+constexpr bool is_midi2_channel_voice_message(const universal_packet&);
+constexpr bool is_midi2_registered_controller_message(const universal_packet&);
+constexpr bool is_midi2_assignable_controller_message(const universal_packet&);
+constexpr bool is_midi2_registered_per_note_controller_message(const universal_packet&);
+constexpr bool is_midi2_assignable_per_note_controller_message(const universal_packet&);
+constexpr bool is_midi2_per_note_pitch_bend_message(const universal_packet&);
+
+//--------------------------------------------------------------------------
+
+constexpr bool is_note_on_with_attribute(const universal_packet&, uint8_t);
+constexpr bool is_note_off_with_attribute(const universal_packet&, uint8_t);
+constexpr bool is_note_on_with_pitch_7_9(const universal_packet&);
+
+//--------------------------------------------------------------------------
+
+constexpr uint8_t  get_midi2_note_attribute(const universal_packet&);
+constexpr uint16_t get_midi2_note_attribute_data(const universal_packet&);
+
 constexpr uint8_t get_midi2_per_note_controller_index(const universal_packet&);
+
+constexpr bool is_pitch_bend_sensitivity_message(const universal_packet&);
+constexpr bool is_per_note_pitch_bend_sensitivity_message(const universal_packet&);
+
+constexpr pitch_bend_sensitivity get_pitch_bend_sensitivity_value(const universal_packet&);
+constexpr pitch_bend_sensitivity get_per_note_pitch_bend_sensitivity_value(const universal_packet&);
+
+constexpr pitch_bend get_per_note_pitch_bend_value(const universal_packet&);
 
 //--------------------------------------------------------------------------
 
@@ -390,9 +410,53 @@ constexpr bool is_midi2_per_note_pitch_bend_message(const universal_packet& p)
 {
     return is_midi2_channel_voice_message(p) && (p.status() & 0xF0) == channel_voice_status::per_note_pitch_bend;
 }
+constexpr bool is_note_on_with_attribute(const universal_packet& p, uint8_t attribute)
+{
+    return is_midi2_channel_voice_message(p) && ((p.status() & 0xF0) == channel_voice_status::note_on) &&
+           (p.byte4() == attribute);
+}
+constexpr bool is_note_off_with_attribute(const universal_packet& p, uint8_t attribute)
+{
+    return is_midi2_channel_voice_message(p) && ((p.status() & 0xF0) == channel_voice_status::note_off) &&
+           (p.byte4() == attribute);
+}
+constexpr bool is_note_on_with_pitch_7_9(const universal_packet& p)
+{
+    return is_note_on_with_attribute(p, note_attribute::pitch_7_9);
+}
+constexpr uint8_t get_midi2_note_attribute(const universal_packet& p)
+{
+    return p.byte4();
+}
+constexpr uint16_t get_midi2_note_attribute_data(const universal_packet& p)
+{
+    return uint16_t(p.data[1] & 0xFFFF);
+}
 constexpr uint8_t get_midi2_per_note_controller_index(const universal_packet& p)
 {
     return p.byte4();
+}
+constexpr bool is_pitch_bend_sensitivity_message(const universal_packet& p)
+{
+    return is_midi2_registered_controller_message(p) && (p.byte3() == 0) &&
+           (p.byte4() == registered_parameter_number::pitch_bend_sensitivity);
+}
+constexpr bool is_per_note_pitch_bend_sensitivity_message(const universal_packet& p)
+{
+    return is_midi2_registered_controller_message(p) && (p.byte3() == 0) &&
+           (p.byte4() == registered_parameter_number::per_note_pitch_bend_sensitivity);
+}
+constexpr pitch_bend_sensitivity get_pitch_bend_sensitivity_value(const universal_packet& p)
+{
+    return pitch_bend_sensitivity{ p.data[1] & 0xFFFC0000 };
+}
+constexpr pitch_bend_sensitivity get_per_note_pitch_bend_sensitivity_value(const universal_packet& p)
+{
+    return pitch_bend_sensitivity{ p.data[1] };
+}
+constexpr pitch_bend get_per_note_pitch_bend_value(const universal_packet& p)
+{
+    return pitch_bend{ p.data[1] };
 }
 
 //--------------------------------------------------------------------------

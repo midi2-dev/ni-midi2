@@ -1,3 +1,8 @@
+# v1.7.0
+
+* add note attribute helpers
+* add pitch bend sensitivity helpers
+
 # v1.6.0
 
 * add support for double precision numbers

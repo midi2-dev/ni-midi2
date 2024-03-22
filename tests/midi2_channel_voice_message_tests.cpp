@@ -465,13 +465,17 @@ TEST_F(midi2_channel_voice_message, make_per_note_pitch_bend_message)
     using namespace midi;
 
     {
-        constexpr auto m = make_per_note_pitch_bend_message(12, 9, 77, pitch_bend{ uint32_t{ 0x80000000 } });
+        constexpr auto pb = pitch_bend{ uint32_t{ 0x80000000 } };
+        constexpr auto m  = make_per_note_pitch_bend_message(12, 9, 77, pb);
         EXPECT_EQ((universal_packet{ 0x4C694D00, 0x80000000 }), m);
+        EXPECT_EQ(get_per_note_pitch_bend_value(m), pb);
     }
 
     {
-        const auto m = make_per_note_pitch_bend_message(3, 7, 0x94, pitch_bend{ uint32_t{ 0x44126535 } });
+        const auto pb = pitch_bend{ uint32_t{ 0x44126535 } };
+        const auto m  = make_per_note_pitch_bend_message(3, 7, 0x94, pitch_bend{ uint32_t{ 0x44126535 } });
         EXPECT_EQ((universal_packet{ 0x43679400, 0x44126535 }), m);
+        EXPECT_EQ(get_per_note_pitch_bend_value(m), pb);
     }
 }
 
@@ -542,6 +546,173 @@ TEST_F(midi2_channel_voice_message, is_midi2_type_query_functions)
         EXPECT_FALSE(is_midi2_registered_per_note_controller_message(m));
         EXPECT_FALSE(is_midi2_assignable_per_note_controller_message(m));
         EXPECT_TRUE(is_midi2_per_note_pitch_bend_message(m));
+    }
+}
+
+//-----------------------------------------------
+
+TEST_F(midi2_channel_voice_message, notes_with_attribute)
+{
+    using namespace midi;
+
+    {
+        const auto m = make_midi2_note_on_message(1, 1, 60, velocity{ 0.9 }, pitch_7_9{ 65.9 });
+        EXPECT_FALSE(is_note_on_with_attribute(m, note_attribute::none));
+        EXPECT_FALSE(is_note_on_with_attribute(m, note_attribute::manufacturer_specific));
+        EXPECT_TRUE(is_note_on_with_attribute(m, note_attribute::pitch_7_9));
+        EXPECT_FALSE(is_note_off_with_attribute(m, note_attribute::none));
+        EXPECT_FALSE(is_note_off_with_attribute(m, note_attribute::manufacturer_specific));
+        EXPECT_FALSE(is_note_off_with_attribute(m, note_attribute::pitch_7_9));
+        EXPECT_TRUE(is_note_on_with_pitch_7_9(m));
+
+        EXPECT_EQ(get_midi2_note_attribute(m), note_attribute::pitch_7_9);
+        EXPECT_EQ(get_midi2_note_attribute_data(m), pitch_7_9{ 65.9 }.value);
+    }
+
+    {
+        constexpr auto m =
+          make_midi2_note_on_message(5, 9, 88, velocity{ uint7_t{ 44 } }, note_attribute::manufacturer_specific, 1234);
+        EXPECT_FALSE(is_note_on_with_attribute(m, note_attribute::none));
+        EXPECT_TRUE(is_note_on_with_attribute(m, note_attribute::manufacturer_specific));
+        EXPECT_FALSE(is_note_on_with_attribute(m, note_attribute::pitch_7_9));
+        EXPECT_FALSE(is_note_off_with_attribute(m, note_attribute::none));
+        EXPECT_FALSE(is_note_off_with_attribute(m, note_attribute::manufacturer_specific));
+        EXPECT_FALSE(is_note_off_with_attribute(m, note_attribute::pitch_7_9));
+        EXPECT_FALSE(is_note_on_with_pitch_7_9(m));
+
+        EXPECT_EQ(get_midi2_note_attribute(m), note_attribute::manufacturer_specific);
+        EXPECT_EQ(get_midi2_note_attribute_data(m), 1234);
+    }
+
+    {
+        const auto m = make_midi2_note_off_message(1, 1, 60, velocity{ 0.9 }, note_attribute::profile_specific, 0xABCD);
+        EXPECT_FALSE(is_note_on_with_attribute(m, note_attribute::none));
+        EXPECT_FALSE(is_note_on_with_attribute(m, note_attribute::manufacturer_specific));
+        EXPECT_FALSE(is_note_on_with_attribute(m, note_attribute::pitch_7_9));
+        EXPECT_FALSE(is_note_on_with_attribute(m, note_attribute::profile_specific));
+        EXPECT_FALSE(is_note_off_with_attribute(m, note_attribute::none));
+        EXPECT_FALSE(is_note_off_with_attribute(m, note_attribute::manufacturer_specific));
+        EXPECT_TRUE(is_note_off_with_attribute(m, note_attribute::profile_specific));
+        EXPECT_FALSE(is_note_on_with_pitch_7_9(m));
+
+        EXPECT_EQ(get_midi2_note_attribute(m), note_attribute::profile_specific);
+        EXPECT_EQ(get_midi2_note_attribute_data(m), 0xABCD);
+    }
+
+    {
+        constexpr auto m = make_midi2_note_on_message(1, 1, 60, velocity{ uint7_t{ 90 } });
+        EXPECT_TRUE(is_note_on_with_attribute(m, note_attribute::none));
+        EXPECT_FALSE(is_note_on_with_attribute(m, note_attribute::manufacturer_specific));
+        EXPECT_FALSE(is_note_on_with_attribute(m, note_attribute::pitch_7_9));
+        EXPECT_FALSE(is_note_off_with_attribute(m, note_attribute::none));
+        EXPECT_FALSE(is_note_off_with_attribute(m, note_attribute::manufacturer_specific));
+        EXPECT_FALSE(is_note_off_with_attribute(m, note_attribute::profile_specific));
+        EXPECT_FALSE(is_note_on_with_pitch_7_9(m));
+    }
+
+    {
+        constexpr auto m = make_midi1_note_on_message(1, 1, 60, velocity{ uint7_t{ 90 } });
+        EXPECT_FALSE(is_note_on_with_attribute(m, note_attribute::none));
+        EXPECT_FALSE(is_note_on_with_attribute(m, note_attribute::manufacturer_specific));
+        EXPECT_FALSE(is_note_on_with_attribute(m, note_attribute::pitch_7_9));
+        EXPECT_FALSE(is_note_off_with_attribute(m, note_attribute::none));
+        EXPECT_FALSE(is_note_off_with_attribute(m, note_attribute::manufacturer_specific));
+        EXPECT_FALSE(is_note_off_with_attribute(m, note_attribute::profile_specific));
+        EXPECT_FALSE(is_note_on_with_pitch_7_9(m));
+    }
+
+    {
+        constexpr auto m =
+          make_midi2_channel_voice_message(12, channel_voice_status::registered_controller, 5, 4, 0x62, 0xABCDEF00);
+        EXPECT_FALSE(is_note_on_with_attribute(m, note_attribute::none));
+        EXPECT_FALSE(is_note_on_with_attribute(m, note_attribute::manufacturer_specific));
+        EXPECT_FALSE(is_note_on_with_attribute(m, note_attribute::pitch_7_9));
+        EXPECT_FALSE(is_note_off_with_attribute(m, note_attribute::none));
+        EXPECT_FALSE(is_note_off_with_attribute(m, note_attribute::manufacturer_specific));
+        EXPECT_FALSE(is_note_off_with_attribute(m, note_attribute::profile_specific));
+        EXPECT_FALSE(is_note_on_with_pitch_7_9(m));
+    }
+
+    {
+        constexpr auto m = make_assignable_controller_message(3, 7, 9, 0x45, controller_value{ 0x80101010u });
+        EXPECT_FALSE(is_note_on_with_attribute(m, note_attribute::none));
+        EXPECT_FALSE(is_note_on_with_attribute(m, note_attribute::manufacturer_specific));
+        EXPECT_FALSE(is_note_on_with_attribute(m, note_attribute::pitch_7_9));
+        EXPECT_FALSE(is_note_off_with_attribute(m, note_attribute::none));
+        EXPECT_FALSE(is_note_off_with_attribute(m, note_attribute::manufacturer_specific));
+        EXPECT_FALSE(is_note_off_with_attribute(m, note_attribute::profile_specific));
+        EXPECT_FALSE(is_note_on_with_pitch_7_9(m));
+    }
+}
+
+//-----------------------------------------------
+
+TEST_F(midi2_channel_voice_message, pitch_bend_sensitivities)
+{
+    using namespace midi;
+
+    {
+        constexpr auto pbSens = pitch_bend_sensitivity{ note_nr_t{ 5 } };
+        constexpr auto m      = make_registered_controller_message(
+          0, 14, 0, registered_parameter_number::pitch_bend_sensitivity, controller_value{ pbSens.value });
+
+        EXPECT_TRUE(is_pitch_bend_sensitivity_message(m));
+        EXPECT_FALSE(is_per_note_pitch_bend_sensitivity_message(m));
+        EXPECT_EQ(get_pitch_bend_sensitivity_value(m), pbSens);
+    }
+
+    {
+        const auto pbSens = pitch_bend_sensitivity{ 3.25 };
+        const auto m      = make_registered_controller_message(
+          4, 7, 0, registered_parameter_number::pitch_bend_sensitivity, controller_value{ pbSens.value });
+
+        EXPECT_TRUE(is_pitch_bend_sensitivity_message(m));
+        EXPECT_FALSE(is_per_note_pitch_bend_sensitivity_message(m));
+        EXPECT_EQ(get_pitch_bend_sensitivity_value(m), pbSens);
+    }
+
+    {
+        constexpr auto pbSens = pitch_bend_sensitivity{ note_nr_t{ 8 } };
+        constexpr auto m      = make_registered_controller_message(
+          0, 14, 0, registered_parameter_number::per_note_pitch_bend_sensitivity, controller_value{ pbSens.value });
+
+        EXPECT_FALSE(is_pitch_bend_sensitivity_message(m));
+        EXPECT_TRUE(is_per_note_pitch_bend_sensitivity_message(m));
+        EXPECT_EQ(get_per_note_pitch_bend_sensitivity_value(m), pbSens);
+    }
+
+    {
+        const auto pbSens = pitch_bend_sensitivity{ 3.934 };
+        const auto m      = make_registered_controller_message(
+          4, 7, 0, registered_parameter_number::per_note_pitch_bend_sensitivity, controller_value{ pbSens.value });
+
+        EXPECT_FALSE(is_pitch_bend_sensitivity_message(m));
+        EXPECT_TRUE(is_per_note_pitch_bend_sensitivity_message(m));
+        EXPECT_EQ(get_per_note_pitch_bend_sensitivity_value(m), pbSens);
+    }
+
+    {
+        constexpr auto pbSens = pitch_bend_sensitivity{ note_nr_t{ 2 } };
+        constexpr auto m      = make_registered_controller_message(
+          0, 14, 1, registered_parameter_number::pitch_bend_sensitivity, controller_value{ pbSens.value });
+
+        EXPECT_FALSE(is_pitch_bend_sensitivity_message(m));
+        EXPECT_FALSE(is_per_note_pitch_bend_sensitivity_message(m));
+    }
+
+    {
+        constexpr auto m = make_registered_controller_message(
+          0, 14, 0, registered_parameter_number::coarse_tuning, controller_value{ uint7_t{ 4 } });
+
+        EXPECT_FALSE(is_pitch_bend_sensitivity_message(m));
+        EXPECT_FALSE(is_per_note_pitch_bend_sensitivity_message(m));
+    }
+
+    {
+        constexpr auto m = make_midi2_channel_pressure_message(14, 3, controller_value{ 0x79273847u });
+
+        EXPECT_FALSE(is_pitch_bend_sensitivity_message(m));
+        EXPECT_FALSE(is_per_note_pitch_bend_sensitivity_message(m));
     }
 }
 

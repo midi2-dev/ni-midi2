@@ -266,11 +266,12 @@ namespace control_change {
 //--------------------------------------------------------------------------
 
 namespace registered_parameter_number {
-    constexpr controller_t pitch_bend_sensitivity = 0;
-    constexpr controller_t fine_tuning            = 1;
-    constexpr controller_t coarse_tuning          = 2;
-    constexpr controller_t tuning_program_select  = 3;
-    constexpr controller_t tuning_bank_select     = 4;
+    constexpr controller_t pitch_bend_sensitivity          = 0;
+    constexpr controller_t fine_tuning                     = 1;
+    constexpr controller_t coarse_tuning                   = 2;
+    constexpr controller_t tuning_program_select           = 3;
+    constexpr controller_t tuning_bank_select              = 4;
+    constexpr controller_t per_note_pitch_bend_sensitivity = 7;
 } // namespace registered_parameter_number
 
 //--------------------------------------------------------------------------
