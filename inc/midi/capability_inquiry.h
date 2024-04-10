@@ -370,6 +370,23 @@ struct profile_id
 };
 #pragma pack(pop)
 
+//! Capability Inquiry Profile destination
+struct profile_destination
+{
+    uint7_t  scope{ 0x7F };     //!< 0..15 = channel, 0x7E = group, 0x7F = function block
+    uint14_t num_channels{ 0 }; //!< 0 if scope is group or function block, otherwise number of channels > 0
+
+    static constexpr uint7_t group          = 0x7E;
+    static constexpr uint7_t function_block = 0x7F;
+};
+
+constexpr profile_destination channel_profile(uint7_t first_channel, uint14_t num_channels = 1)
+{
+    return profile_destination{ first_channel, num_channels };
+}
+constexpr profile_destination group_profile{ profile_destination::group, 0 };
+constexpr profile_destination function_block_profile{ profile_destination::function_block, 0 };
+
 //---- subtype::profile_inquiry
 
 //! Profile Inquiry view
@@ -421,7 +438,7 @@ message make_profile_inquiry_reply(muid_t                         source_muid,
                                    uint7_t                        device_id = 0x7F);
 
 //----
-//! view class for Profile messages carrying one ID (On/Off/Enabled/Disabled/ProfileSpecificData)
+//! view class for Profile messages carrying one ID (On/Off/Enabled/Disabled/Added/Removed/ProfileSpecificData)
 struct profile_id_view : capability_inquiry_view
 {
     using capability_inquiry_view::capability_inquiry_view;
@@ -433,33 +450,47 @@ struct profile_id_view : capability_inquiry_view
     struct field_offsets;
 };
 
+//----
+//! view class for Profile messages carrying one ID and a channel count (On/Off/Enabled/Disabled)
+struct profile_destination_view : profile_id_view
+{
+    using profile_id_view::profile_id_view;
+
+    uint14_t            num_channels() const;
+    profile_destination params() const;
+
+    static bool validate(const sysex7& sx);
+
+    struct field_offsets;
+};
+
 //---- subtype::set_profile_on
 
 message make_profile_on_request(muid_t source_muid,
                                 muid_t destination_muid,
                                 const profile_id&,
-                                uint7_t device_id = 0x7F);
+                                const profile_destination&);
 
 //---- subtype::set_profile_off
 
 message make_profile_off_request(muid_t source_muid,
                                  muid_t destination_muid,
                                  const profile_id&,
-                                 uint7_t device_id = 0x7F);
+                                 const profile_destination&);
 
 //---- subtype::profile_enabled
 
 message make_profile_enabled_notification(muid_t source_muid,
                                           muid_t destination_muid,
                                           const profile_id&,
-                                          uint7_t device_id = 0x7F);
+                                          const profile_destination&);
 
 //---- subtype::profile_disabled
 
 message make_profile_disabled_notification(muid_t source_muid,
                                            muid_t destination_muid,
                                            const profile_id&,
-                                           uint7_t device_id = 0x7F);
+                                           const profile_destination&);
 
 //---- subtype::profile_added
 
@@ -1352,6 +1383,13 @@ inline bool operator==(const profile_id& a, const profile_id& b)
            (a.byte5 == b.byte5);
 }
 
+//---- profile_destination
+
+inline bool operator==(const profile_destination& a, const profile_destination& b)
+{
+    return (a.scope == b.scope) && (a.num_channels == b.num_channels);
+}
+
 //---- subtype::profile_inquiry
 
 inline bool profile_inquiry_view::validate(const sysex7& sx)
@@ -1451,54 +1489,83 @@ inline bool profile_id_view::validate(const sysex7& sx)
            (sx.data[2] >= subtype::set_profile_on) && (sx.data[2] <= subtype::profile_removed);
 }
 
+//---- profile_destination_view
+
+struct profile_destination_view::field_offsets : profile_id_view::field_offsets
+{
+    static constexpr auto num_channels = payload + 5;
+};
+
+inline uint14_t profile_destination_view::num_channels() const
+{
+    return sx.make_uint14(field_offsets::num_channels);
+}
+
+inline profile_destination profile_destination_view::params() const
+{
+    return profile_destination{ device_id(), num_channels() };
+}
+
+inline bool profile_destination_view::validate(const sysex7& sx)
+{
+    return (sx.manufacturerID == manufacturer::universal_non_realtime) &&
+           (sx.data.size() >= field_offsets::profile_id + 7u) && (sx.data[1] == 0x0D) &&
+           (sx.data[2] >= subtype::set_profile_on) && (sx.data[2] <= subtype::profile_disabled);
+}
+
 //---- subtype::set_profile_on
 
-inline message make_profile_on_request(muid_t            source_muid,
-                                       muid_t            destination_muid,
-                                       const profile_id& p,
-                                       uint7_t           device_id)
+inline message make_profile_on_request(muid_t                     source_muid,
+                                       muid_t                     destination_muid,
+                                       const profile_id&          p,
+                                       const profile_destination& dest)
 {
-    auto result = message::make_with_payload_size(5, subtype::set_profile_on, source_muid, destination_muid, device_id);
+    auto result =
+      message::make_with_payload_size(7, subtype::set_profile_on, source_muid, destination_muid, dest.scope);
     result.add_data(&p.byte1, 5);
+    result.add_uint14(dest.num_channels);
     return result;
 }
 
 //---- subtype::set_profile_off
 
-inline message make_profile_off_request(muid_t            source_muid,
-                                        muid_t            destination_muid,
-                                        const profile_id& p,
-                                        uint7_t           device_id)
+inline message make_profile_off_request(muid_t                     source_muid,
+                                        muid_t                     destination_muid,
+                                        const profile_id&          p,
+                                        const profile_destination& dest)
 {
     auto result =
-      message::make_with_payload_size(5, subtype::set_profile_off, source_muid, destination_muid, device_id);
+      message::make_with_payload_size(7, subtype::set_profile_off, source_muid, destination_muid, dest.scope);
     result.add_data(&p.byte1, 5);
+    result.add_uint14(0); // reserved
     return result;
 }
 
 //---- subtype::profile_enabled
 
-inline message make_profile_enabled_notification(muid_t            source_muid,
-                                                 muid_t            destination_muid,
-                                                 const profile_id& p,
-                                                 uint7_t           device_id)
+inline message make_profile_enabled_notification(muid_t                     source_muid,
+                                                 muid_t                     destination_muid,
+                                                 const profile_id&          p,
+                                                 const profile_destination& dest)
 {
     auto result =
-      message::make_with_payload_size(5, subtype::profile_enabled, source_muid, destination_muid, device_id);
+      message::make_with_payload_size(7, subtype::profile_enabled, source_muid, destination_muid, dest.scope);
     result.add_data(&p.byte1, 5);
+    result.add_uint14(dest.num_channels);
     return result;
 }
 
 //---- subtype::profile_disabled
 
-inline message make_profile_disabled_notification(muid_t            source_muid,
-                                                  muid_t            destination_muid,
-                                                  const profile_id& p,
-                                                  uint7_t           device_id)
+inline message make_profile_disabled_notification(muid_t                     source_muid,
+                                                  muid_t                     destination_muid,
+                                                  const profile_id&          p,
+                                                  const profile_destination& dest)
 {
     auto result =
-      message::make_with_payload_size(5, subtype::profile_disabled, source_muid, destination_muid, device_id);
+      message::make_with_payload_size(7, subtype::profile_disabled, source_muid, destination_muid, dest.scope);
     result.add_data(&p.byte1, 5);
+    result.add_uint14(dest.num_channels);
     return result;
 }
 

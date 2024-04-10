@@ -871,8 +871,8 @@ TEST_F(ci_profile_configuration, profile_id_view)
 
         SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
-        auto mut = midi::ci::make_profile_on_request(0x1234568, 0x2345689, profile, 0x0D);
-        EXPECT_EQ(17u, mut.data.size());
+        auto mut = midi::ci::make_profile_on_request(0x1234568, 0x2345689, profile, midi::ci::channel_profile(0x0D));
+        EXPECT_GE(mut.data.size(), 17u);
 
         EXPECT_TRUE(VUT::validate(mut));
         EXPECT_TRUE(midi::ci::as<VUT>(mut));
@@ -895,8 +895,9 @@ TEST_F(ci_profile_configuration, profile_id_view)
 
         SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
-        auto mut = midi::ci::make_profile_disabled_notification(0x7856312, 0x2345689, profile);
-        EXPECT_EQ(17u, mut.data.size());
+        auto mut =
+          midi::ci::make_profile_disabled_notification(0x7856312, 0x2345689, profile, midi::ci::function_block_profile);
+        EXPECT_GE(mut.data.size(), 17u);
 
         EXPECT_TRUE(VUT::validate(mut));
         EXPECT_TRUE(midi::ci::as<VUT>(mut));
@@ -920,7 +921,7 @@ TEST_F(ci_profile_configuration, profile_id_view)
         SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
         auto mut = midi::ci::make_profile_added_notification(0x7863412, 0x2345689, profile);
-        EXPECT_EQ(17u, mut.data.size());
+        EXPECT_GE(mut.data.size(), 17u);
 
         EXPECT_TRUE(VUT::validate(mut));
         EXPECT_TRUE(midi::ci::as<VUT>(mut));
@@ -940,25 +941,10 @@ TEST_F(ci_profile_configuration, profile_id_view)
 
     // invalid type
     {
-        midi::sysex7 sx{ midi::manufacturer::universal_non_realtime,
-                         { 0x7F,
-                           0x08,
-                           0x26,
-                           0x02,
-                           0x78,
-                           0x56,
-                           0x34,
-                           0x12,
-                           0x77,
-                           0x55,
-                           0x33,
-                           0x11,
-                           0x44,
-                           0x55,
-                           0x66,
-                           0x12,
-                           0x34,
-                           0x56 } };
+        midi::sysex7 sx{
+            midi::manufacturer::universal_non_realtime,
+            { 0x7F, 0x08, 0x26, 0x02, 0x78, 0x56, 0x34, 0x12, 0x77, 0x55, 0x33, 0x11, 0x44, 0x55, 0x66, 0x12, 0x34 }
+        };
 
         EXPECT_FALSE(VUT::validate(sx));
         EXPECT_FALSE(midi::ci::as<VUT>(sx));
@@ -966,25 +952,10 @@ TEST_F(ci_profile_configuration, profile_id_view)
 
     // invalid subtype
     {
-        midi::sysex7 sx{ midi::manufacturer::universal_non_realtime,
-                         { 0x7F,
-                           0x0D,
-                           0x28,
-                           0x02,
-                           0x78,
-                           0x56,
-                           0x34,
-                           0x12,
-                           0x77,
-                           0x55,
-                           0x33,
-                           0x11,
-                           0x44,
-                           0x55,
-                           0x66,
-                           0x12,
-                           0x34,
-                           0x56 } };
+        midi::sysex7 sx{
+            midi::manufacturer::universal_non_realtime,
+            { 0x7F, 0x0D, 0x28, 0x02, 0x78, 0x56, 0x34, 0x12, 0x77, 0x55, 0x33, 0x11, 0x44, 0x55, 0x66, 0x12, 0x34 }
+        };
 
         EXPECT_FALSE(VUT::validate(sx));
         EXPECT_FALSE(midi::ci::as<VUT>(sx));
@@ -1028,17 +999,17 @@ TEST_F(ci_profile_configuration, profile_id_view)
 
 //-----------------------------------------------
 
-TEST_F(ci_profile_configuration, set_profile_on)
+TEST_F(ci_profile_configuration, profile_destination_view)
 {
-    using VUT = midi::ci::profile_id_view;
+    using VUT = midi::ci::profile_destination_view;
 
     {
         const midi::ci::profile_id profile{ 0x01, 0x02, 0x03, 0x04, 0x05 };
 
         SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
-        auto mut = midi::ci::make_profile_on_request(0x1234567, 0, profile, 0x0D);
-        EXPECT_EQ(17u, mut.data.size());
+        auto mut = midi::ci::make_profile_on_request(0x1234568, 0x2345689, profile, midi::ci::channel_profile(0x0D));
+        EXPECT_GE(mut.data.size(), 19u);
 
         EXPECT_TRUE(VUT::validate(mut));
         EXPECT_TRUE(midi::ci::as<VUT>(mut));
@@ -1049,9 +1020,11 @@ TEST_F(ci_profile_configuration, set_profile_on)
         EXPECT_EQ(midi::universal_sysex::type::capability_inquiry, m.type());
         EXPECT_EQ(0x22, m.subtype());
         EXPECT_EQ(midi::ci::version, m.message_version());
-        EXPECT_EQ(0x1234567u, m.source_muid());
-        EXPECT_EQ(0u, m.destination_muid());
+        EXPECT_EQ(0x1234568u, m.source_muid());
+        EXPECT_EQ(0x2345689u, m.destination_muid());
         EXPECT_EQ(profile, m.profile());
+        EXPECT_EQ(1u, m.num_channels());
+        EXPECT_EQ((midi::ci::profile_destination{ 0x0D, 1 }), m.params());
 
         SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
@@ -1061,8 +1034,152 @@ TEST_F(ci_profile_configuration, set_profile_on)
 
         SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
-        auto mut = midi::ci::make_profile_on_request(0x8563412, 0x1FFFFFF, profile);
-        EXPECT_EQ(17u, mut.data.size());
+        auto mut =
+          midi::ci::make_profile_disabled_notification(0x7856312, 0x2345689, profile, midi::ci::function_block_profile);
+        EXPECT_GE(mut.data.size(), 19u);
+
+        EXPECT_TRUE(VUT::validate(mut));
+        EXPECT_TRUE(midi::ci::as<VUT>(mut));
+
+        auto m = VUT{ mut };
+
+        EXPECT_EQ(0x7F, m.device_id());
+        EXPECT_EQ(midi::universal_sysex::type::capability_inquiry, m.type());
+        EXPECT_EQ(0x25, m.subtype());
+        EXPECT_EQ(midi::ci::version, m.message_version());
+        EXPECT_EQ(0x7856312u, m.source_muid());
+        EXPECT_EQ(0x2345689u, m.destination_muid());
+        EXPECT_EQ(profile, m.profile());
+        EXPECT_EQ(0u, m.num_channels());
+        EXPECT_EQ((midi::ci::profile_destination{ 0x7F, 0 }), m.params());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
+    }
+
+    {
+        const midi::ci::profile_id profile{ 0x7E, 0x44, 0x33, 0x22, 0x11 };
+
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
+        auto mut = midi::ci::make_profile_added_notification(0x7863412, 0x2345689, profile);
+
+        EXPECT_FALSE(VUT::validate(mut));
+        EXPECT_FALSE(midi::ci::as<VUT>(mut));
+    }
+
+    // invalid type
+    {
+        midi::sysex7 sx{ midi::manufacturer::universal_non_realtime,
+                         { 0x7F,
+                           0x08,
+                           0x26,
+                           0x02,
+                           0x78,
+                           0x56,
+                           0x34,
+                           0x12,
+                           0x77,
+                           0x55,
+                           0x33,
+                           0x11,
+                           0x44,
+                           0x55,
+                           0x66,
+                           0x12,
+                           0x34,
+                           0x01,
+                           0x00 } };
+
+        EXPECT_FALSE(VUT::validate(sx));
+        EXPECT_FALSE(midi::ci::as<VUT>(sx));
+    }
+
+    // invalid subtype
+    {
+        midi::sysex7 sx{ midi::manufacturer::universal_non_realtime,
+                         { 0x7F,
+                           0x0D,
+                           0x26,
+                           0x02,
+                           0x78,
+                           0x56,
+                           0x34,
+                           0x12,
+                           0x77,
+                           0x55,
+                           0x33,
+                           0x11,
+                           0x44,
+                           0x55,
+                           0x66,
+                           0x12,
+                           0x34,
+                           0x01,
+                           0x00 } };
+
+        EXPECT_FALSE(VUT::validate(sx));
+        EXPECT_FALSE(midi::ci::as<VUT>(sx));
+    }
+
+    // invalid size
+    {
+        midi::sysex7 sx{ midi::manufacturer::universal_non_realtime,
+                         { 0x7F, 0x0D, 0x23, 0x02, 0x78, 0x56, 0x34, 0x12, 0x77, 0x55, 0x33 } };
+
+        EXPECT_FALSE(VUT::validate(sx));
+        EXPECT_FALSE(midi::ci::as<VUT>(sx));
+    }
+
+    // forward compatibility - accept larger message size
+    {
+        midi::sysex7 sx{ midi::manufacturer::universal_non_realtime,
+                         { 0x7F, 0x0D, 0x24, 0x02, 0x78, 0x56, 0x34, 0x12, 0x77, 0x55, 0x33,
+                           0x11, 0x44, 0x55, 0x66, 0x12, 0x34, 0x01, 0x00, 0x11, 0x22 } };
+
+        EXPECT_TRUE(VUT::validate(sx));
+        EXPECT_TRUE(midi::ci::as<VUT>(sx));
+    }
+}
+
+//-----------------------------------------------
+
+TEST_F(ci_profile_configuration, set_profile_on)
+{
+    using VUT = midi::ci::profile_destination_view;
+
+    {
+        const midi::ci::profile_id profile{ 0x01, 0x02, 0x03, 0x04, 0x05 };
+
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
+        auto mut = midi::ci::make_profile_on_request(0x1234567, 0, profile, midi::ci::channel_profile(0x06));
+        EXPECT_EQ(19u, mut.data.size());
+
+        EXPECT_TRUE(VUT::validate(mut));
+        EXPECT_TRUE(midi::ci::as<VUT>(mut));
+
+        auto m = VUT{ mut };
+
+        EXPECT_EQ(0x06, m.device_id());
+        EXPECT_EQ(midi::universal_sysex::type::capability_inquiry, m.type());
+        EXPECT_EQ(0x22, m.subtype());
+        EXPECT_EQ(midi::ci::version, m.message_version());
+        EXPECT_EQ(0x1234567u, m.source_muid());
+        EXPECT_EQ(0u, m.destination_muid());
+        EXPECT_EQ(profile, m.profile());
+        EXPECT_EQ(1u, m.num_channels());
+        EXPECT_EQ((midi::ci::profile_destination{ 6, 1 }), m.params());
+
+        SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
+    }
+
+    {
+        const midi::ci::profile_id profile{ 0x7E, 0x44, 0x33, 0x22, 0x11 };
+
+        SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
+
+        auto mut = midi::ci::make_profile_on_request(0x8563412, 0x1FFFFFF, profile, midi::ci::function_block_profile);
+        EXPECT_EQ(19u, mut.data.size());
 
         EXPECT_TRUE(VUT::validate(mut));
         EXPECT_TRUE(midi::ci::as<VUT>(mut));
@@ -1076,6 +1193,8 @@ TEST_F(ci_profile_configuration, set_profile_on)
         EXPECT_EQ(0x8563412u, m.source_muid());
         EXPECT_EQ(0x1FFFFFFu, m.destination_muid());
         EXPECT_EQ(profile, m.profile());
+        EXPECT_EQ(0u, m.num_channels());
+        EXPECT_EQ((midi::ci::profile_destination{ 0x7F, 0 }), m.params());
 
         SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
@@ -1083,7 +1202,7 @@ TEST_F(ci_profile_configuration, set_profile_on)
     {
         const midi::ci::profile_id profile{ 0x7E, 0x44, 0x33, 0x22, 0x11 };
 
-        auto mut    = midi::ci::make_profile_on_request(0x8563412, 0x1234567, profile);
+        auto mut    = midi::ci::make_profile_on_request(0x8563412, 0x1234567, profile, midi::ci::group_profile);
         mut.data[2] = 0x31;
 
         EXPECT_FALSE(VUT::validate(mut));
@@ -1095,28 +1214,30 @@ TEST_F(ci_profile_configuration, set_profile_on)
 
 TEST_F(ci_profile_configuration, set_profile_off)
 {
-    using VUT = midi::ci::profile_id_view;
+    using VUT = midi::ci::profile_destination_view;
 
     {
         const midi::ci::profile_id profile{ 0x01, 0x02, 0x03, 0x04, 0x05 };
 
         SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
-        auto mut = midi::ci::make_profile_off_request(0x1234567, 4711, profile, 0x0D);
-        EXPECT_EQ(17u, mut.data.size());
+        auto mut = midi::ci::make_profile_off_request(0x1234567, 4711, profile, midi::ci::channel_profile(0x05, 5));
+        EXPECT_EQ(19u, mut.data.size());
 
         EXPECT_TRUE(VUT::validate(mut));
         EXPECT_TRUE(midi::ci::as<VUT>(mut));
 
         auto m = VUT{ mut };
 
-        EXPECT_EQ(0x0D, m.device_id());
+        EXPECT_EQ(0x05, m.device_id());
         EXPECT_EQ(midi::universal_sysex::type::capability_inquiry, m.type());
         EXPECT_EQ(0x23, m.subtype());
         EXPECT_EQ(midi::ci::version, m.message_version());
         EXPECT_EQ(0x1234567u, m.source_muid());
         EXPECT_EQ(4711u, m.destination_muid());
         EXPECT_EQ(profile, m.profile());
+        EXPECT_EQ(0u, m.num_channels());
+        EXPECT_EQ((midi::ci::profile_destination{ 0x05, 0 }), m.params());
 
         SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
@@ -1126,15 +1247,15 @@ TEST_F(ci_profile_configuration, set_profile_off)
 
         SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
-        auto mut = midi::ci::make_profile_off_request(0x7563412, 42, profile);
-        EXPECT_EQ(17u, mut.data.size());
+        auto mut = midi::ci::make_profile_off_request(0x7563412, 42, profile, midi::ci::group_profile);
+        EXPECT_EQ(19u, mut.data.size());
 
         EXPECT_TRUE(VUT::validate(mut));
         EXPECT_TRUE(midi::ci::as<VUT>(mut));
 
         auto m = VUT{ mut };
 
-        EXPECT_EQ(0x7F, m.device_id());
+        EXPECT_EQ(0x7E, m.device_id());
         EXPECT_EQ(midi::universal_sysex::type::capability_inquiry, m.type());
         EXPECT_EQ(0x23, m.subtype());
         EXPECT_EQ(midi::ci::version, m.message_version());
@@ -1148,7 +1269,7 @@ TEST_F(ci_profile_configuration, set_profile_off)
     {
         const midi::ci::profile_id profile{ 0x7E, 0x44, 0x33, 0x22, 0x11 };
 
-        auto mut    = midi::ci::make_profile_off_request(0x7856341, 0x292A2B2, profile);
+        auto mut    = midi::ci::make_profile_off_request(0x7856341, 0x292A2B2, profile, midi::ci::channel_profile(0));
         mut.data[2] = 0x31;
 
         EXPECT_FALSE(VUT::validate(mut));
@@ -1160,15 +1281,16 @@ TEST_F(ci_profile_configuration, set_profile_off)
 
 TEST_F(ci_profile_configuration, profile_enabled)
 {
-    using VUT = midi::ci::profile_id_view;
+    using VUT = midi::ci::profile_destination_view;
 
     {
         const midi::ci::profile_id profile{ 0x01, 0x02, 0x03, 0x04, 0x05 };
 
         SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
-        auto mut = midi::ci::make_profile_enabled_notification(0x2345678, 0x0101010, profile, 0x0D);
-        EXPECT_EQ(17u, mut.data.size());
+        auto mut =
+          midi::ci::make_profile_enabled_notification(0x2345678, 0x0101010, profile, midi::ci::channel_profile(0x0D));
+        EXPECT_EQ(19u, mut.data.size());
 
         EXPECT_TRUE(VUT::validate(mut));
         EXPECT_TRUE(midi::ci::as<VUT>(mut));
@@ -1182,6 +1304,8 @@ TEST_F(ci_profile_configuration, profile_enabled)
         EXPECT_EQ(0x2345678u, m.source_muid());
         EXPECT_EQ(0x0101010u, m.destination_muid());
         EXPECT_EQ(profile, m.profile());
+        EXPECT_EQ(1u, m.num_channels());
+        EXPECT_EQ(midi::ci::channel_profile(0x0D), m.params());
 
         SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
@@ -1191,21 +1315,23 @@ TEST_F(ci_profile_configuration, profile_enabled)
 
         SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
-        auto mut = midi::ci::make_profile_enabled_notification(0x7863412, 0x5647382, profile);
-        EXPECT_EQ(17u, mut.data.size());
+        auto mut = midi::ci::make_profile_enabled_notification(0x7863412, 0x5647382, profile, midi::ci::group_profile);
+        EXPECT_EQ(19u, mut.data.size());
 
         EXPECT_TRUE(VUT::validate(mut));
         EXPECT_TRUE(midi::ci::as<VUT>(mut));
 
         auto m = VUT{ mut };
 
-        EXPECT_EQ(0x7F, m.device_id());
+        EXPECT_EQ(0x7E, m.device_id());
         EXPECT_EQ(midi::universal_sysex::type::capability_inquiry, m.type());
         EXPECT_EQ(0x24, m.subtype());
         EXPECT_EQ(midi::ci::version, m.message_version());
         EXPECT_EQ(0x7863412u, m.source_muid());
         EXPECT_EQ(0x5647382u, m.destination_muid());
         EXPECT_EQ(profile, m.profile());
+        EXPECT_EQ(0u, m.num_channels());
+        EXPECT_EQ((midi::ci::profile_destination{ 0x7E, 0 }), m.params());
 
         SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
@@ -1213,7 +1339,8 @@ TEST_F(ci_profile_configuration, profile_enabled)
     {
         const midi::ci::profile_id profile{ 0x7E, 0x44, 0x33, 0x22, 0x11 };
 
-        auto mut    = midi::ci::make_profile_enabled_notification(0x8563412, 0x0192837, profile);
+        auto mut =
+          midi::ci::make_profile_enabled_notification(0x8563412, 0x0192837, profile, midi::ci::function_block_profile);
         mut.data[2] = 0x31;
 
         EXPECT_FALSE(VUT::validate(mut));
@@ -1225,15 +1352,16 @@ TEST_F(ci_profile_configuration, profile_enabled)
 
 TEST_F(ci_profile_configuration, profile_disabled)
 {
-    using VUT = midi::ci::profile_id_view;
+    using VUT = midi::ci::profile_destination_view;
 
     {
         const midi::ci::profile_id profile{ 0x01, 0x02, 0x03, 0x04, 0x05 };
 
         SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
-        auto mut = midi::ci::make_profile_disabled_notification(0x1234567, 5, profile, 0x0D);
-        EXPECT_EQ(17u, mut.data.size());
+        auto mut =
+          midi::ci::make_profile_disabled_notification(0x1234567, 5, profile, midi::ci::channel_profile(0x0D, 9));
+        EXPECT_EQ(19u, mut.data.size());
 
         EXPECT_TRUE(VUT::validate(mut));
         EXPECT_TRUE(midi::ci::as<VUT>(mut));
@@ -1247,6 +1375,8 @@ TEST_F(ci_profile_configuration, profile_disabled)
         EXPECT_EQ(0x1234567u, m.source_muid());
         EXPECT_EQ(5u, m.destination_muid());
         EXPECT_EQ(profile, m.profile());
+        EXPECT_EQ(9u, m.num_channels());
+        EXPECT_EQ((midi::ci::profile_destination{ 0x0D, 9 }), m.params());
 
         SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
@@ -1256,21 +1386,23 @@ TEST_F(ci_profile_configuration, profile_disabled)
 
         SYSEX_ALLOCATOR_CAPTURE_COUNT(c);
 
-        auto mut = midi::ci::make_profile_disabled_notification(0x7856341, 0x9999999, profile);
-        EXPECT_EQ(17u, mut.data.size());
+        auto mut = midi::ci::make_profile_disabled_notification(0x7856341, 0x9999999, profile, midi::ci::group_profile);
+        EXPECT_EQ(19u, mut.data.size());
 
         EXPECT_TRUE(VUT::validate(mut));
         EXPECT_TRUE(midi::ci::as<VUT>(mut));
 
         auto m = VUT{ mut };
 
-        EXPECT_EQ(0x7F, m.device_id());
+        EXPECT_EQ(0x7E, m.device_id());
         EXPECT_EQ(midi::universal_sysex::type::capability_inquiry, m.type());
         EXPECT_EQ(0x25, m.subtype());
         EXPECT_EQ(midi::ci::version, m.message_version());
         EXPECT_EQ(0x7856341u, m.source_muid());
         EXPECT_EQ(0x9999999u, m.destination_muid());
         EXPECT_EQ(profile, m.profile());
+        EXPECT_EQ(0u, m.num_channels());
+        EXPECT_EQ((midi::ci::profile_destination{ 0x7E, 0 }), m.params());
 
         SYSEX_ALLOCATOR_VERIFY_DIFF(c, 1);
     }
@@ -1278,7 +1410,8 @@ TEST_F(ci_profile_configuration, profile_disabled)
     {
         const midi::ci::profile_id profile{ 0x7E, 0x44, 0x33, 0x22, 0x11 };
 
-        auto mut    = midi::ci::make_profile_disabled_notification(0x7856312, 13, profile);
+        auto mut =
+          midi::ci::make_profile_disabled_notification(0x7856312, 13, profile, midi::ci::function_block_profile);
         mut.data[2] = 0x31;
 
         EXPECT_FALSE(VUT::validate(mut));
