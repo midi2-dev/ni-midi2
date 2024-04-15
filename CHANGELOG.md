@@ -1,3 +1,7 @@
+# v1.8.0
+
+* fix MIDI CI profile messages, some implementations were not yet compatible with MIDI CI 1.2
+
 # v1.7.0
 
 * add note attribute helpers
