@@ -613,7 +613,7 @@ constexpr pitch_increment::pitch_increment(double d)
     else if (d >= 0.)
     {
         const auto result = pitch_7_25(d).value;
-        if (result <= std::numeric_limits<int32_t>::max())
+        if (result <= uint32_t(std::numeric_limits<int32_t>::max()))
             value = result;
         else
             value = std::numeric_limits<int32_t>::max();

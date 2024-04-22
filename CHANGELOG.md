@@ -1,3 +1,7 @@
+# v1.8.1
+
+* fix signed/unsigned mismatch warning with older MSVC compilers
+
 # v1.8.0
 
 * fix MIDI CI profile messages, some implementations were not yet compatible with MIDI CI 1.2
