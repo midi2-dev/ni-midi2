@@ -351,10 +351,10 @@ TEST(velocity, as_double)
 {
     using namespace midi;
 
-    EXPECT_FLOAT_EQ(0., velocity{ uint7_t{ 0 } }.as_double());
-    EXPECT_FLOAT_EQ(0.25, velocity{ uint7_t{ 32 } }.as_double());
-    EXPECT_FLOAT_EQ(0.5, velocity{ uint16_t{ 0x8000 } }.as_double());
-    EXPECT_FLOAT_EQ(1., velocity{ uint16_t{ 0xFFFF } }.as_double());
+    EXPECT_DOUBLE_EQ(0., velocity{ uint7_t{ 0 } }.as_double());
+    EXPECT_DOUBLE_EQ(0.25, velocity{ uint7_t{ 32 } }.as_double());
+    EXPECT_DOUBLE_EQ(0.5, velocity{ uint16_t{ 0x8000 } }.as_double());
+    EXPECT_DOUBLE_EQ(1., velocity{ uint16_t{ 0xFFFF } }.as_double());
 }
 
 //-----------------------------------------------
@@ -1260,11 +1260,11 @@ TEST(pitch_7_9, as_double)
 {
     using namespace midi;
 
-    EXPECT_FLOAT_EQ(0.0, pitch_7_9{ uint16_t{ 0x0000 } }.as_float());
-    EXPECT_FLOAT_EQ(32., pitch_7_9{ uint16_t{ 0x4000 } }.as_float());
-    EXPECT_FLOAT_EQ(64.25, pitch_7_9{ uint16_t{ 0x8080 } }.as_float());
-    EXPECT_FLOAT_EQ(96.125, pitch_7_9{ uint16_t{ 0xC040 } }.as_float());
-    EXPECT_FLOAT_EQ(127.5, pitch_7_9{ uint16_t{ 0xFF00 } }.as_float());
+    EXPECT_DOUBLE_EQ(0.0, pitch_7_9{ uint16_t{ 0x0000 } }.as_double());
+    EXPECT_DOUBLE_EQ(32., pitch_7_9{ uint16_t{ 0x4000 } }.as_double());
+    EXPECT_DOUBLE_EQ(64.25, pitch_7_9{ uint16_t{ 0x8080 } }.as_double());
+    EXPECT_DOUBLE_EQ(96.125, pitch_7_9{ uint16_t{ 0xC040 } }.as_double());
+    EXPECT_DOUBLE_EQ(127.5, pitch_7_9{ uint16_t{ 0xFF00 } }.as_double());
 }
 
 //-----------------------------------------------
@@ -1687,7 +1687,7 @@ TEST(pitch_7_25, operator_plus_pitch_increment)
     // underflow
     EXPECT_EQ(0.f, (pitch_7_25{ 0.1f } + pitch_increment{ -1.5f }).as_float());
     // overflow
-    EXPECT_FLOAT_EQ(128., (pitch_7_25{ 127.9 } + pitch_increment{ 0.2 }).as_double());
+    EXPECT_FLOAT_EQ(128.f, (pitch_7_25{ 127.9 } + pitch_increment{ 0.2 }).as_double());
 }
 
 //-----------------------------------------------
@@ -1722,19 +1722,21 @@ TEST(pitch_7_25, operator_plus_double)
 {
     using namespace midi;
 
-    EXPECT_FLOAT_EQ(19.5, (pitch_7_25{ 19. } + 0.5).as_double());
-    EXPECT_FLOAT_EQ(64.75, (pitch_7_25{ note_nr_t{ 64 } } + 0.75).as_double());
+    constexpr double eps = 1e-8;
 
-    EXPECT_FLOAT_EQ(99.1, (pitch_7_25{ note_nr_t{ 99 } } + 0.1).as_double());
-    EXPECT_FLOAT_EQ(118., (pitch_7_25{ 117.56 } + .44).as_double());
+    EXPECT_NEAR(19.5, (pitch_7_25{ 19. } + 0.5).as_double(), eps);
+    EXPECT_NEAR(64.75, (pitch_7_25{ note_nr_t{ 64 } } + 0.75).as_double(), eps);
+
+    EXPECT_NEAR(99.1, (pitch_7_25{ note_nr_t{ 99 } } + 0.1).as_double(), eps);
+    EXPECT_NEAR(118., (pitch_7_25{ 117.56 } + .44).as_double(), eps);
 
     EXPECT_EQ(0xFFFFFFFFu, (pitch_7_25{ 127.77 } + 1.23).value);
 
-    EXPECT_FLOAT_EQ(18.5, (pitch_7_25{ 19. } + -0.5).as_double());
-    EXPECT_FLOAT_EQ(63.25, (pitch_7_25{ note_nr_t{ 64 } } + -0.75).as_double());
+    EXPECT_NEAR(18.5, (pitch_7_25{ 19. } + -0.5).as_double(), eps);
+    EXPECT_NEAR(63.25, (pitch_7_25{ note_nr_t{ 64 } } + -0.75).as_double(), eps);
 
-    EXPECT_FLOAT_EQ(98.9, (pitch_7_25{ note_nr_t{ 99 } } + -0.1).as_double());
-    EXPECT_FLOAT_EQ(117.12, (pitch_7_25{ 117.56 } + -.44).as_double());
+    EXPECT_NEAR(98.9, (pitch_7_25{ note_nr_t{ 99 } } + -0.1).as_double(), eps);
+    EXPECT_NEAR(117.12, (pitch_7_25{ 117.56 } + -.44).as_double(), eps);
 
     // underflow
     EXPECT_EQ(0x00000000u, (pitch_7_25{ 1. } + -1.23).value);
@@ -2189,11 +2191,11 @@ TEST(controller_value, as_double)
 {
     using namespace midi;
 
-    EXPECT_FLOAT_EQ(0.0, controller_value{ uint32_t{ 0x00000000 } }.as_double());
-    EXPECT_FLOAT_EQ(0.25, controller_value{ uint32_t{ 0x40000000 } }.as_double());
-    EXPECT_FLOAT_EQ(0.5, controller_value{ uint32_t{ 0x80000000 } }.as_double());
-    EXPECT_FLOAT_EQ(0.75, controller_value{ uint32_t{ 0xBFFFFFFF } }.as_double());
-    EXPECT_FLOAT_EQ(1.0, controller_value{ uint32_t{ 0xFFFFFFFF } }.as_double());
+    EXPECT_DOUBLE_EQ(0.0, controller_value{ uint32_t{ 0x00000000 } }.as_double());
+    EXPECT_DOUBLE_EQ(0.25, controller_value{ uint32_t{ 0x40000000 } }.as_double());
+    EXPECT_DOUBLE_EQ(0.5, controller_value{ uint32_t{ 0x80000000 } }.as_double());
+    EXPECT_NEAR(0.75f, controller_value{ uint32_t{ 0xBFFFFFFF } }.as_double(), 1e-10);
+    EXPECT_DOUBLE_EQ(1.0, controller_value{ uint32_t{ 0xFFFFFFFF } }.as_double());
 }
 
 //-----------------------------------------------
