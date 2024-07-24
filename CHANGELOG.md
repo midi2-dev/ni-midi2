@@ -1,3 +1,7 @@
+# v1.8.3
+
+* more VS 2022 warning fixes
+
 # v1.8.2
 
 * fix VS 2022 warnings in as_double() tests

@@ -640,11 +640,11 @@ TEST(pitch_bend, as_double)
 {
     using namespace midi;
 
-    EXPECT_FLOAT_EQ(-1.0f, pitch_bend{ uint32_t{ 0x00000000 } }.as_double());
-    EXPECT_FLOAT_EQ(-0.5f, pitch_bend{ uint32_t{ 0x40000000 } }.as_double());
-    EXPECT_FLOAT_EQ(0.0f, pitch_bend{ uint32_t{ 0x80000000 } }.as_double());
-    EXPECT_FLOAT_EQ(0.5f, pitch_bend{ uint32_t{ 0xBFFFFFFF } }.as_double());
-    EXPECT_FLOAT_EQ(1.0f, pitch_bend{ uint32_t{ 0xFFFFFFFF } }.as_double());
+    EXPECT_DOUBLE_EQ(-1.0, pitch_bend{ uint32_t{ 0x00000000 } }.as_double());
+    EXPECT_DOUBLE_EQ(-0.5, pitch_bend{ uint32_t{ 0x40000000 } }.as_double());
+    EXPECT_DOUBLE_EQ(0.0, pitch_bend{ uint32_t{ 0x80000000 } }.as_double());
+    EXPECT_NEAR(0.5, pitch_bend{ uint32_t{ 0xBFFFFFFF } }.as_double(), 1e-8);
+    EXPECT_DOUBLE_EQ(1.0, pitch_bend{ uint32_t{ 0xFFFFFFFF } }.as_double());
 }
 
 //-----------------------------------------------
@@ -1687,7 +1687,7 @@ TEST(pitch_7_25, operator_plus_pitch_increment)
     // underflow
     EXPECT_EQ(0.f, (pitch_7_25{ 0.1f } + pitch_increment{ -1.5f }).as_float());
     // overflow
-    EXPECT_FLOAT_EQ(128.f, (pitch_7_25{ 127.9 } + pitch_increment{ 0.2 }).as_double());
+    EXPECT_FLOAT_EQ(128.f, (pitch_7_25{ 127.9 } + pitch_increment{ 0.2 }).as_float());
 }
 
 //-----------------------------------------------

@@ -931,10 +931,10 @@ TEST_F(channel_voice_message, as_midi1_channel_voice_message)
         // 98, 99, 100, and 101.
         // * In MIDI 2.0 Protocol, Control Change 88 shall not be used for High Resolution Velocity. The Note On 16 bit
         // Velocity value has a higher range than the MIDI 1.0 High Resolution Velocity controller and Note On combined.
-        for (midi::uint7_t index : { 0, 6, 32, 38, 88, 98, 99, 100, 101 })
+        for (auto index : { 0, 6, 32, 38, 88, 98, 99, 100, 101 })
         {
             EXPECT_FALSE(as_midi1_channel_voice_message(midi2_channel_voice_message_view{
-              make_midi2_control_change_message(9, 0, index, controller_value{ uint32_t{ 12345 } }) }));
+              make_midi2_control_change_message(9, 0, midi::uint7_t(index), controller_value{ uint32_t{ 12345 } }) }));
         }
     }
 
@@ -1074,10 +1074,10 @@ TEST_F(channel_voice_message, as_midi2_channel_voice_message)
         // Instead they should transmit the new MIDI 2.0 Program Change message (see Section 7.4.9).
         // * In MIDI 2.0 Protocol, Control Change 88 shall not be used for High Resolution Velocity. The Note On 16 bit
         // Velocity value has a higher range than the MIDI 1.0 High Resolution Velocity controller and Note On combined.
-        for (midi::uint7_t index : { 0, 6, 32, 38, 88, 98, 99, 100, 101 })
+        for (auto index : { 0, 6, 32, 38, 88, 98, 99, 100, 101 })
         {
             EXPECT_FALSE(as_midi2_channel_voice_message(midi1_channel_voice_message_view{
-              make_midi1_control_change_message(9, 0, index, controller_value{ uint32_t{ 12345 } }) }));
+              make_midi1_control_change_message(9, 0, midi::uint7_t(index), controller_value{ uint32_t{ 12345 } }) }));
         }
     }
 
