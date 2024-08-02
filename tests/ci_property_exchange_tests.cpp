@@ -902,7 +902,7 @@ TEST_F(ci_property_exchange, get_property_data_reply)
 
         auto sx = midi::ci::make_get_property_data_reply(0x1133577,
                                                          0xFFAABB0,
-                                                         256,
+                                                         0,
                                                          128,
                                                          midi::ci::property_exchange::chunk{
                                                            chunk,
@@ -927,7 +927,7 @@ TEST_F(ci_property_exchange, get_property_data_reply)
         EXPECT_EQ(0u, m.header_size());
         EXPECT_EQ(m.header_end(), m.header_begin() + m.header_size());
 
-        EXPECT_EQ(256u, m.number_of_chunks());
+        EXPECT_EQ(0u, m.number_of_chunks());
         EXPECT_EQ(128u, m.number_of_this_chunk());
 
         EXPECT_EQ(chunk.size(), m.chunk_size());

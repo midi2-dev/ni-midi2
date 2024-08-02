@@ -229,7 +229,7 @@ bool property_exchange::property_data_message_view::validate(const sysex7& sx)
         const auto cur_chunk   = sx.make_uint14(field_offsets::this_chunk + header_bytes);
         const auto chunk_bytes = sx.make_uint14(field_offsets::chunk_size + header_bytes);
 
-        if (cur_chunk > num_chunks)
+        if (num_chunks && (cur_chunk > num_chunks))
             return false;
 
         if (header_bytes && (cur_chunk > 1))
@@ -258,8 +258,8 @@ message property_exchange::make_property_data_message(subtype_t     subtype,
     auto result =
       message::make_with_payload_size(9 + header.size + chunk.size, subtype, source_muid, destination_muid, device_id);
 
-    assert((number_of_chunks && number_of_this_chunk) || ((chunk.data == nullptr) && (chunk.size == 0)));
-    assert(number_of_this_chunk <= number_of_chunks);
+    assert(number_of_this_chunk || ((chunk.data == nullptr) && (chunk.size == 0)));
+    assert((number_of_chunks == 0) || (number_of_this_chunk <= number_of_chunks));
 
     assert(!header.size || header.data);
     assert(!chunk.size || chunk.data);
