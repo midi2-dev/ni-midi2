@@ -1,3 +1,7 @@
+# v1.8.4
+
+* fix Property Exchange chunk validation
+
 # v1.8.3
 
 * more VS 2022 warning fixes
