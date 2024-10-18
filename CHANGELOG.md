@@ -1,3 +1,7 @@
+# v1.8.5
+
+* support 14 bit in `controller_value`, useful for MIDI 1 (N)RPNs
+
 # v1.8.4
 
 * fix Property Exchange chunk validation
