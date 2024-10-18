@@ -1986,6 +1986,43 @@ TEST(controller_value, construct_from_uint32)
 
 //-----------------------------------------------
 
+TEST(controller_value, construct_from_uint14)
+{
+    using namespace midi;
+
+    {
+        controller_value v{ uint14_t{ 0u } };
+
+        EXPECT_EQ(0x00000000u, v.value);
+    }
+
+    {
+        controller_value v{ uint14_t{ 0x1C94 } };
+
+        EXPECT_EQ(0x72500000u, v.value);
+    }
+
+    {
+        controller_value v{ uint14_t{ 8192 } };
+
+        EXPECT_EQ(0x80000000u, v.value);
+    }
+
+    {
+        controller_value v{ uint14_t{ 0b10'1100'1001'0101u } };
+
+        EXPECT_EQ(0b1011'0010'0101'0101'1001'0010'1010'1100u, v.value);
+    }
+
+    {
+        controller_value v{ uint14_t{ 0x3FFF } };
+
+        EXPECT_EQ(0xFFFFFFFFu, v.value);
+    }
+}
+
+//-----------------------------------------------
+
 TEST(controller_value, construct_from_uint7)
 {
     using namespace midi;
@@ -2196,6 +2233,24 @@ TEST(controller_value, as_double)
     EXPECT_DOUBLE_EQ(0.5, controller_value{ uint32_t{ 0x80000000 } }.as_double());
     EXPECT_NEAR(0.75f, controller_value{ uint32_t{ 0xBFFFFFFF } }.as_double(), 1e-10);
     EXPECT_DOUBLE_EQ(1.0, controller_value{ uint32_t{ 0xFFFFFFFF } }.as_double());
+}
+
+//-----------------------------------------------
+
+TEST(controller_value, as_uint14)
+{
+    using namespace midi;
+
+    EXPECT_EQ(0u, controller_value{ uint32_t{ 0x00000000 } }.as_uint14());
+    EXPECT_EQ(4u, controller_value{ uint32_t{ 0x00123456 } }.as_uint14());
+    EXPECT_EQ(1372u, controller_value{ uint32_t{ 0x15738382 } }.as_uint14());
+    EXPECT_EQ(2048u, controller_value{ uint32_t{ 0x20000000 } }.as_uint14());
+    EXPECT_EQ(3558u, controller_value{ uint32_t{ 0x379AFF43 } }.as_uint14());
+    EXPECT_EQ(4096u, controller_value{ uint32_t{ 0x40000000 } }.as_uint14());
+    EXPECT_EQ(8192u, controller_value{ uint32_t{ 0x80000000 } }.as_uint14());
+    EXPECT_EQ(10995u, controller_value{ uint32_t{ 0xABCDEF12 } }.as_uint14());
+    EXPECT_EQ(12288u, controller_value{ uint32_t{ 0xC0000000 } }.as_uint14());
+    EXPECT_EQ(16383u, controller_value{ uint32_t{ 0xFFFFFFFF } }.as_uint14());
 }
 
 //-----------------------------------------------

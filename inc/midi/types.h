@@ -214,13 +214,15 @@ struct controller_value
 
     constexpr controller_value() = default;
     constexpr explicit controller_value(uint32_t);
+    constexpr explicit controller_value(uint14_t);
     constexpr explicit controller_value(uint7_t);
     constexpr explicit controller_value(float);
     constexpr explicit controller_value(double);
 
-    constexpr float   as_float() const;  // [0..1]
-    constexpr double  as_double() const; // [0..1]
-    constexpr uint7_t as_uint7() const;
+    constexpr float    as_float() const;  // [0..1]
+    constexpr double   as_double() const; // [0..1]
+    constexpr uint14_t as_uint14() const;
+    constexpr uint7_t  as_uint7() const;
 
     constexpr void operator+=(controller_increment);
 
@@ -391,9 +393,17 @@ constexpr controller_value::controller_value(uint32_t v)
   : value(v)
 {
 }
+constexpr controller_value::controller_value(uint14_t v)
+  : value(upsample_14_to_32bit(v))
+{
+}
 constexpr controller_value::controller_value(uint7_t v)
   : value(upsample_7_to_32bit(v))
 {
+}
+constexpr uint14_t controller_value::as_uint14() const
+{
+    return downsample_32_to_14bit(value);
 }
 constexpr uint7_t controller_value::as_uint7() const
 {
