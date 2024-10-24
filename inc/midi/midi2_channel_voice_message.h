@@ -53,6 +53,7 @@ constexpr bool is_midi2_channel_voice_message(const universal_packet&);
 constexpr bool is_registered_controller_message(const universal_packet&);
 constexpr bool is_assignable_controller_message(const universal_packet&);
 constexpr bool is_registered_per_note_controller_message(const universal_packet&);
+constexpr bool is_registered_per_note_controller_pitch_message(const universal_packet&);
 constexpr bool is_assignable_per_note_controller_message(const universal_packet&);
 constexpr bool is_per_note_pitch_bend_message(const universal_packet&);
 
@@ -400,6 +401,11 @@ constexpr bool is_registered_per_note_controller_message(const universal_packet&
 {
     return is_midi2_channel_voice_message(p) &&
            (p.status() & 0xF0) == channel_voice_status::registered_per_note_controller;
+}
+constexpr bool is_registered_per_note_controller_pitch_message(const universal_packet& p)
+{
+    return is_registered_per_note_controller_message(p) &&
+           get_per_note_controller_index(p) == registered_per_note_controller::pitch_7_25;
 }
 constexpr bool is_assignable_per_note_controller_message(const universal_packet& p)
 {

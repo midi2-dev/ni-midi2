@@ -238,6 +238,7 @@ TEST_F(midi2_channel_voice_message, make_registered_per_note_controller_message)
         EXPECT_EQ((universal_packet{ 0x4F0E2C4D, 0x33445566 }), m);
         EXPECT_TRUE(is_registered_per_note_controller_message(m));
         EXPECT_TRUE(get_per_note_controller_index(m) == 77);
+        EXPECT_FALSE(is_registered_per_note_controller_pitch_message(m));
     }
 
     {
@@ -245,6 +246,16 @@ TEST_F(midi2_channel_voice_message, make_registered_per_note_controller_message)
         EXPECT_EQ((universal_packet{ 0x41053344, 0x00000055 }), m);
         EXPECT_TRUE(is_registered_per_note_controller_message(m));
         EXPECT_TRUE(get_per_note_controller_index(m) == 0x44);
+        EXPECT_FALSE(is_registered_per_note_controller_pitch_message(m));
+    }
+
+    {
+        const auto m = make_registered_per_note_controller_message(
+          7, 4, 64, registered_per_note_controller::pitch_7_25, controller_value{ 0x12345678u });
+        EXPECT_EQ((universal_packet{ 0x47044003, 0x12345678u }), m);
+        EXPECT_TRUE(is_registered_per_note_controller_message(m));
+        EXPECT_TRUE(get_per_note_controller_index(m) == 3);
+        EXPECT_TRUE(is_registered_per_note_controller_pitch_message(m));
     }
 }
 
