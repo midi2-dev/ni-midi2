@@ -153,14 +153,14 @@ TEST_F(midi2_channel_voice_message, make_midi2_channel_voice_message)
         const auto m =
           make_midi2_channel_voice_message(4, channel_voice_status::per_note_pitch_bend, 14, 0x43, 0x00, 0x8000D123);
         EXPECT_EQ((universal_packet{ 0x446E4300, 0x8000D123 }), m);
-        EXPECT_TRUE(is_midi2_per_note_pitch_bend_message(m));
+        EXPECT_TRUE(is_per_note_pitch_bend_message(m));
     }
 
     {
         constexpr auto m =
           make_midi2_channel_voice_message(12, channel_voice_status::registered_controller, 5, 4, 0x62, 0xABCDEF00);
         EXPECT_EQ((universal_packet{ 0x4C250462, 0xABCDEF00 }), m);
-        EXPECT_TRUE(is_midi2_registered_controller_message(m));
+        EXPECT_TRUE(is_registered_controller_message(m));
     }
 
     { // invalid channel in status
@@ -236,15 +236,15 @@ TEST_F(midi2_channel_voice_message, make_registered_per_note_controller_message)
         constexpr auto m =
           make_registered_per_note_controller_message(0xF, 0xE, 44, 77, controller_value{ 0x33445566u });
         EXPECT_EQ((universal_packet{ 0x4F0E2C4D, 0x33445566 }), m);
-        EXPECT_TRUE(is_midi2_registered_per_note_controller_message(m));
-        EXPECT_TRUE(get_midi2_per_note_controller_index(m) == 77);
+        EXPECT_TRUE(is_registered_per_note_controller_message(m));
+        EXPECT_TRUE(get_per_note_controller_index(m) == 77);
     }
 
     {
         const auto m = make_registered_per_note_controller_message(1, 5, 0x33, 0x44, controller_value{ 0x55u });
         EXPECT_EQ((universal_packet{ 0x41053344, 0x00000055 }), m);
-        EXPECT_TRUE(is_midi2_registered_per_note_controller_message(m));
-        EXPECT_TRUE(get_midi2_per_note_controller_index(m) == 0x44);
+        EXPECT_TRUE(is_registered_per_note_controller_message(m));
+        EXPECT_TRUE(get_per_note_controller_index(m) == 0x44);
     }
 }
 
@@ -258,8 +258,8 @@ TEST_F(midi2_channel_voice_message, make_assignable_per_note_controller_message)
         constexpr auto m =
           make_assignable_per_note_controller_message(0xE, 0xD, 0x12, 0x34, controller_value{ 0x44556677u });
         EXPECT_EQ((universal_packet{ 0x4E1D1234, 0x44556677 }), m);
-        EXPECT_TRUE(is_midi2_assignable_per_note_controller_message(m));
-        EXPECT_TRUE(get_midi2_per_note_controller_index(m) == 0x34);
+        EXPECT_TRUE(is_assignable_per_note_controller_message(m));
+        EXPECT_TRUE(get_per_note_controller_index(m) == 0x34);
     }
 
     {
@@ -316,7 +316,7 @@ TEST_F(midi2_channel_voice_message, make_registered_controller_message)
     {
         constexpr auto m = make_registered_controller_message(3, 7, 9, 0x45, controller_value{ 0x80101010u });
         EXPECT_EQ((universal_packet{ 0x43270945, 0x80101010 }), m);
-        EXPECT_TRUE(is_midi2_registered_controller_message(m));
+        EXPECT_TRUE(is_registered_controller_message(m));
     }
 
     { // invalid bank bits
@@ -339,7 +339,7 @@ TEST_F(midi2_channel_voice_message, make_assignable_controller_message)
     {
         constexpr auto m = make_assignable_controller_message(3, 7, 9, 0x45, controller_value{ 0x80101010u });
         EXPECT_EQ((universal_packet{ 0x43370945, 0x80101010 }), m);
-        EXPECT_TRUE(is_midi2_assignable_controller_message(m));
+        EXPECT_TRUE(is_assignable_controller_message(m));
     }
 
     { // invalid bank bits
@@ -486,66 +486,66 @@ TEST_F(midi2_channel_voice_message, is_midi2_type_query_functions)
     {
         constexpr auto m = make_midi1_note_on_message(1, 1, 60, velocity{ uint7_t{ 90 } });
         EXPECT_FALSE(is_midi2_channel_voice_message(m));
-        EXPECT_FALSE(is_midi2_registered_controller_message(m));
-        EXPECT_FALSE(is_midi2_assignable_controller_message(m));
-        EXPECT_FALSE(is_midi2_registered_per_note_controller_message(m));
-        EXPECT_FALSE(is_midi2_assignable_per_note_controller_message(m));
-        EXPECT_FALSE(is_midi2_per_note_pitch_bend_message(m));
+        EXPECT_FALSE(is_registered_controller_message(m));
+        EXPECT_FALSE(is_assignable_controller_message(m));
+        EXPECT_FALSE(is_registered_per_note_controller_message(m));
+        EXPECT_FALSE(is_assignable_per_note_controller_message(m));
+        EXPECT_FALSE(is_per_note_pitch_bend_message(m));
     }
 
     {
         constexpr auto m =
           make_midi2_channel_voice_message(12, channel_voice_status::registered_controller, 5, 4, 0x62, 0xABCDEF00);
         EXPECT_TRUE(is_midi2_channel_voice_message(m));
-        EXPECT_TRUE(is_midi2_registered_controller_message(m));
-        EXPECT_FALSE(is_midi2_assignable_controller_message(m));
-        EXPECT_FALSE(is_midi2_registered_per_note_controller_message(m));
-        EXPECT_FALSE(is_midi2_assignable_per_note_controller_message(m));
-        EXPECT_FALSE(is_midi2_per_note_pitch_bend_message(m));
+        EXPECT_TRUE(is_registered_controller_message(m));
+        EXPECT_FALSE(is_assignable_controller_message(m));
+        EXPECT_FALSE(is_registered_per_note_controller_message(m));
+        EXPECT_FALSE(is_assignable_per_note_controller_message(m));
+        EXPECT_FALSE(is_per_note_pitch_bend_message(m));
     }
 
     {
         constexpr auto m = make_assignable_controller_message(3, 7, 9, 0x45, controller_value{ 0x80101010u });
         EXPECT_TRUE(is_midi2_channel_voice_message(m));
-        EXPECT_FALSE(is_midi2_registered_controller_message(m));
-        EXPECT_TRUE(is_midi2_assignable_controller_message(m));
-        EXPECT_FALSE(is_midi2_registered_per_note_controller_message(m));
-        EXPECT_FALSE(is_midi2_assignable_per_note_controller_message(m));
-        EXPECT_FALSE(is_midi2_per_note_pitch_bend_message(m));
+        EXPECT_FALSE(is_registered_controller_message(m));
+        EXPECT_TRUE(is_assignable_controller_message(m));
+        EXPECT_FALSE(is_registered_per_note_controller_message(m));
+        EXPECT_FALSE(is_assignable_per_note_controller_message(m));
+        EXPECT_FALSE(is_per_note_pitch_bend_message(m));
     }
 
     {
         const auto m = make_registered_per_note_controller_message(1, 5, 0x33, 0x44, controller_value{ 0x55u });
         EXPECT_TRUE(is_midi2_channel_voice_message(m));
-        EXPECT_FALSE(is_midi2_registered_controller_message(m));
-        EXPECT_FALSE(is_midi2_assignable_controller_message(m));
-        EXPECT_TRUE(is_midi2_registered_per_note_controller_message(m));
-        EXPECT_EQ(get_midi2_per_note_controller_index(m), 0x44);
-        EXPECT_FALSE(is_midi2_assignable_per_note_controller_message(m));
-        EXPECT_FALSE(is_midi2_per_note_pitch_bend_message(m));
+        EXPECT_FALSE(is_registered_controller_message(m));
+        EXPECT_FALSE(is_assignable_controller_message(m));
+        EXPECT_TRUE(is_registered_per_note_controller_message(m));
+        EXPECT_EQ(get_per_note_controller_index(m), 0x44);
+        EXPECT_FALSE(is_assignable_per_note_controller_message(m));
+        EXPECT_FALSE(is_per_note_pitch_bend_message(m));
     }
 
     {
         const auto m =
           make_assignable_per_note_controller_message(0xE, 0xD, 0x12, 0x34, controller_value{ 0x44556677u });
         EXPECT_TRUE(is_midi2_channel_voice_message(m));
-        EXPECT_FALSE(is_midi2_registered_controller_message(m));
-        EXPECT_FALSE(is_midi2_assignable_controller_message(m));
-        EXPECT_FALSE(is_midi2_registered_per_note_controller_message(m));
-        EXPECT_TRUE(is_midi2_assignable_per_note_controller_message(m));
-        EXPECT_EQ(get_midi2_per_note_controller_index(m), 0x34);
-        EXPECT_FALSE(is_midi2_per_note_pitch_bend_message(m));
+        EXPECT_FALSE(is_registered_controller_message(m));
+        EXPECT_FALSE(is_assignable_controller_message(m));
+        EXPECT_FALSE(is_registered_per_note_controller_message(m));
+        EXPECT_TRUE(is_assignable_per_note_controller_message(m));
+        EXPECT_EQ(get_per_note_controller_index(m), 0x34);
+        EXPECT_FALSE(is_per_note_pitch_bend_message(m));
     }
 
     {
         const auto m =
           make_midi2_channel_voice_message(4, channel_voice_status::per_note_pitch_bend, 14, 0x43, 0x00, 0x8000D123);
         EXPECT_TRUE(is_midi2_channel_voice_message(m));
-        EXPECT_FALSE(is_midi2_registered_controller_message(m));
-        EXPECT_FALSE(is_midi2_assignable_controller_message(m));
-        EXPECT_FALSE(is_midi2_registered_per_note_controller_message(m));
-        EXPECT_FALSE(is_midi2_assignable_per_note_controller_message(m));
-        EXPECT_TRUE(is_midi2_per_note_pitch_bend_message(m));
+        EXPECT_FALSE(is_registered_controller_message(m));
+        EXPECT_FALSE(is_assignable_controller_message(m));
+        EXPECT_FALSE(is_registered_per_note_controller_message(m));
+        EXPECT_FALSE(is_assignable_per_note_controller_message(m));
+        EXPECT_TRUE(is_per_note_pitch_bend_message(m));
     }
 }
 
@@ -714,6 +714,41 @@ TEST_F(midi2_channel_voice_message, pitch_bend_sensitivities)
         EXPECT_FALSE(is_pitch_bend_sensitivity_message(m));
         EXPECT_FALSE(is_per_note_pitch_bend_sensitivity_message(m));
     }
+}
+
+//-----------------------------------------------
+
+TEST_F(midi2_channel_voice_message, deprecations)
+{
+    using namespace midi;
+
+#if defined(_MSC_VER)
+    __pragma( warning(push) )
+    __pragma( warning(disable: 4996) )
+#elif defined(__clang__)
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#elif defined(__GNUC__) || defined(__GNUG__)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
+    universal_packet p;
+    EXPECT_EQ(is_midi2_registered_controller_message(p), is_registered_controller_message(p));
+    EXPECT_EQ(is_midi2_assignable_controller_message(p), is_assignable_controller_message(p));
+    EXPECT_EQ(is_midi2_registered_per_note_controller_message(p), is_registered_per_note_controller_message(p));
+    EXPECT_EQ(is_midi2_assignable_per_note_controller_message(p), is_assignable_per_note_controller_message(p));
+    EXPECT_EQ(is_midi2_per_note_pitch_bend_message(p), is_per_note_pitch_bend_message(p));
+    if (is_registered_per_note_controller_message(p) || is_assignable_per_note_controller_message(p))
+        EXPECT_EQ(get_midi2_per_note_controller_index(p), get_per_note_controller_index(p));
+
+#if defined(_MSC_VER)
+    __pragma( warning(pop) )
+#elif defined(__clang__)
+    #pragma clang diagnostic pop
+#elif defined(__GNUC__) || defined(__GNUG__)
+    #pragma GCC diagnostic pop
+#endif
 }
 
 //-----------------------------------------------
