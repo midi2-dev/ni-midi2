@@ -1422,6 +1422,19 @@ TEST(pitch_7_25, construct_from_pitch7_9)
 
 //-----------------------------------------------
 
+TEST(pitch_7_25, construct_from_controller_value)
+{
+    using namespace midi;
+
+    {
+        pitch_7_25 p{ controller_value{ 0x12345678u } };
+
+        EXPECT_EQ(0x12345678u, p.value);
+    }
+}
+
+//-----------------------------------------------
+
 TEST(pitch_7_25, construct_from_float)
 {
     using namespace midi;
@@ -2055,6 +2068,20 @@ TEST(controller_value, construct_from_uint7)
         controller_value v{ uint7_t{ 127 } };
 
         EXPECT_EQ(0xFFFFFFFFu, v.value);
+    }
+}
+
+//-----------------------------------------------
+
+TEST(controller_value, construct_from_pitch_7_25)
+{
+    using namespace midi;
+
+    {
+        pitch_7_25 p{ 74.63 };
+        controller_value v{ p };
+
+        EXPECT_EQ(p.value, v.value);
     }
 }
 

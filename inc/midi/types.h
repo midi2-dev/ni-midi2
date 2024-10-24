@@ -156,6 +156,10 @@ struct pitch_7_9
 
 //--------------------------------------------------------------------------
 
+struct controller_value;
+
+//--------------------------------------------------------------------------
+
 struct pitch_7_25
 {
     uint32_t value{ 0 };
@@ -164,6 +168,7 @@ struct pitch_7_25
     constexpr explicit pitch_7_25(uint32_t);
     constexpr explicit pitch_7_25(pitch_7_9);
     constexpr explicit pitch_7_25(note_nr_t);
+    constexpr explicit pitch_7_25(const controller_value&);
     constexpr explicit pitch_7_25(float);
     constexpr explicit pitch_7_25(double);
 
@@ -216,6 +221,7 @@ struct controller_value
     constexpr explicit controller_value(uint32_t);
     constexpr explicit controller_value(uint14_t);
     constexpr explicit controller_value(uint7_t);
+    constexpr explicit controller_value(const pitch_7_25&);
     constexpr explicit controller_value(float);
     constexpr explicit controller_value(double);
 
@@ -352,6 +358,10 @@ constexpr pitch_7_25::pitch_7_25(pitch_7_9 p)
 {
     this->operator=(p);
 }
+constexpr pitch_7_25::pitch_7_25(const controller_value& v)
+  : value(v.value)
+{
+}
 
 constexpr note_nr_t pitch_7_25::note_nr() const
 {
@@ -401,6 +411,11 @@ constexpr controller_value::controller_value(uint7_t v)
   : value(upsample_7_to_32bit(v))
 {
 }
+constexpr controller_value::controller_value(const pitch_7_25& p)
+  : value(p.value)
+{
+}
+
 constexpr uint14_t controller_value::as_uint14() const
 {
     return downsample_32_to_14bit(value);
