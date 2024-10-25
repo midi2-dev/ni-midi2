@@ -1,3 +1,9 @@
+# v1.9.0
+
+* remove redundant _midi2_ from APIs and deprecate old versions
+* add `is_registered_per_note_controller_pitch_message()`
+* add convinience conversions between `controller_value` and `pitch_7_25`
+
 # v1.8.5
 
 * support 14 bit in `controller_value`, useful for MIDI 1 (N)RPNs
