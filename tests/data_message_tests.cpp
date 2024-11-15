@@ -184,7 +184,7 @@ TEST(data_message, make_sysex7_end_packet)
 
 //-----------------------------------------------
 
-TEST(extended_data_message, sysex7_packet_format)
+TEST(data_message, sysex7_packet_format)
 {
     using namespace midi;
 

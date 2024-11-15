@@ -12,7 +12,8 @@ endif()
 
 option( NIMIDI2_TREAT_WARNINGS_AS_ERRORS "Treat compile warnings as errors"   OFF )
 option( NIMIDI2_UNITY_BUILDS             "Build ni-midi2 with unity builds"   ON  )
-option( NIMIDI2_TESTS                    "Build ni-midi2 Tests"     ${IS_NIMIDI2} )
+option( NIMIDI2_TESTS                    "Build ni-midi2 tests"     ${IS_NIMIDI2} )
+option( NIMIDI2_EXAMPLES                 "Build ni-midi2 examples"  ${IS_NIMIDI2} )
 
 option( NIMIDI2_CUSTOM_SYSEX_DATA_ALLOCATOR "Build with custom sysex data allocator" OFF )
 option( NIMIDI2_PMR_SYSEX_DATA              "Build with sysex data use pmr"          OFF )
@@ -127,3 +128,28 @@ if( NIMIDI2_TESTS )
 
     nimidi2_add_test(ni-midi2-tests GTEST)
 endif(NIMIDI2_TESTS)
+
+if( NIMIDI2_EXAMPLES )
+    set(ExampleSources
+        docs/docs.cpp
+        docs/channel_voice_message.examples.cpp
+        docs/data_message.examples.cpp
+        docs/extended_data_message.examples.cpp
+        docs/flex_data_message.examples.cpp
+        docs/midi1_byte_stream.examples.cpp
+        docs/midi1_channel_voice_message.examples.cpp
+        docs/midi2_channel_voice_message.examples.cpp
+        docs/stream_message.examples.cpp
+        docs/sysex_collector.examples.cpp
+        docs/sysex.examples.cpp
+        docs/system_message.examples.cpp
+        docs/types.examples.cpp
+        docs/universal_sysex.examples.cpp
+        docs/utility_message.examples.cpp
+    )
+
+    source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${ExampleSources})
+
+    add_executable(ni-midi2-examples ${ExampleSources})
+    target_link_libraries(ni-midi2-examples PRIVATE ni::midi2)
+endif(NIMIDI2_EXAMPLES)
