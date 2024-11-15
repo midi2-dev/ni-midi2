@@ -55,6 +55,8 @@ Mathematical operators allow to do integer / fixed point math on pitches and con
     auto from32bit = controller_value{ uint32_t{ 0x45883312 } };
     auto fromFloat = pitch_7_25 { 66.1f };
 
+For more information see [Common Types and Scaling Helpers](docs/types.md).
+
 Conrete instances of packets or messages are created using factory functions.
 
 Incoming packets and messages are inspected using data views.
@@ -75,8 +77,8 @@ Examples for UMP factory functions:
     midi1_channel_voice_message make_midi1_pitch_bend_message(group_t, channel_t, pitch_bend);
     ...
 
-    midi2_channel_voice_message make_midi2_note_on_message(group_t, status_t, note_nr_t, velocity);
-    midi2_channel_voice_message make_midi2_note_on_message(group_t, status_t, note_nr_t, velocity, pitch_7_9);
+    midi2_channel_voice_message make_midi2_note_on_message(group_t, channel_t, note_nr_t, velocity);
+    midi2_channel_voice_message make_midi2_note_on_message(group_t, channel_t, note_nr_t, velocity, pitch_7_9);
     midi2_channel_voice_message make_registered_controller_message(
         group_t, channel_t, uint7_t bank, uint7_t index, controller_value);
     ...
@@ -125,9 +127,9 @@ Alternatively one can use `std::optional` to check and cast in a single statemen
     if (auto m = as_system_message_view(packet))
     {
         // access message data
-        if (m.status() == system_status::song_position)
+        if (m->status() == system_status::song_position)
         {
-            auto pos = m.get_song_position();
+            auto pos = m->get_song_position();
         }
     }
 
@@ -178,6 +180,8 @@ The library provides a `midi1_byte_stream_parser` class and also free helper fun
 
 The `midi1_byte_stream_parser` can be configured to automatically parse and collect Sysex7 messages.
 
+For more information see [midi1_byte_stream.md](docs/midi1_byte_stream.md).
+
 ### Sysex collectors
 
 The `sysex7_collector` class allows to easily collect System Exclusive messages (like MIDI-CI 1.2).
@@ -196,7 +200,7 @@ The `sysex7_collector` class allows to easily collect System Exclusive messages 
 `sysex8_collector` does the same for System Exclusive 8 messages.
 
     sysex8_collector c {
-        [](const sysex8 &s)
+        [](const sysex8 &s, uint8_t stream_id)
         {
             // do something with message
             ...
@@ -206,6 +210,7 @@ The `sysex7_collector` class allows to easily collect System Exclusive messages 
     if (is_sysex8_packet(p))
         c.feed(p);
 
+For more information see [sysex_collector.md](docs/sysex_collector.md).
 
 ### Jitter Reduction Timestamps
 
@@ -220,6 +225,25 @@ There are experimental implementations for a Jitter Reduction Timestamps clock g
 
 Please be aware that these classes only demonstrate the general concept of Jitter Reduction Timestamps, they are not intended as a ready-to-use production solution.
 
+## Detail documentation and example files
+
+There is a growing number of code examples and more detailed documentation available in the [docs](docs) folder. Enable the `cmake` option `NIMIDI2_EXAMPLES` to build the example code.
+
+* Universal MIDI Packet [documentation](docs/universal_packet.md)
+* Common Types and Scaling Helpers [documentation](docs/types.md) and [examples](docs/types.examples.cpp)
+* Protocol Agnostic Channel Voice Message helper [documentation](docs/channel_voice_message.md) and [examples](docs/channel_voice_message.examples.cpp)
+* MIDI 1 Channel Voice Message [documentation](docs/midi1_channel_voice_message.md) and [examples](docs/midi1_channel_voice_message.examples.cpp)
+* MIDI 2 Channel Voice Message [documentation](docs/midi2_channel_voice_message.md) and [examples](docs/midi2_channel_voice_message.examples.cpp)
+* System Message [documentation](docs/system_message.md) and [examples](docs/system_message.examples.cpp)
+* Data Message [documentation](docs/data_message.md) and [examples](docs/data_message.examples.cpp)
+* Extended Data Message [documentation](docs/extended_data_message.md) and [examples](docs/extended_data_message.examples.cpp)
+* Flex Data Message [WIP documentation](docs/flex_data_message.md)
+* Stream Message [WIP documentation](docs/stream_message.md)
+* Utility Message [documentation](docs/utility_message.md)
+* MIDI 1 Byte Stream Helper [WIP documentation](docs/midi1_byte_stream.md) and [examples](docs/midi1_byte_stream.examples.cpp)
+
+Until documentation is completed you may also find the [unit test code](tests) helpful.
+
 ## Building and Testing
 
 The library uses `cmake` as its build system. Simply call `cmake` on the top level source folder to generate a build recipe for your preferred compiler and IDE / `make`.
@@ -229,6 +253,7 @@ There are some `cmake options` that allow customization of what is build and how
     option( NIMIDI2_TREAT_WARNINGS_AS_ERRORS "Treat compile warnings as errors"   OFF )
     option( NIMIDI2_UNITY_BUILDS             "Build ni-midi2 with unity builds"   ON  )
     option( NIMIDI2_TESTS                    "Build ni-midi2 Tests"     ${IS_NIMIDI2} )
+    option( NIMIDI2_EXAMPLES                 "Build ni-midi2 examples"  ${IS_NIMIDI2} )
 
 If you do not need to build unit tests, specify `-DNIMIDI2_TESTS=OFF` on the `cmake` command line. This is the default if this project is included via `add_subdirectory` into your project.
 
