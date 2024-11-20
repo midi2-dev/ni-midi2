@@ -1,3 +1,8 @@
+# v1.10.0
+
+* improve documentation and add example code (part 1, more to follow)
+* add convenience functions to add `uint32` (5 bytes) to `sysex7`
+
 # v1.9.0
 
 * remove redundant _midi2_ from APIs and deprecate old versions
