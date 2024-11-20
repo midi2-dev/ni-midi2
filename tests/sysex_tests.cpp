@@ -341,6 +341,82 @@ TEST_F(sysex, sysex7_add_uintX)
         EXPECT_EQ(127u, sx.data[26]);
         EXPECT_EQ(127u, sx.data[27]);
     }
+
+    {
+        midi::sysex7 sx{ 0x123456 };
+
+        sx.add_uint32(0);
+        EXPECT_EQ(5u, sx.data.size());
+        EXPECT_EQ(0u, sx.data[0]);
+        EXPECT_EQ(0u, sx.data[1]);
+        EXPECT_EQ(0u, sx.data[2]);
+        EXPECT_EQ(0u, sx.data[3]);
+        EXPECT_EQ(0u, sx.data[4]);
+        EXPECT_EQ(0, sx.make_uint32(0u));
+
+        sx.add_uint32(99);
+        EXPECT_EQ(10u, sx.data.size());
+        EXPECT_EQ(99u, sx.data[5]);
+        EXPECT_EQ(0u, sx.data[6]);
+        EXPECT_EQ(0u, sx.data[7]);
+        EXPECT_EQ(0u, sx.data[8]);
+        EXPECT_EQ(0u, sx.data[9]);
+        EXPECT_EQ(99, sx.make_uint32(5u));
+
+        sx.add_uint32(128);
+        EXPECT_EQ(15u, sx.data.size());
+        EXPECT_EQ(0u, sx.data[10]);
+        EXPECT_EQ(1u, sx.data[11]);
+        EXPECT_EQ(0u, sx.data[12]);
+        EXPECT_EQ(0u, sx.data[13]);
+        EXPECT_EQ(0u, sx.data[14]);
+        EXPECT_EQ(128, sx.make_uint32(10u));
+
+        sx.add_uint32(0x3FFF);
+        EXPECT_EQ(20u, sx.data.size());
+        EXPECT_EQ(127u, sx.data[15]);
+        EXPECT_EQ(127u, sx.data[16]);
+        EXPECT_EQ(0u, sx.data[17]);
+        EXPECT_EQ(0u, sx.data[18]);
+        EXPECT_EQ(0u, sx.data[19]);
+        EXPECT_EQ(0x3FFF, sx.make_uint32(15u));
+
+        sx.add_uint32(0x123456);
+        EXPECT_EQ(25u, sx.data.size());
+        EXPECT_EQ(0x56u, sx.data[20]);
+        EXPECT_EQ(0x68u, sx.data[21]);
+        EXPECT_EQ(0x48u, sx.data[22]);
+        EXPECT_EQ(0u, sx.data[23]);
+        EXPECT_EQ(0u, sx.data[24]);
+        EXPECT_EQ(0x123456, sx.make_uint32(20u));
+
+        sx.add_uint32(0x1234567);
+        EXPECT_EQ(30u, sx.data.size());
+        EXPECT_EQ(0x67u, sx.data[25]);
+        EXPECT_EQ(0x0Au, sx.data[26]);
+        EXPECT_EQ(0x0Du, sx.data[27]);
+        EXPECT_EQ(0x09u, sx.data[28]);
+        EXPECT_EQ(0u, sx.data[29]);
+        EXPECT_EQ(0x1234567, sx.make_uint32(25u));
+
+        sx.add_uint32(0x0FFFFFFF);
+        EXPECT_EQ(35u, sx.data.size());
+        EXPECT_EQ(127u, sx.data[30]);
+        EXPECT_EQ(127u, sx.data[31]);
+        EXPECT_EQ(127u, sx.data[32]);
+        EXPECT_EQ(127u, sx.data[33]);
+        EXPECT_EQ(0u, sx.data[34]);
+        EXPECT_EQ(0x0FFFFFFF, sx.make_uint32(30u));
+
+        sx.add_uint32(0xFFFFFFFF);
+        EXPECT_EQ(40u, sx.data.size());
+        EXPECT_EQ(127u, sx.data[35]);
+        EXPECT_EQ(127u, sx.data[36]);
+        EXPECT_EQ(127u, sx.data[37]);
+        EXPECT_EQ(127u, sx.data[38]);
+        EXPECT_EQ(0x0Fu, sx.data[39]);
+        EXPECT_EQ(0xFFFFFFFF, sx.make_uint32(35u));
+    }
 }
 
 //-----------------------------------------------

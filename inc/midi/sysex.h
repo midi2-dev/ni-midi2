@@ -194,6 +194,9 @@ struct sysex7 : sysex
     void     add_uint28(uint28_t);
     uint28_t make_uint28(size_t data_pos) const;
 
+    void     add_uint32(uint32_t);
+    uint28_t make_uint32(size_t data_pos) const;
+
     void            add_device_identity(const device_identity&);
     device_identity make_device_identity(size_t data_pos) const;
 
@@ -283,6 +286,22 @@ inline uint28_t sysex7::make_uint28(size_t data_pos) const
 {
     assert(data_pos + 3 < data.size());
     return data[data_pos] | (data[data_pos + 1] << 7) | (data[data_pos + 2] << 14) | (data[data_pos + 3] << 21);
+}
+
+inline void sysex7::add_uint32(uint32_t value)
+{
+    const uint7_t d[] = { uint7_t(value & 0x7Fu),
+                          uint7_t((value >> 7) & 0x7Fu),
+                          uint7_t((value >> 14) & 0x7Fu),
+                          uint7_t((value >> 21) & 0x7Fu),
+                          uint7_t((value >> 28) & 0x0Fu)};
+    data.insert(data.end(), d, d + sizeof(d));
+}
+
+inline uint32_t sysex7::make_uint32(size_t data_pos) const
+{
+    assert(data_pos + 4 < data.size());
+    return data[data_pos] | (data[data_pos + 1] << 7) | (data[data_pos + 2] << 14) | (data[data_pos + 3] << 21) | ((data[data_pos + 4] & 0x0F) << 28) ;
 }
 
 //--------------------------------------------------------------------------
