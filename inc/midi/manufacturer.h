@@ -57,7 +57,7 @@ namespace manufacturer {
     constexpr manufacturer_t korg                = 0x420000;
     constexpr manufacturer_t yamaha              = 0x430000;
     constexpr manufacturer_t casio               = 0x440000;
-    constexpr manufacturer_t akai                = 0x450000;
+    constexpr manufacturer_t akai                = 0x470000;
     constexpr manufacturer_t fujitsu             = 0x4B0000;
     constexpr manufacturer_t sony                = 0x4C0000;
     constexpr manufacturer_t teac                = 0x4E0000;

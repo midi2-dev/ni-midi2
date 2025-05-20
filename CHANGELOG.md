@@ -1,3 +1,7 @@
+# v1.10.1
+
+* fix AKAIs manufacturer ID
+
 # v1.10.0
 
 * improve documentation and add example code (part 1, more to follow)
