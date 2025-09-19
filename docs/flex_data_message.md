@@ -2,12 +2,14 @@
 
 _WORK IN PROGRESS_
 
+Code examples can be found in [`flex_data_message.examples.cpp`](flex_data_message.examples.cpp).
+
 ## Base Type
 
     struct flex_data_message : universal_packet
     {
         flex_data_message(
-        group_t, packet_format, packet_address, uint4_t, status_t, status_t, uint32_t = 0, uint32_t = 0, uint32_t = 0);
+            group_t, packet_format, packet_address, uint4_t, status_t, status_t, uint32_t = 0, uint32_t = 0, uint32_t = 0);
 
         packet_format  format() const;
         packet_address address() const;
@@ -53,9 +55,9 @@ _WORK IN PROGRESS_
                                                 uint8_t num_subdivision_clicks1,
                                                 uint8_t num_subdivision_clicks2);
     flex_data_message make_set_key_signature_message(
-    group_t, packet_address, uint4_t channel, uint4_t sharps_or_flats, uint4_t tonic_note);
+        group_t, packet_address, uint4_t channel, uint4_t sharps_or_flats, uint4_t tonic_note);
     flex_data_message make_set_chord_message(
-    group_t, packet_address, uint4_t channel, uint32_t data1, uint32_t data2, uint32_t data3);
+        group_t, packet_address, uint4_t channel, uint32_t data1, uint32_t data2, uint32_t data3);
 
 
 ### Flex Data Message Data View:
@@ -73,6 +75,16 @@ _WORK IN PROGRESS_
         uint32_t       data1() const;
         uint32_t       data2() const;
         uint32_t       data3() const;
+        uint8_t        data_byte1() const;
+        uint8_t        data_byte2() const;
+        uint8_t        data_byte2() const;
+        uint8_t        data_byte3() const;
+        uint8_t        data_byte2() const;
+        uint8_t        data_byte4() const;
+        uint8_t        data_byte5() const;
+        uint8_t        data_byte6() const;
+        uint8_t        data_byte7() const;
+        uint8_t        data_byte8() const;
 
         const std::string payload_as_string() const;
     };
