@@ -79,6 +79,18 @@ struct flex_data_message_view
     constexpr uint32_t       data1() const { return p.data[1]; }
     constexpr uint32_t       data2() const { return p.data[2]; }
     constexpr uint32_t       data3() const { return p.data[3]; }
+    constexpr uint8_t        data_byte1() const { return p.get_byte(4); }
+    constexpr uint8_t        data_byte2() const { return p.get_byte(5); }
+    constexpr uint8_t        data_byte3() const { return p.get_byte(6); }
+    constexpr uint8_t        data_byte4() const { return p.get_byte(7); }
+    constexpr uint8_t        data_byte5() const { return p.get_byte(8); }
+    constexpr uint8_t        data_byte6() const { return p.get_byte(9); }
+    constexpr uint8_t        data_byte7() const { return p.get_byte(10); }
+    constexpr uint8_t        data_byte8() const { return p.get_byte(11); }
+    constexpr uint8_t        data_byte9() const { return p.get_byte(12); }
+    constexpr uint8_t        data_byte10() const { return p.get_byte(13); }
+    constexpr uint8_t        data_byte11() const { return p.get_byte(14); }
+    constexpr uint8_t        data_byte12() const { return p.get_byte(15); }
 
     const std::string payload_as_string() const { return flex_data_message::payload_as_string(p); }
 
