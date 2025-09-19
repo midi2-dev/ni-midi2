@@ -139,6 +139,18 @@ TEST_F(flex_data_message, flex_data_message_view)
         EXPECT_EQ(0x12345678u, v.data1());
         EXPECT_EQ(0x9ABCDEF0u, v.data2());
         EXPECT_EQ(0xA9876543u, v.data3());
+        EXPECT_EQ(0x12u, v.data_byte1());
+        EXPECT_EQ(0x34u, v.data_byte2());
+        EXPECT_EQ(0x56u, v.data_byte3());
+        EXPECT_EQ(0x78u, v.data_byte4());
+        EXPECT_EQ(0x9Au, v.data_byte5());
+        EXPECT_EQ(0xBCu, v.data_byte6());
+        EXPECT_EQ(0xDEu, v.data_byte7());
+        EXPECT_EQ(0xF0u, v.data_byte8());
+        EXPECT_EQ(0xA9u, v.data_byte9());
+        EXPECT_EQ(0x87u, v.data_byte10());
+        EXPECT_EQ(0x65u, v.data_byte11());
+        EXPECT_EQ(0x43u, v.data_byte12());
     }
 
     {
@@ -157,6 +169,9 @@ TEST_F(flex_data_message, flex_data_message_view)
         EXPECT_EQ(0xAu, v.data1());
         EXPECT_EQ(0xBu, v.data2());
         EXPECT_EQ(0xCu, v.data3());
+        EXPECT_EQ(0xAu, v.data_byte4());
+        EXPECT_EQ(0xBu, v.data_byte8());
+        EXPECT_EQ(0xCu, v.data_byte12());
     }
 
     {
@@ -175,6 +190,9 @@ TEST_F(flex_data_message, flex_data_message_view)
         EXPECT_EQ(7u, v.data1());
         EXPECT_EQ(8u, v.data2());
         EXPECT_EQ(9u, v.data3());
+        EXPECT_EQ(7u, v.data_byte4());
+        EXPECT_EQ(8u, v.data_byte8());
+        EXPECT_EQ(9u, v.data_byte12());
     }
 
     {
