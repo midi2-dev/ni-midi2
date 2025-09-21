@@ -13,21 +13,25 @@ Code examples can be found in [`channel_voice_message.examples.cpp`](channel_voi
 
 Available filter functions are:
 
-    bool is_channel_voice_message_with_status(const universal_packet&, status_t);
+```cpp
+bool is_channel_voice_message_with_status(const universal_packet&, status_t);
 
-    bool is_note_on_message(const universal_packet&);
-    bool is_note_off_message(const universal_packet&);
-    bool is_poly_pressure_message(const universal_packet&);
-    bool is_control_change_message(const universal_packet&);
-    bool is_program_change_message(const universal_packet&);
-    bool is_channel_pressure_message(const universal_packet&);
-    bool is_channel_pitch_bend_message(const universal_packet&);
+bool is_note_on_message(const universal_packet&);
+bool is_note_off_message(const universal_packet&);
+bool is_poly_pressure_message(const universal_packet&);
+bool is_control_change_message(const universal_packet&);
+bool is_program_change_message(const universal_packet&);
+bool is_channel_pressure_message(const universal_packet&);
+bool is_channel_pitch_bend_message(const universal_packet&);
+```
 
 Additionally, one may use
 
-    bool is_note_on_with_attribute(const universal_packet&, uint8_t);
-    bool is_note_off_with_attribute(const universal_packet&, uint8_t);
-    bool is_note_on_with_pitch_7_9(const universal_packet&);
+```cpp
+bool is_note_on_with_attribute(const universal_packet&, uint8_t);
+bool is_note_off_with_attribute(const universal_packet&, uint8_t);
+bool is_note_on_with_pitch_7_9(const universal_packet&);
+```
 
 to check for MIDI 2 note messages with attributes.
 
@@ -35,16 +39,20 @@ to check for MIDI 2 note messages with attributes.
 
 The following functions are available to extract properties from Note messages:
 
-    note_nr_t get_note_nr(const universal_packet&);
-    pitch_7_9 get_note_pitch(const universal_packet&);
-    velocity  get_note_velocity(const universal_packet&);
+```cpp
+note_nr_t get_note_nr(const universal_packet&);
+pitch_7_9 get_note_pitch(const universal_packet&);
+velocity  get_note_velocity(const universal_packet&);
+```
 
 `get_note_nr` is applicable to _Poly Pressure_ and _Per-Note Controller_ messages, too.
 
 Additionally, one may use
 
-    uint8_t  get_midi2_note_attribute(const universal_packet&);
-    uint16_t get_midi2_note_attribute_data(const universal_packet&);
+```cpp
+uint8_t  get_midi2_note_attribute(const universal_packet&);
+uint16_t get_midi2_note_attribute_data(const universal_packet&);
+```
 
 to retrieve Per Note Attribute type and data.
 
@@ -52,8 +60,10 @@ to retrieve Per Note Attribute type and data.
 
 Use
 
-    controller_t     get_controller_nr(const universal_packet&);
-    controller_value get_controller_value(const universal_packet&);
+```cpp
+controller_t     get_controller_nr(const universal_packet&);
+controller_value get_controller_value(const universal_packet&);
+```
 
 to extract _Control Change_ message properties.
 
@@ -61,22 +71,28 @@ to extract _Control Change_ message properties.
 
 Use these functions to retrieve properties of specific messages:
 
-    controller_value get_poly_pressure_value(const universal_packet&);
-    uint7_t get_program_value(const universal_packet&);
-    controller_value get_channel_pressure_value(const universal_packet&);
-    pitch_bend get_channel_pitch_bend_value(const universal_packet&);
+```cpp
+controller_value get_poly_pressure_value(const universal_packet&);
+uint7_t get_program_value(const universal_packet&);
+controller_value get_channel_pressure_value(const universal_packet&);
+pitch_bend get_channel_pitch_bend_value(const universal_packet&);
+```
 
 ## Conversion between Protocols
 
 One may use
 
-    std::optional<midi1_channel_voice_message>
-    as_midi1_channel_voice_message(const midi2_channel_voice_message_view&);
+```cpp
+std::optional<midi1_channel_voice_message>
+as_midi1_channel_voice_message(const midi2_channel_voice_message_view&);
+```
 
 to convert a MIDI 2 Channel Voice Message to its MIDI 1 counterpart and
 
-    std::optional<midi2_channel_voice_message>
-    as_midi2_channel_voice_message(const midi1_channel_voice_message_view&);
+```cpp
+std::optional<midi2_channel_voice_message>
+as_midi2_channel_voice_message(const midi1_channel_voice_message_view&);
+```
 
 to convert a MIDI 1 Channel Voice Message to its MIDI 2 counterpart.
 
