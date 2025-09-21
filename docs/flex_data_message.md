@@ -4,7 +4,7 @@ Code examples can be found in [`flex_data_message.examples.cpp`](flex_data_messa
 
 ## Message Creation and Filtering
 
-Flex Data Messages are represented by a
+_Flex Data Messages_ are represented by a
 
 ```cpp
 struct flex_data_message : universal_packet
@@ -59,7 +59,7 @@ Be aware that a single `flex_data_text_message` can hold only 12 characters, if 
 using the `packet_format` mechanism (`start`, `cont`, `end`).
 
 Be also aware that the `denominator` in a _Set Time Signature_ message is expressed as a negative power of two, meaning that
-`2` represents a quarter note, `3` and eights note and so on.
+`2` represents a quarter note, `3` an eights note and so on.
 
 Filtering of _Flex Data Messages_ can be done checking `universal_packet::type()` against
 `packet_type::flex_data` or use
