@@ -237,8 +237,8 @@ There is a growing number of code examples and more detailed documentation avail
 * System Message [documentation](docs/system_message.md) and [examples](docs/system_message.examples.cpp)
 * Data Message [documentation](docs/data_message.md) and [examples](docs/data_message.examples.cpp)
 * Extended Data Message [documentation](docs/extended_data_message.md) and [examples](docs/extended_data_message.examples.cpp)
-* Flex Data Message [WIP documentation](docs/flex_data_message.md)
-* Stream Message [WIP documentation](docs/stream_message.md)
+* Flex Data Message [documentation](docs/flex_data_message.md) and [examples](docs/flex_data_message.examples.cpp)
+* Stream Message [documentation](docs/stream_message.md) and [examples](docs/stream_message.examples.cpp)
 * Utility Message [documentation](docs/utility_message.md)
 * MIDI 1 Byte Stream Helper [WIP documentation](docs/midi1_byte_stream.md) and [examples](docs/midi1_byte_stream.examples.cpp)
 
