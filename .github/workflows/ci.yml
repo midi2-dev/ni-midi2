@@ -23,10 +23,10 @@ jobs:
             os: windows-2022
             build_type: Release
 
-          - name: "MacOS 13 (xc14)"
-            os: macos-13
+          - name: "MacOS 14 (xc15)"
+            os: macos-14
             build_type: Release
-            set_xcode_version_cmd: xcodes select 14.3.1
+            set_xcode_version_cmd: xcodes select 15.4
 
           - name: "Ubuntu 22.04 (GCC-11)"
             os: ubuntu-22.04
