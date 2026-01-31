@@ -1,3 +1,9 @@
+# v1.11.0
+
+* add data_byte accessors to `flex_data_message_view`
+* improve documentation for `flex data` and `stream` messages
+* add examples for `flex data` and `stream` messages
+
 # v1.10.1
 
 * fix AKAIs manufacturer ID
