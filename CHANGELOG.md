@@ -1,3 +1,9 @@
+# v1.12.0
+
+* add _Mixed Data Set_ support: `mixed_data_set_header_packet` / `mixed_data_set_payload_packet` incl. views and factory functions
+* add `mixed_data_set` with `send_mixed_data_set` / `as_mixed_data_set_packets`
+* add `mixed_data_set_collector` reassembling _Mixed Data Sets_ from incoming packets (16 simultaneous `mds_id`s)
+
 # v1.11.0
 
 * add data_byte accessors to `flex_data_message_view`

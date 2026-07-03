@@ -2,6 +2,7 @@ extern void run_channel_voice_message_examples();
 extern void run_data_message_examples();
 extern void run_extended_data_message_examples();
 extern void run_flex_data_message_examples();
+extern void run_mixed_data_set_examples();
 extern void run_midi1_byte_stream_examples();
 extern void run_midi1_channel_voice_message_examples();
 extern void run_midi2_channel_voice_message_examples();
@@ -29,6 +30,7 @@ int main()
 
     run_stream_message_examples();
     run_flex_data_message_examples();
+    run_mixed_data_set_examples();
 
     return 0;
 }

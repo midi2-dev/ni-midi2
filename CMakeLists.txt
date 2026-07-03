@@ -49,6 +49,8 @@ set(LibSources
     inc/midi/data_message.h
     inc/midi/extended_data_message.h
     inc/midi/flex_data_message.h
+    inc/midi/mixed_data_set.h
+    inc/midi/mixed_data_set_collector.h src/mixed_data_set_collector.cpp
     inc/midi/stream_message.h
     inc/midi/sysex.h src/sysex.cpp
     inc/midi/sysex_collector.h src/sysex_collector.cpp
@@ -91,6 +93,9 @@ if( NIMIDI2_TESTS )
         tests/data_message_tests.cpp
         tests/extended_data_message_tests.cpp
         tests/flex_data_message_tests.cpp
+        tests/mixed_data_set_tests.cpp
+        tests/mixed_data_set_test_data.cpp tests/mixed_data_set_test_data.h
+        tests/mixed_data_set_collector_tests.cpp
         tests/stream_message_tests.cpp
         tests/system_message_tests.cpp
         tests/utility_message_tests.cpp
@@ -136,6 +141,7 @@ if( NIMIDI2_EXAMPLES )
         docs/data_message.examples.cpp
         docs/extended_data_message.examples.cpp
         docs/flex_data_message.examples.cpp
+        docs/mixed_data_set.examples.cpp
         docs/midi1_byte_stream.examples.cpp
         docs/midi1_channel_voice_message.examples.cpp
         docs/midi2_channel_voice_message.examples.cpp
