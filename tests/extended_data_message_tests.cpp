@@ -702,3 +702,207 @@ TEST(extended_data_message, make_sysex8_end_packet)
 }
 
 //-----------------------------------------------
+
+TEST(extended_data_message, mixed_data_set_header_packet_constructors)
+{
+    using namespace midi;
+
+    {
+        constexpr midi::mixed_data_set_header_packet m;
+
+        EXPECT_EQ(packet_type::extended_data, m.type());
+        EXPECT_EQ(0u, m.group());
+        EXPECT_EQ(extended_data_status::mixed_data_set_header, m.status());
+        EXPECT_EQ(0u, m.mds_id());
+
+        EXPECT_EQ(0x50800000u, m.data[0]);
+        EXPECT_EQ(0u, m.data[1]);
+        EXPECT_EQ(0u, m.data[2]);
+        EXPECT_EQ(0u, m.data[3]);
+
+        EXPECT_TRUE(is_extended_data_message(m));
+        EXPECT_TRUE(is_mixed_data_set_header_packet(m));
+        EXPECT_TRUE(is_mixed_data_set_packet(m));
+        EXPECT_FALSE(is_mixed_data_set_payload_packet(m));
+        EXPECT_FALSE(is_sysex8_packet(m));
+    }
+
+    {
+        constexpr midi::mixed_data_set_header_packet m{ 0xA, 0xC };
+
+        EXPECT_EQ(packet_type::extended_data, m.type());
+        EXPECT_EQ(12u, m.group());
+        EXPECT_EQ(extended_data_status::mixed_data_set_header | 0xA, m.status());
+        EXPECT_EQ(0xAu, m.mds_id());
+
+        EXPECT_EQ(0x5C8A0000u, m.data[0]);
+
+        EXPECT_TRUE(is_mixed_data_set_header_packet(m));
+    }
+}
+
+//-----------------------------------------------
+
+TEST(extended_data_message, mixed_data_set_header_packet_fields)
+{
+    using namespace midi;
+
+    auto m = make_mixed_data_set_header_packet(0x3, 0x9);
+    EXPECT_EQ(0x3u, m.mds_id());
+    EXPECT_EQ(0x9u, m.group());
+
+    m.set_valid_bytes_in_chunk(0x1234);
+    m.set_nr_of_chunks(0x5678);
+    m.set_chunk_nr(0x9ABC);
+    m.set_manufacturer_id(0xA109);
+    m.set_device_id(0xFFFF);
+    m.set_sub_id_1(0x0102);
+    m.set_sub_id_2(0x0304);
+
+    EXPECT_EQ(0x1234u, m.valid_bytes_in_chunk());
+    EXPECT_EQ(0x5678u, m.nr_of_chunks());
+    EXPECT_EQ(0x9ABCu, m.chunk_nr());
+    EXPECT_EQ(0xA109u, m.manufacturer_id());
+    EXPECT_EQ(0xFFFFu, m.device_id());
+    EXPECT_EQ(0x0102u, m.sub_id_1());
+    EXPECT_EQ(0x0304u, m.sub_id_2());
+
+    EXPECT_EQ(0x59831234u, m.data[0]);
+    EXPECT_EQ(0x56789ABCu, m.data[1]);
+    EXPECT_EQ(0xA109FFFFu, m.data[2]);
+    EXPECT_EQ(0x01020304u, m.data[3]);
+
+    m.set_mds_id(0xF);
+    EXPECT_EQ(0xFu, m.mds_id());
+    EXPECT_EQ(extended_data_status::mixed_data_set_header | 0xF, m.status());
+}
+
+//-----------------------------------------------
+
+TEST(extended_data_message, mixed_data_set_payload_packet_constructors)
+{
+    using namespace midi;
+
+    {
+        constexpr midi::mixed_data_set_payload_packet m;
+
+        EXPECT_EQ(packet_type::extended_data, m.type());
+        EXPECT_EQ(0u, m.group());
+        EXPECT_EQ(extended_data_status::mixed_data_set_payload, m.status());
+        EXPECT_EQ(0u, m.mds_id());
+
+        EXPECT_EQ(0x50900000u, m.data[0]);
+
+        EXPECT_TRUE(is_extended_data_message(m));
+        EXPECT_TRUE(is_mixed_data_set_payload_packet(m));
+        EXPECT_TRUE(is_mixed_data_set_packet(m));
+        EXPECT_FALSE(is_mixed_data_set_header_packet(m));
+        EXPECT_FALSE(is_sysex8_packet(m));
+    }
+
+    {
+        constexpr midi::mixed_data_set_payload_packet m{ 0x5, 0x3 };
+
+        EXPECT_EQ(packet_type::extended_data, m.type());
+        EXPECT_EQ(3u, m.group());
+        EXPECT_EQ(extended_data_status::mixed_data_set_payload | 0x5, m.status());
+        EXPECT_EQ(0x5u, m.mds_id());
+
+        EXPECT_EQ(0x53950000u, m.data[0]);
+    }
+}
+
+//-----------------------------------------------
+
+TEST(extended_data_message, mixed_data_set_payload_packet_payload)
+{
+    using namespace midi;
+
+    auto m = make_mixed_data_set_payload_packet(0x5, 0x3);
+
+    for (size_t b = 0; b < mixed_data_set_payload_packet::payload_size; ++b)
+    {
+        m.set_payload_byte(b, uint8_t(b + 1));
+    }
+
+    EXPECT_EQ(0x53950102u, m.data[0]);
+    EXPECT_EQ(0x03040506u, m.data[1]);
+    EXPECT_EQ(0x0708090Au, m.data[2]);
+    EXPECT_EQ(0x0B0C0D0Eu, m.data[3]);
+
+    for (size_t b = 0; b < mixed_data_set_payload_packet::payload_size; ++b)
+    {
+        EXPECT_EQ(b + 1, m.payload_byte(b));
+    }
+}
+
+//-----------------------------------------------
+
+TEST(extended_data_message, is_mixed_data_set_packet)
+{
+    using namespace midi;
+
+    EXPECT_TRUE(is_mixed_data_set_header_packet(universal_packet{ 0x50800000, 0, 0, 0 }));
+    EXPECT_TRUE(is_mixed_data_set_header_packet(universal_packet{ 0x5F8F1234, 1, 2, 3 }));
+    EXPECT_TRUE(is_mixed_data_set_payload_packet(universal_packet{ 0x50900000, 0, 0, 0 }));
+    EXPECT_TRUE(is_mixed_data_set_payload_packet(universal_packet{ 0x5F9F1234, 1, 2, 3 }));
+
+    EXPECT_FALSE(is_mixed_data_set_header_packet(universal_packet{ 0x50900000, 0, 0, 0 }));
+    EXPECT_FALSE(is_mixed_data_set_payload_packet(universal_packet{ 0x50800000, 0, 0, 0 }));
+
+    // sysex8 packets are not mixed data set packets
+    EXPECT_FALSE(is_mixed_data_set_packet(universal_packet{ 0x51010000, 0, 1, 2 }));
+    EXPECT_FALSE(is_mixed_data_set_packet(universal_packet{ 0x53340000, 0, 1, 2 }));
+
+    // other packet types are not mixed data set packets
+    EXPECT_FALSE(is_mixed_data_set_packet(universal_packet{ 0x21903C7F }));
+    EXPECT_FALSE(is_mixed_data_set_packet(universal_packet{ 0xD0100000, 0, 0, 0 }));
+}
+
+//-----------------------------------------------
+
+TEST(extended_data_message, mixed_data_set_packet_views)
+{
+    using namespace midi;
+
+    {
+        constexpr universal_packet p{ 0x59831234, 0x56789ABC, 0xA109FFFF, 0x01020304 };
+
+        auto v = as_mixed_data_set_header_packet_view(p);
+        ASSERT_TRUE(v.has_value());
+        EXPECT_EQ(0x9u, v->group());
+        EXPECT_EQ(0x3u, v->mds_id());
+        EXPECT_EQ(0x1234u, v->valid_bytes_in_chunk());
+        EXPECT_EQ(0x5678u, v->nr_of_chunks());
+        EXPECT_EQ(0x9ABCu, v->chunk_nr());
+        EXPECT_EQ(0xA109u, v->manufacturer_id());
+        EXPECT_EQ(0xFFFFu, v->device_id());
+        EXPECT_EQ(0x0102u, v->sub_id_1());
+        EXPECT_EQ(0x0304u, v->sub_id_2());
+
+        EXPECT_FALSE(as_mixed_data_set_payload_packet_view(p).has_value());
+    }
+
+    {
+        constexpr universal_packet p{ 0x53950102, 0x03040506, 0x0708090A, 0x0B0C0D0E };
+
+        auto v = as_mixed_data_set_payload_packet_view(p);
+        ASSERT_TRUE(v.has_value());
+        EXPECT_EQ(0x3u, v->group());
+        EXPECT_EQ(0x5u, v->mds_id());
+        for (size_t b = 0; b < mixed_data_set_payload_packet::payload_size; ++b)
+        {
+            EXPECT_EQ(b + 1, v->payload_byte(b));
+        }
+
+        EXPECT_FALSE(as_mixed_data_set_header_packet_view(p).has_value());
+    }
+
+    {
+        constexpr universal_packet p{ 0x21903C7F };
+        EXPECT_FALSE(as_mixed_data_set_header_packet_view(p).has_value());
+        EXPECT_FALSE(as_mixed_data_set_payload_packet_view(p).has_value());
+    }
+}
+
+//-----------------------------------------------
