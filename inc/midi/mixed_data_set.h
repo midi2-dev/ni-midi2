@@ -39,12 +39,6 @@ namespace midi {
 
 //--------------------------------------------------------------------------
 
-//! convert a manufacturer ID into its 16 bit Mixed Data Set representation
-constexpr uint16_t mixed_data_set_manufacturer_id(manufacturer_t);
-//! convert a 16 bit Mixed Data Set manufacturer ID into manufacturer_t representation
-constexpr manufacturer_t manufacturer_from_mixed_data_set_id(uint16_t);
-
-//--------------------------------------------------------------------------
 //! MIDI Mixed Data Set
 struct mixed_data_set
 {
@@ -159,32 +153,6 @@ std::vector<extended_data_message> as_mixed_data_set_packets(const mixed_data_se
 
 //----------------------------------------------- inline implementations
 
-constexpr uint16_t mixed_data_set_manufacturer_id(manufacturer_t m)
-{
-    if (m & 0x00FFFF)
-    {
-        // three byte manufacturer ID, high bit set
-        return uint16_t(0x8000u | (m & 0x7F00) | (m & 0x7F));
-    }
-
-    // one byte manufacturer ID
-    return uint16_t((m >> 16) & 0x7F);
-}
-
-constexpr manufacturer_t manufacturer_from_mixed_data_set_id(uint16_t id)
-{
-    if (id & 0x8000)
-    {
-        // three byte manufacturer ID
-        return manufacturer_t(id & 0x7F7F);
-    }
-
-    // one byte manufacturer ID
-    return manufacturer_t(id & 0x7F) << 16;
-}
-
-//--------------------------------------------------------------------------
-
 inline bool mixed_data_set::operator==(const mixed_data_set& other) const
 {
     return (manufacturerID == other.manufacturerID) && (deviceID == other.deviceID) && (subID1 == other.subID1) &&
@@ -217,7 +185,7 @@ void send_mixed_data_set(const mixed_data_set& mds, uint4_t mds_id, group_t grou
     constexpr size_t max_packets_per_chunk = 4094;
     constexpr size_t max_chunk_data_size   = max_packets_per_chunk * payload_bytes_per_packet;
 
-    const auto manufacturer = mixed_data_set_manufacturer_id(mds.manufacturerID);
+    const auto manufacturer = manufacturer_id_16bit(mds.manufacturerID);
 
     const size_t   total_data_size = mds.data.size();
     const uint16_t nr_of_chunks =

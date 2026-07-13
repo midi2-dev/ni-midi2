@@ -32,11 +32,12 @@ Like in _System Exclusive_ messages, `deviceID`, `subID1` and `subID2` are defin
 other MMA/AMEI specifications when `manufacturerID` is a Universal SysEx ID, otherwise
 their use is defined by the manufacturer.
 
-On the wire the manufacturer ID is encoded in 16 bits, conversions are available as
+On the wire the manufacturer ID is encoded in 16 bits, conversions are available
+in `manufacturer.h` as
 
 ```cpp
-constexpr uint16_t       mixed_data_set_manufacturer_id(manufacturer_t);
-constexpr manufacturer_t manufacturer_from_mixed_data_set_id(uint16_t);
+constexpr uint16_t       manufacturer_id_16bit(manufacturer_t);
+constexpr manufacturer_t manufacturer_from_16bit_id(uint16_t);
 ```
 
 ## Message Creation and Filtering

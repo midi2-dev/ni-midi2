@@ -38,33 +38,33 @@ TEST(mixed_data_set, manufacturer_id_conversion)
     using namespace midi;
 
     // one byte manufacturer IDs
-    EXPECT_EQ(0x0004u, mixed_data_set_manufacturer_id(manufacturer::moog));
-    EXPECT_EQ(0x007Eu, mixed_data_set_manufacturer_id(manufacturer::universal_non_realtime));
-    EXPECT_EQ(0x007Fu, mixed_data_set_manufacturer_id(manufacturer::universal_realtime));
-    EXPECT_EQ(0x0000u, mixed_data_set_manufacturer_id(0));
+    EXPECT_EQ(0x0004u, manufacturer_id_16bit(manufacturer::moog));
+    EXPECT_EQ(0x007Eu, manufacturer_id_16bit(manufacturer::universal_non_realtime));
+    EXPECT_EQ(0x007Fu, manufacturer_id_16bit(manufacturer::universal_realtime));
+    EXPECT_EQ(0x0000u, manufacturer_id_16bit(0));
 
     // three byte manufacturer IDs
-    EXPECT_EQ(0xA109u, mixed_data_set_manufacturer_id(manufacturer::native_instruments));
-    EXPECT_EQ(0x820Du, mixed_data_set_manufacturer_id(manufacturer::google));
+    EXPECT_EQ(0xA109u, manufacturer_id_16bit(manufacturer::native_instruments));
+    EXPECT_EQ(0x820Du, manufacturer_id_16bit(manufacturer::google));
 
     // one byte manufacturer IDs
-    EXPECT_EQ(manufacturer::moog, manufacturer_from_mixed_data_set_id(0x0004));
-    EXPECT_EQ(manufacturer::universal_non_realtime, manufacturer_from_mixed_data_set_id(0x007E));
-    EXPECT_EQ(manufacturer::universal_realtime, manufacturer_from_mixed_data_set_id(0x007F));
-    EXPECT_EQ(0u, manufacturer_from_mixed_data_set_id(0x0000));
+    EXPECT_EQ(manufacturer::moog, manufacturer_from_16bit_id(0x0004));
+    EXPECT_EQ(manufacturer::universal_non_realtime, manufacturer_from_16bit_id(0x007E));
+    EXPECT_EQ(manufacturer::universal_realtime, manufacturer_from_16bit_id(0x007F));
+    EXPECT_EQ(0u, manufacturer_from_16bit_id(0x0000));
 
     // three byte manufacturer IDs
-    EXPECT_EQ(manufacturer::native_instruments, manufacturer_from_mixed_data_set_id(0xA109));
-    EXPECT_EQ(manufacturer::google, manufacturer_from_mixed_data_set_id(0x820D));
+    EXPECT_EQ(manufacturer::native_instruments, manufacturer_from_16bit_id(0xA109));
+    EXPECT_EQ(manufacturer::google, manufacturer_from_16bit_id(0x820D));
 
     // reserved bits are ignored
-    EXPECT_EQ(manufacturer::moog, manufacturer_from_mixed_data_set_id(0x0084));
-    EXPECT_EQ(manufacturer::native_instruments, manufacturer_from_mixed_data_set_id(0xA189));
+    EXPECT_EQ(manufacturer::moog, manufacturer_from_16bit_id(0x0084));
+    EXPECT_EQ(manufacturer::native_instruments, manufacturer_from_16bit_id(0xA189));
 
     // round trip
     for (const auto m : { manufacturer::moog, manufacturer::universal_realtime, manufacturer::native_instruments })
     {
-        EXPECT_EQ(m, manufacturer_from_mixed_data_set_id(mixed_data_set_manufacturer_id(m)));
+        EXPECT_EQ(m, manufacturer_from_16bit_id(manufacturer_id_16bit(m)));
     }
 }
 
