@@ -89,7 +89,7 @@ void mixed_data_set_collector::process_header(const mixed_data_set_header_packet
         // start of a new mixed data set
         a.reset();
         a.collecting          = true;
-        a.data.manufacturerID = manufacturer_from_mixed_data_set_id(h.manufacturer_id());
+        a.data.manufacturerID = manufacturer_from_16bit_id(h.manufacturer_id());
         a.data.deviceID       = h.device_id();
         a.data.subID1         = h.sub_id_1();
         a.data.subID2         = h.sub_id_2();

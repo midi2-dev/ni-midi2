@@ -36,6 +36,13 @@ using manufacturer_t = uint32_t;
 
 //--------------------------------------------------------------------------
 
+//! convert a manufacturer ID into its 16 bit representation
+constexpr uint16_t manufacturer_id_16bit(manufacturer_t);
+//! convert a 16 bit manufacturer ID into manufacturer_t representation
+constexpr manufacturer_t manufacturer_from_16bit_id(uint16_t);
+
+//--------------------------------------------------------------------------
+
 namespace manufacturer {
     constexpr manufacturer_t sequential_circuits = 0x010000;
     constexpr manufacturer_t moog                = 0x040000;
@@ -118,6 +125,32 @@ namespace manufacturer {
     constexpr manufacturer_t bome               = 0x002132;
     constexpr manufacturer_t touchkeys          = 0x002136;
 } // namespace manufacturer
+
+//----------------------------------------------- inline implementations
+
+constexpr uint16_t manufacturer_id_16bit(manufacturer_t m)
+{
+    if (m & 0x00FFFF)
+    {
+        // three byte manufacturer ID, high bit set
+        return uint16_t(0x8000u | (m & 0x7F00) | (m & 0x7F));
+    }
+
+    // one byte manufacturer ID
+    return uint16_t((m >> 16) & 0x7F);
+}
+
+constexpr manufacturer_t manufacturer_from_16bit_id(uint16_t id)
+{
+    if (id & 0x8000)
+    {
+        // three byte manufacturer ID
+        return manufacturer_t(id & 0x7F7F);
+    }
+
+    // one byte manufacturer ID
+    return manufacturer_t(id & 0x7F) << 16;
+}
 
 //--------------------------------------------------------------------------
 
