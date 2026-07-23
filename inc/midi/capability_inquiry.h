@@ -365,8 +365,8 @@ struct profile_id
     uint7_t byte4{ 0x00 }; //!< Profile Version, or Manufacturer Specific Info
     uint7_t byte5{ 0x00 }; //!< Profile Level, or Manufacturer Specific Info
 
-    profile_id() = default;
-    profile_id(uint7_t b1, uint7_t b2, uint7_t b3, uint7_t b4, uint7_t b5);
+    constexpr profile_id() = default;
+    constexpr profile_id(uint7_t b1, uint7_t b2, uint7_t b3, uint7_t b4, uint7_t b5);
 };
 #pragma pack(pop)
 
@@ -1368,7 +1368,7 @@ inline message make_invalidate_muid_message(muid_t source_muid, muid_t target_mu
 
 //---- profile_id
 
-inline profile_id::profile_id(uint7_t b1, uint7_t b2, uint7_t b3, uint7_t b4, uint7_t b5)
+constexpr profile_id::profile_id(uint7_t b1, uint7_t b2, uint7_t b3, uint7_t b4, uint7_t b5)
   : byte1(b1)
   , byte2(b2)
   , byte3(b3)
