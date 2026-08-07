@@ -2078,7 +2078,7 @@ TEST(controller_value, construct_from_pitch_7_25)
     using namespace midi;
 
     {
-        pitch_7_25 p{ 74.63 };
+        pitch_7_25       p{ 74.63 };
         controller_value v{ p };
 
         EXPECT_EQ(p.value, v.value);
@@ -2422,6 +2422,27 @@ TEST(device_identity, constructor)
         EXPECT_EQ(0x11u, identity.model);
         EXPECT_EQ(0x00050102u, identity.revision);
     }
+}
+
+//-----------------------------------------------
+
+TEST(device_identity, equality)
+{
+    using namespace midi;
+
+    const auto identity1 = device_identity{ manufacturer::native_instruments, 0x1730, 49, 0x00010005 };
+    const auto identity2 = device_identity{ manufacturer::roland, 0x0808, 0x11, 0x00050102 };
+    const auto identity3 = device_identity{ manufacturer::native_instruments, 0x1730, 49, 0x00010005 };
+
+    EXPECT_EQ(identity1, identity1);
+    EXPECT_NE(identity1, identity2);
+    EXPECT_EQ(identity1, identity3);
+    EXPECT_NE(identity2, identity1);
+    EXPECT_EQ(identity2, identity2);
+    EXPECT_NE(identity2, identity3);
+    EXPECT_EQ(identity3, identity1);
+    EXPECT_NE(identity3, identity2);
+    EXPECT_EQ(identity3, identity3);
 }
 
 //-----------------------------------------------

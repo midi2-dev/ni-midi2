@@ -246,6 +246,9 @@ struct device_identity
     uint14_t       family;       //!< Device Family
     uint14_t       model;        //!< Device Family Model Number
     uint28_t       revision;     //!< Device Revision Level
+
+    constexpr bool operator==(const device_identity&) const;
+    constexpr bool operator!=(const device_identity&) const;
 };
 #pragma pack(pop)
 
@@ -431,6 +434,15 @@ constexpr bool controller_value::operator==(const controller_value& o) const
 constexpr bool controller_value::operator!=(const controller_value& o) const
 {
     return value != o.value;
+}
+
+constexpr bool device_identity::operator==(const device_identity& o) const
+{
+    return (manufacturer == o.manufacturer) && (family == o.family) && (model == o.model) && (revision == o.revision);
+}
+constexpr bool device_identity::operator!=(const device_identity& o) const
+{
+    return !(*this == o);
 }
 
 //--------------------------------------------------------------------------

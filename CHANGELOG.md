@@ -1,3 +1,7 @@
+# v1.12.1
+
+* add equality operators to `device_identity`
+
 # v1.12.0
 
 * add _Mixed Data Set_ support: `mixed_data_set_header_packet` / `mixed_data_set_payload_packet` incl. views and factory functions
