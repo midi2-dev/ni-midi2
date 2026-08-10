@@ -34,7 +34,7 @@ struct sysex7_packet : data_message
 
 A `sysex7_packet` can hold a payload of up to six bytes and provides APIs to add or read the payload bytes. Be aware that the payload shall only be 7 bit data.
 
-Instead of using sysex7_packet constructors one can create messages using factory functions:
+Instead of using `sysex7_packet` constructors one can create messages using factory functions:
 
 ```cpp
 sysex7_packet make_sysex7_complete_packet(group_t);
@@ -43,7 +43,7 @@ sysex7_packet make_sysex7_continue_packet(group_t);
 sysex7_packet make_sysex7_end_packet(group_t);
 ```
 
-Filtering of Data Messages can be done checking `universal_packet::type()` against
+Filtering of _Data Messages_ can be done checking `universal_packet::type()` against
 `packet_type::data` or use
 
 ```cpp

@@ -40,7 +40,7 @@ System Exclusive 8 packets payload is allowed to be 8 bit, different to traditio
 
 In MIDI 2 is allowed to have multiple parallel System Exclusive 8 streams running in parallel. Therefore every  `sysex8_packet` needs to have a `stream_id`. A UMP Endpoint communicates the maximum number of parallel UMP streams allowed using [Stream Messages](stream_message.md).
 
-Instead of using sysex8_packet constructors one can create messages using factory functions:
+Instead of using `sysex8_packet` constructors one can create messages using factory functions:
 
 ```cpp
 sysex8_packet make_sysex8_complete_packet(uint8_t stream_id, group_t);
@@ -49,7 +49,7 @@ sysex8_packet make_sysex8_continue_packet(uint8_t stream_id, group_t);
 sysex8_packet make_sysex8_end_packet(uint8_t stream_id, group_t);
 ```
 
-Filtering of Extended Data Messages can be done checking `universal_packet::type()` against
+Filtering of _Extended Data Messages_ can be done checking `universal_packet::type()` against
 `packet_type::extended_data` or use
 
 ```cpp
