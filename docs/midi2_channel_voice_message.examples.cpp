@@ -145,6 +145,56 @@ void per_note_pitch_bend_message_examples()
     assert(get_per_note_pitch_bend_value(pnpb) == pb);
 }
 
+void channel_tuning_message_examples()
+{
+    using namespace midi;
+
+    const group_t   group   = 0x3;
+    const channel_t channel = 0xE;
+
+    midi2_channel_voice_message coarse = make_registered_controller_message(
+      group, channel, 0, registered_parameter_number::coarse_tuning, controller_value{ uint7_t{ 0x43 } });
+
+    assert(is_channel_coarse_tuning_message(coarse));
+    assert(get_channel_coarse_tuning_value(coarse) == pitch_increment{ 3.0 });
+
+    coarse = make_registered_controller_message(
+      group, channel, 0, registered_parameter_number::coarse_tuning, controller_value{ uint7_t{ 0x3A } });
+
+    assert(is_channel_coarse_tuning_message(coarse));
+    assert(get_channel_coarse_tuning_value(coarse) == pitch_increment{ -6.0 });
+
+    midi2_channel_voice_message fine = make_registered_controller_message(
+      group, channel, 0, registered_parameter_number::fine_tuning, controller_value{ uint14_t{ 0x2000 } });
+
+    assert(is_channel_fine_tuning_message(fine));
+    assert(get_channel_fine_tuning_value(fine) == pitch_increment{ 0.0 });
+
+    fine = make_registered_controller_message(
+      group, channel, 0, registered_parameter_number::fine_tuning, controller_value{ uint14_t{ 0x3000 } });
+    assert(is_channel_fine_tuning_message(fine));
+    assert(get_channel_fine_tuning_value(fine) == pitch_increment{ 0.5 });
+
+    // sending a tuning offset: coarse and fine tuning messages can be created directly from a pitch_increment
+    coarse = make_channel_coarse_tuning_message(group, channel, pitch_increment{ -6.0 });
+    assert(is_channel_coarse_tuning_message(coarse));
+    assert(get_channel_coarse_tuning_value(coarse) == pitch_increment{ -6.0 });
+
+    fine = make_channel_fine_tuning_message(group, channel, pitch_increment{ 0.5 });
+    assert(is_channel_fine_tuning_message(fine));
+    assert(get_channel_fine_tuning_value(fine) == pitch_increment{ 0.5 });
+
+    // an arbitrary tuning value spanning both RPNs is split into a coarse (whole semitone) and a fine
+    // (sub-semitone remainder) message; the pair is meant to be sent together as one atomic tuning operation
+    const auto tuning_messages = make_channel_tuning_messages(group, channel, pitch_increment{ -6.5 });
+
+    assert(is_channel_coarse_tuning_message(tuning_messages.first));
+    assert(get_channel_coarse_tuning_value(tuning_messages.first) == pitch_increment{ -7.0 });
+
+    assert(is_channel_fine_tuning_message(tuning_messages.second));
+    assert(get_channel_fine_tuning_value(tuning_messages.second) == pitch_increment{ 0.5 });
+}
+
 void relative_registered_controller_message_examples()
 {
     using namespace midi;
@@ -471,6 +521,7 @@ void run_midi2_channel_voice_message_examples()
     relative_registered_controller_message_examples();
     relative_assignable_controller_message_examples();
     per_note_pitch_bend_message_examples();
+    channel_tuning_message_examples();
     midi2_note_message_examples();
     midi2_poly_pressure_message_examples();
     midi2_control_change_message_examples();

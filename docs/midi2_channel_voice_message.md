@@ -74,7 +74,22 @@ make_midi2_pitch_bend_message(group_t, channel_t, pitch_bend);
 
 midi2_channel_voice_message
 make_per_note_pitch_bend_message(group_t, channel_t, note_nr_t, pitch_bend);
+
+midi2_channel_voice_message
+make_channel_coarse_tuning_message(group_t, channel_t, pitch_increment);
+
+midi2_channel_voice_message
+make_channel_fine_tuning_message(group_t, channel_t, pitch_increment);
+
+std::pair<midi2_channel_voice_message, midi2_channel_voice_message>
+make_channel_tuning_messages(group_t, channel_t, pitch_increment);
 ```
+
+`make_channel_coarse_tuning_message` and `make_channel_fine_tuning_message` each encode a `pitch_increment`
+into a single RPN 02 (Coarse Tuning) or RPN 01 (Fine Tuning) message, clamped to that RPN's representable
+range (`[-64, +63]` semitones for coarse, `(-1, +1)` semitones for fine). `make_channel_tuning_messages`
+combines both: it splits an arbitrary `pitch_increment` into a whole-semitone part and its non-negative sub-semitone remainder, and returns them as a `std::pair` of coarse
+(`.first`) and fine (`.second`) tuning messages.
 
 Filtering of MIDI 2 Channel Voice Messages can be done checking `universal_packet::type()` against
 `packet_type::midi2_channel_voice` or use
@@ -94,6 +109,9 @@ bool is_note_on_with_pitch_7_9(const universal_packet&);
 
 bool is_pitch_bend_sensitivity_message(const universal_packet&);
 bool is_per_note_pitch_bend_sensitivity_message(const universal_packet&);
+
+bool is_channel_coarse_tuning_message(const universal_packet&);
+bool is_channel_fine_tuning_message(const universal_packet&);
 ```
 
 ## Message View and Properties
@@ -137,4 +155,7 @@ pitch_bend_sensitivity get_pitch_bend_sensitivity_value(const universal_packet&)
 pitch_bend_sensitivity get_per_note_pitch_bend_sensitivity_value(const universal_packet&);
 
 pitch_bend get_per_note_pitch_bend_value(const universal_packet&);
+
+pitch_increment get_channel_coarse_tuning_value(const universal_packet&);
+pitch_increment get_channel_fine_tuning_value(const universal_packet&);
 ```

@@ -1,3 +1,8 @@
+# v1.13.0
+
+* add `get_channel_coarse_tuning_value()` / `get_channel_fine_tuning_value()`
+* add `make_channel_coarse_tuning_message()` / `make_channel_fine_tuning_message()` / `make_channel_tuning_messages()`
+
 # v1.12.1
 
 * add equality operators to `device_identity`

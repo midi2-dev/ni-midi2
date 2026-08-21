@@ -729,6 +729,235 @@ TEST_F(midi2_channel_voice_message, pitch_bend_sensitivities)
 
 //-----------------------------------------------
 
+TEST_F(midi2_channel_voice_message, channel_tuning)
+{
+    using namespace midi;
+
+    {
+        constexpr auto m = make_registered_controller_message(
+          0, 14, 0, registered_parameter_number::coarse_tuning, controller_value{ uint7_t{ 0 } });
+
+        EXPECT_TRUE(is_channel_coarse_tuning_message(m));
+        EXPECT_FALSE(is_channel_fine_tuning_message(m));
+        EXPECT_EQ(get_channel_coarse_tuning_value(m), (pitch_increment{ -64.0 }));
+    }
+
+    {
+        const auto m = make_registered_controller_message(
+          4, 7, 0, registered_parameter_number::coarse_tuning, controller_value{ uint7_t{ 0x40 } });
+
+        EXPECT_TRUE(is_channel_coarse_tuning_message(m));
+        EXPECT_FALSE(is_channel_fine_tuning_message(m));
+        EXPECT_EQ(get_channel_coarse_tuning_value(m), (pitch_increment{ 0.0 }));
+    }
+
+    {
+        constexpr auto m = make_registered_controller_message(
+          0, 14, 0, registered_parameter_number::coarse_tuning, controller_value{ uint7_t{ 0x7F } });
+
+        EXPECT_TRUE(is_channel_coarse_tuning_message(m));
+        EXPECT_FALSE(is_channel_fine_tuning_message(m));
+        EXPECT_EQ(get_channel_coarse_tuning_value(m), (pitch_increment{ 63.0 }));
+    }
+
+    {
+        // the lower 25 bits (everything but the 7-bit MSB) must be ignored
+        constexpr auto m = make_registered_controller_message(
+          0, 14, 0, registered_parameter_number::coarse_tuning, controller_value{ uint32_t{ 0x86000000u } });
+
+        EXPECT_TRUE(is_channel_coarse_tuning_message(m));
+        EXPECT_EQ(get_channel_coarse_tuning_value(m), (pitch_increment{ 3.0 }));
+
+        constexpr auto m2 = make_registered_controller_message(
+          0, 14, 0, registered_parameter_number::coarse_tuning, controller_value{ uint32_t{ 0x87FFFFFFu } });
+
+        EXPECT_TRUE(is_channel_coarse_tuning_message(m2));
+        EXPECT_EQ(get_channel_coarse_tuning_value(m2), (pitch_increment{ 3.0 }));
+    }
+
+    {
+        constexpr auto m = make_registered_controller_message(
+          0, 14, 0, registered_parameter_number::fine_tuning, controller_value{ uint14_t{ 0 } });
+
+        EXPECT_FALSE(is_channel_coarse_tuning_message(m));
+        EXPECT_TRUE(is_channel_fine_tuning_message(m));
+        EXPECT_EQ(get_channel_fine_tuning_value(m), (pitch_increment{ -1.0 }));
+    }
+
+    {
+        const auto m = make_registered_controller_message(
+          4, 7, 0, registered_parameter_number::fine_tuning, controller_value{ uint14_t{ 0x2000 } });
+
+        EXPECT_FALSE(is_channel_coarse_tuning_message(m));
+        EXPECT_TRUE(is_channel_fine_tuning_message(m));
+        EXPECT_EQ(get_channel_fine_tuning_value(m), (pitch_increment{ 0.0 }));
+    }
+
+    {
+        constexpr auto m = make_registered_controller_message(
+          0, 14, 0, registered_parameter_number::fine_tuning, controller_value{ uint14_t{ 0x3FFF } });
+
+        EXPECT_FALSE(is_channel_coarse_tuning_message(m));
+        EXPECT_TRUE(is_channel_fine_tuning_message(m));
+        EXPECT_EQ(get_channel_fine_tuning_value(m), (pitch_increment{ 8191.0 / 8192.0 }));
+    }
+
+    {
+        // the lower 18 bits (everything but the 14-bit RPN value) must be ignored
+        constexpr auto m = make_registered_controller_message(
+          0, 14, 0, registered_parameter_number::fine_tuning, controller_value{ uint32_t{ 0x80000000u } });
+
+        EXPECT_TRUE(is_channel_fine_tuning_message(m));
+        EXPECT_EQ(get_channel_fine_tuning_value(m), (pitch_increment{ 0.0 }));
+
+        constexpr auto m2 = make_registered_controller_message(
+          0, 14, 0, registered_parameter_number::fine_tuning, controller_value{ uint32_t{ 0x8003FFFFu } });
+
+        EXPECT_TRUE(is_channel_fine_tuning_message(m2));
+        EXPECT_EQ(get_channel_fine_tuning_value(m2), (pitch_increment{ 0.0 }));
+    }
+}
+
+//-----------------------------------------------
+
+TEST_F(midi2_channel_voice_message, make_channel_coarse_tuning_message)
+{
+    using namespace midi;
+
+    {
+        const auto m = make_channel_coarse_tuning_message(3, 7, pitch_increment{ 3.0 });
+
+        EXPECT_EQ(0x43270002u, m.data[0]); // group 3, channel 7, bank 0, index = coarse_tuning (2)
+        EXPECT_TRUE(is_channel_coarse_tuning_message(m));
+        EXPECT_FALSE(is_channel_fine_tuning_message(m));
+        EXPECT_EQ(get_channel_coarse_tuning_value(m), (pitch_increment{ 3.0 }));
+    }
+
+    {
+        const auto m = make_channel_coarse_tuning_message(0, 14, pitch_increment{ -64.0 });
+
+        EXPECT_TRUE(is_channel_coarse_tuning_message(m));
+        EXPECT_EQ(get_channel_coarse_tuning_value(m), (pitch_increment{ -64.0 }));
+    }
+
+    {
+        const auto m = make_channel_coarse_tuning_message(0, 14, pitch_increment{ 63.0 });
+
+        EXPECT_TRUE(is_channel_coarse_tuning_message(m));
+        EXPECT_EQ(get_channel_coarse_tuning_value(m), (pitch_increment{ 63.0 }));
+    }
+
+    { // out-of-range values clamp to the representable [-64, +63] semitone range
+        const auto m = make_channel_coarse_tuning_message(0, 14, pitch_increment{ 100.0 });
+        EXPECT_EQ(get_channel_coarse_tuning_value(m), (pitch_increment{ 63.0 }));
+
+        const auto m2 = make_channel_coarse_tuning_message(0, 14, pitch_increment{ -100.0 });
+        EXPECT_EQ(get_channel_coarse_tuning_value(m2), (pitch_increment{ -64.0 }));
+    }
+}
+
+//-----------------------------------------------
+
+TEST_F(midi2_channel_voice_message, make_channel_fine_tuning_message)
+{
+    using namespace midi;
+
+    {
+        const auto m = make_channel_fine_tuning_message(3, 7, pitch_increment{ 0.5 });
+
+        EXPECT_EQ(0x43270001u, m.data[0]); // group 3, channel 7, bank 0, index = fine_tuning (1)
+        EXPECT_FALSE(is_channel_coarse_tuning_message(m));
+        EXPECT_TRUE(is_channel_fine_tuning_message(m));
+        EXPECT_EQ(get_channel_fine_tuning_value(m), (pitch_increment{ 0.5 }));
+    }
+
+    {
+        const auto m = make_channel_fine_tuning_message(0, 14, pitch_increment{ 0.0 });
+
+        EXPECT_TRUE(is_channel_fine_tuning_message(m));
+        EXPECT_EQ(get_channel_fine_tuning_value(m), (pitch_increment{ 0.0 }));
+    }
+
+    {
+        const auto m = make_channel_fine_tuning_message(0, 14, pitch_increment{ -1.0 });
+
+        EXPECT_TRUE(is_channel_fine_tuning_message(m));
+        EXPECT_EQ(get_channel_fine_tuning_value(m), (pitch_increment{ -1.0 }));
+    }
+
+    { // out-of-range values clamp to the representable (-1, +1) semitone range
+        const auto m = make_channel_fine_tuning_message(0, 14, pitch_increment{ 5.0 });
+        EXPECT_EQ(get_channel_fine_tuning_value(m), (pitch_increment{ 8191.0 / 8192.0 }));
+
+        const auto m2 = make_channel_fine_tuning_message(0, 14, pitch_increment{ -5.0 });
+        EXPECT_EQ(get_channel_fine_tuning_value(m2), (pitch_increment{ -1.0 }));
+    }
+}
+
+//-----------------------------------------------
+
+TEST_F(midi2_channel_voice_message, make_channel_tuning_messages)
+{
+    using namespace midi;
+
+    {
+        // splitting a fractional semitone value yields a coarse message carrying the
+        // nearest whole semitone and a fine message carrying the remainder; applying
+        // both reconstructs the requested tuning (within the fine RPN's quantization
+        // resolution of 100/8192 cents)
+        const auto messages = make_channel_tuning_messages(3, 7, pitch_increment{ 5.3 });
+
+        EXPECT_TRUE(is_channel_coarse_tuning_message(messages.first));
+        EXPECT_TRUE(is_channel_fine_tuning_message(messages.second));
+
+        const auto reconstructed = get_channel_coarse_tuning_value(messages.first).value / double(1 << 25) +
+                                   get_channel_fine_tuning_value(messages.second).value / double(1 << 25);
+        EXPECT_NEAR(5.3, reconstructed, 1.0 / 8192.0);
+    }
+
+    {
+        const auto messages = make_channel_tuning_messages(0, 14, pitch_increment{ -12.75 });
+
+        EXPECT_EQ(get_channel_coarse_tuning_value(messages.first), (pitch_increment{ -13.0 }));
+        EXPECT_EQ(get_channel_fine_tuning_value(messages.second), (pitch_increment{ 0.25 }));
+    }
+
+    { // exactly on a semitone boundary: coarse absorbs it all, fine is zero
+        const auto messages = make_channel_tuning_messages(0, 14, pitch_increment{ -6.0 });
+
+        EXPECT_EQ(get_channel_coarse_tuning_value(messages.first), (pitch_increment{ -6.0 }));
+        EXPECT_EQ(get_channel_fine_tuning_value(messages.second), (pitch_increment{ 0.0 }));
+    }
+
+    { // the split always rounds down (floor), not to the nearest semitone: 6.7 splits as 6 + 0.7, not 7 - 0.3
+        const auto messages = make_channel_tuning_messages(0, 14, pitch_increment{ 6.7 });
+
+        EXPECT_EQ(get_channel_coarse_tuning_value(messages.first), (pitch_increment{ 6.0 }));
+
+        const auto reconstructed = get_channel_coarse_tuning_value(messages.first).value / double(1 << 25) +
+                                   get_channel_fine_tuning_value(messages.second).value / double(1 << 25);
+        EXPECT_NEAR(6.7, reconstructed, 1.0 / 8192.0);
+    }
+
+    { // the split is exact, pure integer math: applying both messages losslessly reconstructs any
+      // value already aligned to the fine RPN's 1/8192 semitone resolution
+        const auto messages = make_channel_tuning_messages(0, 14, pitch_increment{ int32_t{ -13 * (1 << 25) / 4 } });
+
+        EXPECT_EQ(get_channel_coarse_tuning_value(messages.first), (pitch_increment{ -4.0 }));
+        EXPECT_EQ(get_channel_fine_tuning_value(messages.second), (pitch_increment{ 0.75 }));
+    }
+
+    { // being pure integer math (no std::round), the round trip is usable in a constexpr context as
+        // long as the pitch_increment isn't itself constructed from a float/double
+        constexpr auto messages = make_channel_tuning_messages(0, 14, pitch_increment{ int32_t{ 3 * (1 << 25) } });
+
+        static_assert(get_channel_coarse_tuning_value(messages.first) == pitch_increment{ int32_t{ 3 * (1 << 25) } });
+        static_assert(get_channel_fine_tuning_value(messages.second) == pitch_increment{ int32_t{ 0 } });
+    }
+}
+
+//-----------------------------------------------
+
 TEST_F(midi2_channel_voice_message, deprecations)
 {
     using namespace midi;

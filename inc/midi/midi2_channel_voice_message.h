@@ -27,8 +27,10 @@
 #include <midi/types.h>
 #include <midi/universal_packet.h>
 
+#include <algorithm>
 #include <cassert>
 #include <optional>
+#include <utility>
 
 //--------------------------------------------------------------------------
 
@@ -77,6 +79,12 @@ constexpr pitch_bend_sensitivity get_pitch_bend_sensitivity_value(const universa
 constexpr pitch_bend_sensitivity get_per_note_pitch_bend_sensitivity_value(const universal_packet&);
 
 constexpr pitch_bend get_per_note_pitch_bend_value(const universal_packet&);
+
+constexpr bool is_channel_coarse_tuning_message(const universal_packet&);
+constexpr bool is_channel_fine_tuning_message(const universal_packet&);
+
+constexpr pitch_increment get_channel_coarse_tuning_value(const universal_packet&);
+constexpr pitch_increment get_channel_fine_tuning_value(const universal_packet&);
 
 //--------------------------------------------------------------------------
 
@@ -164,6 +172,11 @@ constexpr midi2_channel_voice_message make_midi2_channel_pressure_message(group_
 
 constexpr midi2_channel_voice_message make_midi2_pitch_bend_message(group_t, channel_t, pitch_bend);
 constexpr midi2_channel_voice_message make_per_note_pitch_bend_message(group_t, channel_t, note_nr_t, pitch_bend);
+
+constexpr midi2_channel_voice_message make_channel_coarse_tuning_message(group_t, channel_t, pitch_increment);
+constexpr midi2_channel_voice_message make_channel_fine_tuning_message(group_t, channel_t, pitch_increment);
+constexpr std::pair<midi2_channel_voice_message, midi2_channel_voice_message> make_channel_tuning_messages(
+  group_t, channel_t, pitch_increment);
 
 //--------------------------------------------------------------------------
 // inline implementations
@@ -389,6 +402,44 @@ constexpr midi2_channel_voice_message make_per_note_pitch_bend_message(group_t  
     return { group, channel_voice_status::per_note_pitch_bend, channel, note_nr, 0, pb.value };
 }
 
+//--------------------------------------------------------------------------
+
+constexpr midi2_channel_voice_message make_channel_coarse_tuning_message(group_t         group,
+                                                                         channel_t       channel,
+                                                                         pitch_increment tuning)
+{
+    // pitch_increment::value is a signed S6.25 fixed point semitone offset, spanning exactly the
+    // range of an int32_t; flipping its sign bit (like the pitch_bend 0x80000000 center convention)
+    // turns it into the same unsigned, 64-semitone-biased representation the wire value uses, so the
+    // 7-bit MSB is simply its top 7 bits
+    const auto raw = static_cast<uint32_t>(tuning.value) ^ 0x80000000u;
+
+    return make_registered_controller_message(
+      group, channel, 0, registered_parameter_number::coarse_tuning, controller_value{ downsample_32_to_7bit(raw) });
+}
+constexpr midi2_channel_voice_message make_channel_fine_tuning_message(group_t         group,
+                                                                       channel_t       channel,
+                                                                       pitch_increment tuning)
+{
+    // fine tuning only covers +/-1 semitone at a resolution of 1/8192 semitone, i.e. 4096 (= 2^25 / 2^13)
+    // raw S6.25 units per step; out-of-range values are clamped to the representable [0, 16383] value.
+    const auto raw14 = std::clamp(tuning.value / 4096 + 8192, int32_t{ 0 }, int32_t{ 16383 });
+
+    return make_registered_controller_message(
+      group, channel, 0, registered_parameter_number::fine_tuning, controller_value{ static_cast<uint14_t>(raw14) });
+}
+constexpr std::pair<midi2_channel_voice_message, midi2_channel_voice_message> make_channel_tuning_messages(
+  group_t group, channel_t channel, pitch_increment tuning)
+{
+    // split into a whole-semitone part (its top 7 bits, i.e. floor(semitones)) and the non-negative
+    // sub-semitone remainder (its low 25 bits)
+    const auto coarse_value = static_cast<int32_t>(static_cast<uint32_t>(tuning.value) & 0xFE000000u);
+    const auto fine_value   = tuning.value - coarse_value;
+
+    return { make_channel_coarse_tuning_message(group, channel, pitch_increment{ coarse_value }),
+             make_channel_fine_tuning_message(group, channel, pitch_increment{ fine_value }) };
+}
+
 constexpr bool is_registered_controller_message(const universal_packet& p)
 {
     return is_midi2_channel_voice_message(p) && (p.status() & 0xF0) == channel_voice_status::registered_controller;
@@ -494,6 +545,30 @@ constexpr pitch_bend_sensitivity get_per_note_pitch_bend_sensitivity_value(const
 constexpr pitch_bend get_per_note_pitch_bend_value(const universal_packet& p)
 {
     return pitch_bend{ p.data[1] };
+}
+
+constexpr bool is_channel_coarse_tuning_message(const universal_packet& p)
+{
+    return is_registered_controller_message(p) && (p.byte3() == 0) &&
+           (p.byte4() == registered_parameter_number::coarse_tuning);
+}
+constexpr bool is_channel_fine_tuning_message(const universal_packet& p)
+{
+    return is_registered_controller_message(p) && (p.byte3() == 0) &&
+           (p.byte4() == registered_parameter_number::fine_tuning);
+}
+constexpr pitch_increment get_channel_coarse_tuning_value(const universal_packet& p)
+{
+    // inverse of make_channel_coarse_tuning_message: re-bias the 7-bit MSB into the top bits of an
+    // S6.25 value by flipping its sign bit back.
+    const auto raw = static_cast<uint32_t>(downsample_32_to_7bit(p.data[1])) << 25;
+    return pitch_increment{ static_cast<int32_t>(raw ^ 0x80000000u) };
+}
+constexpr pitch_increment get_channel_fine_tuning_value(const universal_packet& p)
+{
+    // inverse of make_channel_fine_tuning_message's raw14 = value / 4096 + 8192
+    const auto raw14 = static_cast<int32_t>(downsample_32_to_14bit(p.data[1]));
+    return pitch_increment{ (raw14 - 8192) * 4096 };
 }
 
 //--------------------------------------------------------------------------
