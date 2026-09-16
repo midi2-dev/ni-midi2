@@ -1,3 +1,4 @@
+include(GoogleTest)
 
 function(nimidi2_add_test Target)
 
@@ -18,8 +19,14 @@ function(nimidi2_add_test Target)
     set( TestOutput ${Target}.xml)
   endif()
 
-  add_test(NAME ${Target}_run
-    COMMAND $<TARGET_FILE:${Target}> --gtest_output=xml:test-reports/${TestOutput}
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  if( NIMIDI2_DISCOVER_TESTS )
+    gtest_discover_tests(${Target}
+      EXTRA_ARGS --gtest_output=xml:test-reports/${TestOutput}
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  else()
+    add_test(NAME ${Target}_run
+      COMMAND $<TARGET_FILE:${Target}> --gtest_output=xml:test-reports/${TestOutput}
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  endif()
 
 endfunction()

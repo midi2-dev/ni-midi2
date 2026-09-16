@@ -13,6 +13,7 @@ endif()
 option( NIMIDI2_TREAT_WARNINGS_AS_ERRORS "Treat compile warnings as errors"   OFF )
 option( NIMIDI2_UNITY_BUILDS             "Build ni-midi2 with unity builds"   ON  )
 option( NIMIDI2_TESTS                    "Build ni-midi2 tests"     ${IS_NIMIDI2} )
+option( NIMIDI2_DISCOVER_TESTS           "Discover ni-midi2 tests"            OFF )
 option( NIMIDI2_EXAMPLES                 "Build ni-midi2 examples"  ${IS_NIMIDI2} )
 
 option( NIMIDI2_CUSTOM_SYSEX_DATA_ALLOCATOR "Build with custom sysex data allocator" OFF )

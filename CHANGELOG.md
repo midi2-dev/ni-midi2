@@ -3,6 +3,7 @@
 * add `get_channel_coarse_tuning_value()` / `get_channel_fine_tuning_value()`
 * add `make_channel_coarse_tuning_message()` / `make_channel_fine_tuning_message()` / `make_channel_tuning_messages()`
 * fix maximum _Product Instance ID_ length from 16 to 42 bytes
+* introduce `cmake` option `NIMIDI2_DISCOVER_TESTS` to discover individual tests (`gtest_discover_tests`)
 
 # v1.12.1
 
