@@ -25,6 +25,8 @@
 #include <midi/stream_message.h>
 #include <midi/universal_sysex.h>
 
+#include <vector>
+
 //-----------------------------------------------
 
 class stream_message : public ::testing::Test
@@ -805,27 +807,52 @@ TEST_F(stream_message, send_product_instance_id)
 {
     using namespace midi;
 
-    auto run_test = [](std::string_view pid) {
-        size_t      number_of_packets = 0;
-        std::string resulting_pid;
+    auto run_test = [](std::string_view pid, std::optional<std::string_view> expected_pid = std::nullopt) {
+        std::vector<packet_format> formats;
+        std::string                resulting_pid;
         send_product_instance_id(pid, [&](const midi::universal_packet& p) {
             auto msg = as_product_instance_id_view(p);
             EXPECT_TRUE(msg);
             if (msg)
             {
-                ++number_of_packets;
+                formats.push_back(msg->format());
                 resulting_pid.append(msg->payload());
             }
         });
 
-        EXPECT_EQ(resulting_pid, pid);
-        return number_of_packets;
+        EXPECT_EQ(resulting_pid, expected_pid.value_or(pid));
+
+        if (formats.size() == 1)
+        {
+            EXPECT_EQ(packet_format::complete, formats.front());
+        }
+        else
+        {
+            EXPECT_EQ(packet_format::start, formats.front());
+            EXPECT_EQ(packet_format::end, formats.back());
+            for (size_t i = 1; i + 1 < formats.size(); ++i)
+                EXPECT_EQ(packet_format::cont, formats[i]);
+        }
+
+        return formats.size();
     };
 
     EXPECT_EQ(1u, run_test("ABCDE"));
     EXPECT_EQ(1u, run_test("14AD4C5HE5EA9F"));
-    EXPECT_EQ(2u, run_test("14AD4C5HE5EA9F0"));
-    EXPECT_EQ(2u, run_test("14AD4C5HE5EA9F01"));
+    EXPECT_EQ(2u, run_test("14AD4C5HE5EA9F1"));
+    EXPECT_EQ(2u, run_test("14AD4C5HE5EA9F14AD4C5HE5EA9F"));
+    EXPECT_EQ(3u, run_test("14AD4C5HE5EA9F14AD4C5HE5EA9F14AD4C"));
+    EXPECT_EQ(3u, run_test("14AD4C5HE5EA9F14AD4C5HE5EA9F14AD4C5HE5EA9F"));
+
+#ifndef NDEBUG
+    // exceeding the new 42 character limit must trip the assert in debug builds
+    EXPECT_DEATH(run_test("14AD4C5HE5EA9F14AD4C5HE5EA9F14AD4C5HE5EA9FX"), "");
+#else
+    // in release builds assertions are compiled out: the id must be silently
+    // truncated to 42 characters instead of being sent in full
+    EXPECT_EQ(3u,
+              run_test("14AD4C5HE5EA9F14AD4C5HE5EA9F14AD4C5HE5EA9FX", "14AD4C5HE5EA9F14AD4C5HE5EA9F14AD4C5HE5EA9F"));
+#endif
 }
 
 //-----------------------------------------------

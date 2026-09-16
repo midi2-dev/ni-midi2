@@ -565,7 +565,6 @@ constexpr stream_message make_endpoint_name_message(packet_format format, const 
 constexpr stream_message make_product_instance_id_message(packet_format format, const std::string_view& n)
 {
     assert(n.length() <= 14);
-    assert(format != packet_format::cont);
     stream_message m{ stream_status::product_instance_id, format };
     unsigned       b = 2;
     for (auto c : n)
@@ -695,7 +694,7 @@ void send_endpoint_name(std::string_view name, Sender&& sender)
 template<typename Sender>
 void send_product_instance_id(std::string_view product_instance_id, Sender&& sender)
 {
-    assert(product_instance_id.length() <= 16);
+    assert(product_instance_id.length() <= 42);
 
     if (product_instance_id.length() <= 14)
     {
@@ -703,9 +702,18 @@ void send_product_instance_id(std::string_view product_instance_id, Sender&& sen
     }
     else
     {
+        product_instance_id = product_instance_id.substr(0, 42); // enforce limit even if assert is compiled out
+
         sender(make_product_instance_id_message(packet_format::start, product_instance_id.substr(0, 14)));
         product_instance_id.remove_prefix(14);
-        sender(make_product_instance_id_message(packet_format::end, product_instance_id.substr(0, 2)));
+
+        while (product_instance_id.size() > 14)
+        {
+            sender(make_product_instance_id_message(packet_format::cont, product_instance_id.substr(0, 14)));
+            product_instance_id.remove_prefix(14);
+        }
+
+        sender(make_product_instance_id_message(packet_format::end, product_instance_id));
     }
 }
 
