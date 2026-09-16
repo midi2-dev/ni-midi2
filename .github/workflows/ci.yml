@@ -19,46 +19,46 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - name: "Windows 2022"
-            os: windows-2022
+          - name: "Windows 2025"
+            os: windows-2025
             build_type: Release
 
-          - name: "MacOS 14 (xc15)"
-            os: macos-14
+          - name: "MacOS 15 (xc16)"
+            os: macos-15
             build_type: Release
-            set_xcode_version_cmd: xcodes select 15.4
+            set_xcode_version_cmd: xcodes select 16.4
 
-          - name: "Ubuntu 22.04 (GCC-11)"
-            os: ubuntu-22.04
+          - name: "Ubuntu 24.04 (GCC-14)"
+            os: ubuntu-24.04
             build_type: Release
-            cc: "gcc-11"
-            cxx: "g++-11"
+            cc: "gcc-14"
+            cxx: "g++-14"
 
-          - name: "Ubuntu 22.04 (GCC-10)"
-            os: ubuntu-22.04
+          - name: "Ubuntu 24.04 (GCC-13)"
+            os: ubuntu-24.04
             build_type: Release
-            cc: "gcc-10"
-            cxx: "g++-10"
+            cc: "gcc-13"
+            cxx: "g++-13"
 
-          - name: "Ubuntu 22.04 (GCC-9)"
-            os: ubuntu-22.04
+          - name: "Ubuntu 24.04 (GCC-12)"
+            os: ubuntu-24.04
             build_type: Release
-            cc: "gcc-9"
-            cxx: "g++-9"
+            cc: "gcc-12"
+            cxx: "g++-12"
 
-          - name: "sysex pmr (Ubuntu 22.04, GCC-11)"
-            os: ubuntu-22.04
+          - name: "sysex pmr (Ubuntu 24.04, GCC-12)"
+            os: ubuntu-24.04
             cmake_options: "-DNIMIDI2_PMR_SYSEX_DATA=ON"
             build_type: Release
-            cc: "gcc-11"
-            cxx: "g++-11"
+            cc: "gcc-12"
+            cxx: "g++-12"
 
-          - name: "non-unity builds (Ubuntu 22.04, GCC-11)"
-            os: ubuntu-22.04
+          - name: "non-unity builds (Ubuntu 24.04, GCC-12)"
+            os: ubuntu-24.04
             cmake_options: "-DNIMIDI2_UNITY_BUILDS=OFF"
             build_type: Release
-            cc: "gcc-11"
-            cxx: "g++-11"
+            cc: "gcc-12"
+            cxx: "g++-12"
 
           - name: "Code-Coverage (Ubuntu 22.04, GCC-10)"
             os: ubuntu-22.04
