@@ -950,11 +950,37 @@ TEST_F(ci_profile_configuration, profile_id_view)
         EXPECT_FALSE(midi::ci::as<VUT>(sx));
     }
 
+    // the Profile Details and Profile Specific Data messages carry one ID too
+    {
+        const midi::ci::profile_id profile{ 0x7E, 0x44, 0x33, 0x22, 0x11 };
+        const midi::uint7_t        data[] = { 0x01, 0x02 };
+
+        const auto inquiry       = midi::ci::make_profile_details_inquiry(0x1234568, 0x2345689, profile, 0x03);
+        const auto reply         = midi::ci::make_profile_details_reply(0x2345689, 0x1234568, profile, 0x03, data, 2);
+        const auto specific_data = midi::ci::make_profile_specific_data_message(0x1234568, 0x2345689, profile, data, 2);
+
+        for (const midi::sysex7& mut :
+             { midi::sysex7{ inquiry }, midi::sysex7{ reply }, midi::sysex7{ specific_data } })
+        {
+            EXPECT_TRUE(VUT::validate(mut));
+            ASSERT_TRUE(midi::ci::as<VUT>(mut));
+            EXPECT_EQ(profile, midi::ci::as<VUT>(mut)->profile());
+        }
+
+        // the details views share the base
+        const VUT& inquiry_base = midi::ci::profile_details_inquiry_view{ inquiry };
+        EXPECT_EQ(profile, inquiry_base.profile());
+        EXPECT_EQ(0x2345689u, inquiry_base.destination_muid());
+        const VUT& reply_base = midi::ci::profile_details_reply_view{ reply };
+        EXPECT_EQ(profile, reply_base.profile());
+        EXPECT_EQ(0x1234568u, reply_base.destination_muid());
+    }
+
     // invalid subtype
     {
         midi::sysex7 sx{
             midi::manufacturer::universal_non_realtime,
-            { 0x7F, 0x0D, 0x28, 0x02, 0x78, 0x56, 0x34, 0x12, 0x77, 0x55, 0x33, 0x11, 0x44, 0x55, 0x66, 0x12, 0x34 }
+            { 0x7F, 0x0D, 0x21, 0x02, 0x78, 0x56, 0x34, 0x12, 0x77, 0x55, 0x33, 0x11, 0x44, 0x55, 0x66, 0x12, 0x34 }
         };
 
         EXPECT_FALSE(VUT::validate(sx));

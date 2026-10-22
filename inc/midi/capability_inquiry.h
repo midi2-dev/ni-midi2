@@ -438,7 +438,8 @@ message make_profile_inquiry_reply(muid_t                         source_muid,
                                    uint7_t                        device_id = 0x7F);
 
 //----
-//! view class for Profile messages carrying one ID (On/Off/Enabled/Disabled/Added/Removed/ProfileSpecificData)
+//! view class for Profile messages carrying one ID
+//! (On/Off/Enabled/Disabled/Added/Removed/DetailsInquiry/DetailsReply/ProfileSpecificData)
 struct profile_id_view : capability_inquiry_view
 {
     using capability_inquiry_view::capability_inquiry_view;
@@ -508,12 +509,11 @@ message make_profile_removed_notification(muid_t source_muid,
 
 //---- subtype::profile_details_inquiry
 
-struct profile_details_inquiry_view : capability_inquiry_view
+struct profile_details_inquiry_view : profile_id_view
 {
-    using capability_inquiry_view::capability_inquiry_view;
+    using profile_id_view::profile_id_view;
 
-    profile_id profile() const;
-    uint7_t    target() const;
+    uint7_t target() const;
 
     static bool validate(const sysex7&);
 
@@ -525,11 +525,10 @@ message make_profile_details_inquiry(
 
 //---- subtype::profile_details_reply
 
-struct profile_details_reply_view : capability_inquiry_view
+struct profile_details_reply_view : profile_id_view
 {
-    using capability_inquiry_view::capability_inquiry_view;
+    using profile_id_view::profile_id_view;
 
-    profile_id     profile() const;
     uint7_t        target() const;
     uint14_t       target_data_length() const;
     const uint7_t* target_data() const;
@@ -1486,7 +1485,8 @@ inline bool profile_id_view::validate(const sysex7& sx)
 {
     return (sx.manufacturerID == manufacturer::universal_non_realtime) &&
            (sx.data.size() >= field_offsets::profile_id + 5u) && (sx.data[1] == 0x0D) &&
-           (sx.data[2] >= subtype::set_profile_on) && (sx.data[2] <= subtype::profile_removed);
+           (((sx.data[2] >= subtype::set_profile_on) && (sx.data[2] <= subtype::profile_details_reply)) ||
+            (sx.data[2] == subtype::profile_specific_data));
 }
 
 //---- profile_destination_view
@@ -1596,20 +1596,10 @@ inline message make_profile_removed_notification(muid_t            source_muid,
 
 //---- subtype::profile_details_inquiry
 
-struct profile_details_inquiry_view::field_offsets : capability_inquiry_view::field_offsets
+struct profile_details_inquiry_view::field_offsets : profile_id_view::field_offsets
 {
-    static constexpr auto profile_id = payload;
-    static constexpr auto target     = payload + 5;
+    static constexpr auto target = payload + 5;
 };
-
-inline profile_id profile_details_inquiry_view::profile() const
-{
-    return profile_id{ sx.data[field_offsets::profile_id],
-                       sx.data[field_offsets::profile_id + 1],
-                       sx.data[field_offsets::profile_id + 2],
-                       sx.data[field_offsets::profile_id + 3],
-                       sx.data[field_offsets::profile_id + 4] };
-}
 
 inline uint7_t profile_details_inquiry_view::target() const
 {
@@ -1652,22 +1642,12 @@ inline message make_profile_details_reply(muid_t            source_muid,
 
 //---- subtype::profile_details_inquiry
 
-struct profile_details_reply_view::field_offsets : capability_inquiry_view::field_offsets
+struct profile_details_reply_view::field_offsets : profile_id_view::field_offsets
 {
-    static constexpr auto profile_id         = payload;
     static constexpr auto target             = payload + 5u;
     static constexpr auto target_data_length = payload + 6u;
     static constexpr auto target_data        = payload + 8u;
 };
-
-inline profile_id profile_details_reply_view::profile() const
-{
-    return profile_id{ sx.data[field_offsets::profile_id],
-                       sx.data[field_offsets::profile_id + 1],
-                       sx.data[field_offsets::profile_id + 2],
-                       sx.data[field_offsets::profile_id + 3],
-                       sx.data[field_offsets::profile_id + 4] };
-}
 
 inline uint7_t profile_details_reply_view::target() const
 {
@@ -1694,11 +1674,10 @@ inline bool profile_details_reply_view::validate(const sysex7& sx)
 
 //---- subtype::profile_specific_data
 
-struct profile_specific_data_view::field_offsets : capability_inquiry_view::field_offsets
+struct profile_specific_data_view::field_offsets : profile_id_view::field_offsets
 {
-    static constexpr auto profile_id = payload;
-    static constexpr auto data_size  = payload + 5u;
-    static constexpr auto data       = payload + 9u;
+    static constexpr auto data_size = payload + 5u;
+    static constexpr auto data      = payload + 9u;
 };
 
 inline bool profile_specific_data_view::validate(const sysex7& sx)

@@ -1,3 +1,7 @@
+# v1.13.1
+
+* `profile_details_inquiry_view` and `profile_details_reply_view` derive from `profile_id_view`, and `profile_id_view` validates the _Profile Details_ and _Profile Specific Data_ messages too, so code can read the profile ID and the destination MUID of any of them through the common base
+
 # v1.13.0
 
 * add `get_channel_coarse_tuning_value()` / `get_channel_fine_tuning_value()`
