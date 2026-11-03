@@ -93,6 +93,35 @@ TEST_F(ci_profile_configuration, profile_id)
 
 //-----------------------------------------------
 
+TEST_F(ci_profile_configuration, same_profile)
+{
+    using midi::ci::profile_id;
+    using midi::ci::same_profile;
+
+    constexpr profile_id standard{ 0x7E, 0x02, 0x03, 0x04, 0x05 };
+    static_assert(same_profile(standard, standard));
+
+    // Profile Version and Profile Level
+    EXPECT_TRUE(same_profile(standard, profile_id{ 0x7E, 0x02, 0x03, 0x01, 0x7F }));
+    EXPECT_TRUE(same_profile(profile_id{ 0x7E, 0x02, 0x03, 0x01, 0x7F }, standard));
+
+    // Profile Number
+    EXPECT_FALSE(same_profile(standard, profile_id{ 0x7E, 0x01, 0x03, 0x04, 0x05 }));
+    EXPECT_FALSE(same_profile(standard, profile_id{ 0x7E, 0x02, 0x01, 0x04, 0x05 }));
+
+    // Standard Defined and Manufacturer Specific
+    EXPECT_FALSE(same_profile(standard, profile_id{ 0x00, 0x02, 0x03, 0x04, 0x05 }));
+    EXPECT_FALSE(same_profile(profile_id{ 0x00, 0x02, 0x03, 0x04, 0x05 }, standard));
+
+    // Manufacturer Specific Info
+    constexpr profile_id manufacturer{ 0x00, 0x21, 0x09, 0x7F, 0x01 };
+    EXPECT_TRUE(same_profile(manufacturer, manufacturer));
+    EXPECT_FALSE(same_profile(manufacturer, profile_id{ 0x00, 0x21, 0x09, 0x7F, 0x02 }));
+    EXPECT_FALSE(same_profile(manufacturer, profile_id{ 0x00, 0x21, 0x09, 0x01, 0x01 }));
+}
+
+//-----------------------------------------------
+
 TEST_F(ci_profile_configuration, profile_inquiry)
 {
     using VUT = midi::ci::profile_inquiry_view;

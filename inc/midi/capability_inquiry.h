@@ -370,6 +370,9 @@ struct profile_id
 };
 #pragma pack(pop)
 
+//! true if a and b identify the same profile. Bytes 1 to 3 identify a Standard Defined Profile (M2-102).
+constexpr bool same_profile(const profile_id& a, const profile_id& b);
+
 //! Capability Inquiry Profile destination
 struct profile_destination
 {
@@ -1376,10 +1379,17 @@ constexpr profile_id::profile_id(uint7_t b1, uint7_t b2, uint7_t b3, uint7_t b4,
 {
 }
 
-inline bool operator==(const profile_id& a, const profile_id& b)
+constexpr bool operator==(const profile_id& a, const profile_id& b)
 {
     return (a.byte1 == b.byte1) && (a.byte2 == b.byte2) && (a.byte3 == b.byte3) && (a.byte4 == b.byte4) &&
            (a.byte5 == b.byte5);
+}
+
+constexpr bool same_profile(const profile_id& a, const profile_id& b)
+{
+    if (a.byte1 == 0x7E)
+        return (b.byte1 == 0x7E) && (a.byte2 == b.byte2) && (a.byte3 == b.byte3);
+    return a == b;
 }
 
 //---- profile_destination
