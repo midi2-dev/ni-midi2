@@ -240,6 +240,7 @@ There is a growing number of code examples and more detailed documentation avail
 * Flex Data Message [documentation](docs/flex_data_message.md) and [examples](docs/flex_data_message.examples.cpp)
 * Stream Message [documentation](docs/stream_message.md) and [examples](docs/stream_message.examples.cpp)
 * Utility Message [documentation](docs/utility_message.md)
+* MIDI Capability Inquiry [documentation](docs/capability_inquiry.md) and [examples](docs/capability_inquiry.examples.cpp)
 * MIDI 1 Byte Stream Helper [WIP documentation](docs/midi1_byte_stream.md) and [examples](docs/midi1_byte_stream.examples.cpp)
 
 Until documentation is completed you may also find the [unit test code](tests) helpful.
