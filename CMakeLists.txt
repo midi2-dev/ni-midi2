@@ -138,6 +138,7 @@ endif(NIMIDI2_TESTS)
 if( NIMIDI2_EXAMPLES )
     set(ExampleSources
         docs/docs.cpp
+        docs/capability_inquiry.examples.cpp
         docs/channel_voice_message.examples.cpp
         docs/data_message.examples.cpp
         docs/extended_data_message.examples.cpp

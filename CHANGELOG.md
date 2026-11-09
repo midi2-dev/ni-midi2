@@ -1,3 +1,8 @@
+# v1.14.0
+
+* add `same_profile()`, which compares a Standard Defined Profile ID by bytes 1 to 3
+* make the `profile_id` equality operator `constexpr`
+
 # v1.13.2
 
 * `profile_details_inquiry_view` and `profile_details_reply_view` derive from `profile_id_view`, and `profile_id_view` validates the _Profile Details_ and _Profile Specific Data_ messages too, so code can read the profile ID and the destination MUID of any of them through the common base

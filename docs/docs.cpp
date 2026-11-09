@@ -1,3 +1,4 @@
+extern void run_capability_inquiry_examples();
 extern void run_channel_voice_message_examples();
 extern void run_data_message_examples();
 extern void run_extended_data_message_examples();
@@ -31,6 +32,8 @@ int main()
     run_stream_message_examples();
     run_flex_data_message_examples();
     run_mixed_data_set_examples();
+
+    run_capability_inquiry_examples();
 
     return 0;
 }
